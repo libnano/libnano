@@ -7,8 +7,6 @@ nucleic acid toolkit
 Low level Python modules for working with DNA sequences.
 The goal is to be fast so most everthing is written in Cython or C.
 
-This is a work in progress. Uses klib `khash.h` for faster C hash tables
-
 ## Features:
 
 * `fileio`: genbank and fasta reader/writers, xmfa
@@ -25,18 +23,12 @@ This is a work in progress. Uses klib `khash.h` for faster C hash tables
 
 * Build derivative Cython modules with libnano using `libnano.includes()` in
 your include_dir in `distutils.core.setup`
-* use `cynja` to do templating in Cython
 * incorporates a [cymem](https://github.com/syllog1sm/cymem) derivative to help
 with memory management.  Adds some features like taking ownership of memory to
 help get you in trouble :-)
+* use `cynja` to do templating in Cython
 
 ## Building libnano:
 
 * Run `python setup.py build_ext --inplace` to build in the package dir
-* Optional flag "--dev" builds pre-release extensions
 * Optional flag "--rmbuilt" removes old *.c and *.so files from previous builds
-
-## git subtree for klib
-see [subtree setup](https://blogs.atlassian.com/2013/05/alternatives-to-git-submodule-git-subtree/)
-
-    git subtree add --prefix klib git@github.com:attractivechaos/klib.git master --squash

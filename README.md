@@ -4,7 +4,8 @@
 
 nucleic acid toolkit
 
-Low level Python modules for working with DNA sequences.
+Low level Python modules for working with DNA sequences.<br/>
+It was developed to be used as a cog in application specific libraries while avoiding bloat.<br/>
 The goal is to be fast so most everthing is written in Cython or C.
 
 ## Features:
@@ -18,15 +19,6 @@ The goal is to be fast so most everthing is written in Cython or C.
 * `seqsearch`: search sequences for features like restriction sites or
                "submers" (kmers with 0 or more mismatches to a subsequence
                in the target)
-
-## Development Features:
-
-* Build derivative Cython modules with libnano using `libnano.includes()` in
-your include_dir in `distutils.core.setup`
-* incorporates a [cymem](https://github.com/syllog1sm/cymem) derivative to help
-with memory management.  Adds some features like taking ownership of memory to
-help get you in trouble :-)
-* use `cynja` to do templating in Cython
 
 ## Building libnano:
 

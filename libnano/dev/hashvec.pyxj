@@ -1,0 +1,64 @@
+
+from numpy cimport uint32_t
+
+# ClassName=HashVecTuple, ht_name=str2vectuple, 
+# vec_t=tuple_t, key_t=kh_cstr_t, val_t=vectuple_t
+
+cdef extern from "nano_khash.h":
+    ctypedef uint32_t khint32_t
+    ctypedef khint32_t khint_t
+    ctypedef khint_t khiter_t
+
+    ctypedef const char* kh_cstr_t
+
+    ctypedef struct {{vec_t}}:
+        int idx
+        int offset
+
+    ctypedef struct {{val_t}}:
+        size_t n
+        {{vec_t}}* arr
+
+    ctypedef struct kh_{{ht_name}}_t:
+        {{val_t}}** vals; 
+
+    kh_{{ht_name}}_t* kh_init_{{ht_name}}() 
+    void kh_destroy_{{ht_name}}(kh_{{ht_name}}_t*)
+    void kh_clear_{{ht_name}}(kh_{{ht_name}}_t*)
+    khint_t kh_get_{{ht_name}}(const kh_{{ht_name}}_t*, kh_cstr_t)
+    int kh_resize_{{ht_name}}(kh_{{ht_name}}_t*, khint_t )
+    khint_t kh_put_{{ht_name}}(kh_{{ht_name}}_t*, kh_cstr_t, int *)
+    void kh_del_{{ht_name}}(kh_{{ht_name}}_t*, khint_t )
+    {{val_t}} kh_value(kh_{{ht_name}}_t*, khint_t)
+    khint_t kh_end(kh_{{ht_name}}_t*)
+
+
+cdef class {{ClassName}}:
+    cdef kh_{{ht_name}}_t* ht
+
+    def __init__(self):
+        self.ht = kh_init_{{ht_name}}()     
+
+    def __dealloc__(self):
+        kh_destroy_{{ht_name}}(self.ht)
+
+    cdef inline khint_t getHash({{ClassName}} self, kh_cstr_t key):
+        """get the key from the hash table
+        if key doesn't exist returns the khint_t kh_end(self.ht)
+        returns the hashedkey of type khint_t
+        """
+        return kh_get_{{ht_name}}(self.ht, key)
+
+    cdef inline khint_t putHash({{ClassName}} self, kh_cstr_t key, int* ret):
+        """ add the key to the hash table
+        returns the hashedkey of type khint_t
+        """
+        return kh_put_{{ht_name}}(self.ht, key, ret)
+
+    cdef inline setValue({{ClassName}} self, khint_t hashedkey, {{val_t}}* val):
+        self.ht.vals[hashedkey] = val
+
+
+
+
+

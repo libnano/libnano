@@ -1,0 +1,3 @@
+def test({{key_t}} i):
+    cdef {{key_t}} j = 2
+    return i + j

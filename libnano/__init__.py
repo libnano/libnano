@@ -15,4 +15,4 @@ from libnano.core import seqstr
 
 __author__ = "Nick Conway, Ben Pruitt"
 __all__ = ['seqstr', 'seqint', 'seqscreen']
-__version__ = '0.1.1.2'
+__version__ = '0.1.1.3'

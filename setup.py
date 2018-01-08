@@ -46,6 +46,7 @@ import os
 import re
 import sys
 import ast
+import shutil
 
 pjoin = os.path.join
 rpath = os.path.relpath
@@ -86,6 +87,16 @@ normal_extensions = []
 
 # ~~~~~~~~~~~~~~~~~~~~~~~ configure cython extensions ~~~~~~~~~~~~~~~~~~~~~~~ #
 cython_extensions = []
+
+# ~~~~~~~~~~~~~~~~~~~ add helpers pyx, pxd, and py filess ~~~~~~~~~~~~~~~~~~~ #
+helpers_fp = pjoin(MODULE_PATH, 'helpers')
+# copy python 2/3 specific version of c_util.pxd to use
+if IS_PY_THREE:
+    shutil.copyfile(pjoin(helpers_fp, 'c_util3.pxd'), pjoin(helpers_fp, 'c_util.pxd'))
+else:
+    shutil.copyfile(pjoin(helpers_fp, 'c_util2.pxd'), pjoin(helpers_fp, 'c_util.pxd'))
+libnano_files += [rpath(pjoin(helpers_fp, f)) for f in
+                  os.listdir(helpers_fp) if ('.py' in f or '.pyx' in f or '.pxd' in f)]
 
 def addExtension(*ext_args, **ext_kwargs):
     global libnano_files
@@ -131,9 +142,9 @@ addExtension(
 )
 
 addExtension(
-    'libnano.dev.seqint',
+    'libnano.core.seqint',
     depends=[],
-    sources=['libnano/dev/seqint.pyx', 'libnano/core/src/si_seqint.c'],
+    sources=['libnano/core/seqint.pyx', 'libnano/core/src/si_seqint.c'],
     include_dirs=common_include,
     extra_compile_args=extra_compile_args
 )
@@ -224,10 +235,6 @@ if IS_PY_THREE:
         extra_compile_args=extra_compile_args,
     )
 
-# add helpers pyx and py files
-helpers_fp = pjoin(MODULE_PATH, 'helpers')
-libnano_files += [rpath(pjoin(helpers_fp, f)) for f in
-                  os.listdir(helpers_fp) if ('.py' in f or '.pyx' in f or '.pxd' in f)]
 # add header files or extra c files
 for path in common_include:
     libnano_files += [rpath(pjoin(path, f)) for f in
@@ -245,7 +252,7 @@ libnano_files = list(set(libnano_files))
 # pprint.pprint(libnano_files)
 # sys.exit(1)
 
-packages = ['libnano', 'libnano.core', 'libnano.dev', 'libnano.fileio',
+packages = ['libnano', 'libnano.core', 'libnano.fileio',
             'libnano.helpers', 'libnano.cymem', 'libnano.core.seqsearch',
             'libnano.datastructures', 'libnano.datastructures.seqrecord',
             'libnano.datasets', 'libnano.core.seqmetric']

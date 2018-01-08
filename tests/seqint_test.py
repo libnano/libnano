@@ -7,7 +7,7 @@ from os.path import join, abspath, dirname
 # For package imports
 sys.path.insert(0, abspath(join(dirname(__file__), '..')))
 
-from libnano.dev import seqint
+from libnano.core import seqint
 import _setup
 
 # ~~~~~ Python implementations of sequence manipulations for comparison ~~~~~ #
@@ -74,7 +74,7 @@ class TestSeqInt(unittest.TestCase):
     def test_substring(self):
         ''' Test seqint substring method '''
         for x in range(1000):
-            seq = self._randSeq()    
+            seq = self._randSeq()
             seq_int = seqint.seq2Int(seq)
             sidx = random.randint(0, len(seq)-1)
             eidx = random.randint(sidx+1, len(seq))

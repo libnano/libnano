@@ -296,6 +296,7 @@ setup_requires = ['cython']
 
 # Instrumenting for Travis troubleshooting
 import numpy
+print(numpy.__version__)
 print(numpy.__path__)
 print(numpy.distutils.misc_util.get_numpy_include_dirs())
 

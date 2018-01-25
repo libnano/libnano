@@ -77,7 +77,11 @@ MODULE_PATH = pjoin(PACKAGE_PATH, 'libnano')
 # DATASETS_PATH =     pjoin(MODULE_PATH, 'datasets')
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ include dirs ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
-common_include = ['libnano/src', 'libnano/core/src', 'libnano/dev/src']
+# https://cython.readthedocs.io/en/latest/src/userguide/sharing_declarations.html#search-paths-for-definition-files
+common_include = [  'libnano/src',
+                    'libnano/core/src',
+                    'libnano/dev/src',
+                    'libnano/helpers']
 
 # Non-python files to include in the installation
 libnano_files = []

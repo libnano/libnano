@@ -40,7 +40,6 @@ try:
 except ImportError:
     from distutils.core import setup, Extension
 
-from Cython.Build import cythonize
 import numpy.distutils.misc_util
 import os
 import re
@@ -285,21 +284,22 @@ if '--rmbuilt' in script_args:
     script_args.remove('--rmbuilt')
 
 # ~~~~~~~~~~~~~~~~~~~~~~~ cythonize cython extensions ~~~~~~~~~~~~~~~~~~~~~~~ #
-cython_ext_list = cythonize(cython_extensions, include_path=common_include)
+# cython_ext_list = cythonize(cython_extensions, include_path=common_include)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ rock and roll ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 install_requires = ['six',
-                    'cython',
                     'jinja2',
                     'numpy'
                     ]
+
+setup_requires = ['cython']
 
 setup(
     name=DISTNAME,
     version=version,
     maintainer=AUTHORS,
     packages=packages,
-    ext_modules=normal_extensions + cython_ext_list,
+    ext_modules=normal_extensions + cython_extensions,
     include_dirs=numpy.distutils.misc_util.get_numpy_include_dirs(),
     package_data={'libnano': libnano_files},
     maintainer_email=EMAIL,
@@ -311,5 +311,6 @@ setup(
     classifiers=CLASSIFIERS,
     script_args=script_args,
     zip_safe=False,
-    install_requires=install_requires
+    install_requires=install_requires,
+    setup_requires=setup_requires
 )

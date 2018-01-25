@@ -236,9 +236,9 @@ if IS_PY_THREE:
     )
 
 # add header files or extra c files
-for path in common_include:
-    libnano_files += [rpath(pjoin(path, f)) for f in
-                  os.listdir(path) if ('.h' in f or '.c' in f)]
+# for path in common_include:
+#     libnano_files += [rpath(pjoin(path, f)) for f in
+#                   os.listdir(path) if ('.h' in f or '.c' in f)]
 
 # ~~~~~~~~~~~~~~~~~~~~~ Strip `libnano/` for package data ~~~~~~~~~~~~~~~~~~~~ #
 check_libnano = 'libnano/'
@@ -261,12 +261,6 @@ packages = ['libnano', 'libnano.core', 'libnano.fileio',
 
 # Commented out by NC 2018.01.05 since we are rolling towards PyPi
 script_args = sys.argv[1:]
-# if '--dev' in script_args:
-#     normal_extensions += dev_setup.normal_extensions
-#     cython_extensions += dev_setup.cython_extensions
-#     libnano_files += dev_setup.libnano_files
-#     script_args.remove('--dev')
-#     # packages.append('libnano.dev')
 
 # ~~~~~~~~~~~~~~~~~~~ remove old built files if specified ~~~~~~~~~~~~~~~~~~~ #
 def removeBuiltFiles():
@@ -291,9 +285,9 @@ cython_ext_list = cythonize(cython_extensions)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ rock and roll ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 install_requires = ['six',
-                    # 'cython',
+                    'cython',
                     'jinja2',
-                    # 'numpy'
+                    'numpy'
                     ]
 
 setup(

@@ -81,7 +81,7 @@ MODULE_PATH = pjoin(PACKAGE_PATH, 'libnano')
 common_include = [  'libnano/src',
                     'libnano/core/src',
                     'libnano/dev/src',
-                    'libnano/helpers']
+                    '']
 
 # Non-python files to include in the installation
 libnano_files = []
@@ -285,7 +285,7 @@ if '--rmbuilt' in script_args:
     script_args.remove('--rmbuilt')
 
 # ~~~~~~~~~~~~~~~~~~~~~~~ cythonize cython extensions ~~~~~~~~~~~~~~~~~~~~~~~ #
-cython_ext_list = cythonize(cython_extensions)
+cython_ext_list = cythonize(cython_extensions, include_path=common_include)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ rock and roll ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 install_requires = ['six',

@@ -4,7 +4,7 @@ from cpython cimport array
 import array
 
 
-from libnano.helpers cimport c_util
+cimport c_util
 
 __doc__ = 'Simple DNA sequence metrics'
 

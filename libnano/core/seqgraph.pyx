@@ -1,5 +1,5 @@
 #cython: boundscheck=False, wraparound=False
-from libnano.helpers cimport c_util
+cimport c_util
 cimport cython
 import numpy as np
 cimport numpy as cnp

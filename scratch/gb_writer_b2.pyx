@@ -6,7 +6,7 @@ except:
 
 from collections import OrderedDict
 from libc.stdio cimport FILE, fopen, fclose, fwrite, fflush, fprintf, sprintf
-from libnano from helpers cimport c_util
+cimport c_util
 from libc.stdlib cimport malloc, free
 
 cdef inline fwrite_b(FILE* fd, bytes out_str_b):

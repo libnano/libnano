@@ -1,4 +1,4 @@
-from libnano.helpers cimport c_util
+cimport c_util
 import numpy as np
 
 cimport numpy as cnp

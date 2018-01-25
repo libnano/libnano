@@ -1,5 +1,5 @@
 
-from libnano.helpers cimport c_util
+cimport c_util
 
 __doc__ = "Simple filtering of DNA sequences"
 

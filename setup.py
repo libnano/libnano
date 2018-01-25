@@ -81,7 +81,7 @@ MODULE_PATH = pjoin(PACKAGE_PATH, 'libnano')
 common_include = [  'libnano/src',
                     'libnano/core/src',
                     'libnano/dev/src',
-                    '']
+                    'libnano/helpers']
 
 # Non-python files to include in the installation
 libnano_files = []

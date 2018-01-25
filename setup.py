@@ -291,9 +291,9 @@ cython_ext_list = cythonize(cython_extensions)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ rock and roll ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 install_requires = ['six',
-                    'cython',
+                    # 'cython',
                     'jinja2',
-                    'numpy'
+                    # 'numpy'
                     ]
 
 setup(

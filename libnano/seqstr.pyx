@@ -10,9 +10,9 @@ Includes hamming distance method and derivative heuristic methods.
 """
 
 cimport c_util
-import numpy as np
 import random
 cimport numpy as cnp
+import numpy as np
 
 from cython.operator cimport postincrement as inc
 

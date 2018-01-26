@@ -70,13 +70,13 @@ IS_PY3 = True if int(sys.version[0]) > 2 else False
 LOCAL_DIR = os.path.dirname(os.path.realpath(__file__))
 
 try:
-    from libnano.core import seqstr
+    from libnano import seqstr
     from libnano.helpers.jsonbytes import base_decode_dict
 except:
     import os.path
     LOCAL_DIR = os.path.abspath(os.path.dirname(__file__))
     sys.path.insert(0, os.path.abspath(os.path.join(LOCAL_DIR, '..', '..')))
-    from libnano.core import seqstr
+    from libnano import seqstr
     from libnano.helpers.jsonbytes import base_decode_dict
 if IS_PY3:
     import urllib.request as urllib2

@@ -1,5 +1,5 @@
 '''
-libnano.core.prostr
+libnano.prostr
 ~~~~~~~~~~~~~~~~~~~
 
 Methods to translate from DNA/RNA to amino acid sequence and vice versa

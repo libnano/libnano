@@ -1,5 +1,5 @@
 from seedmatch import SeedMatcher
-from libnano.core.seqstr import thresholdRollingHammingList
+from libnano.seqstr import thresholdRollingHammingList
 
 # computed using seedfinder.pyx
 PRECOMPUTED_SEEDS = {

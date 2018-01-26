@@ -285,7 +285,7 @@ setup(
     maintainer=AUTHORS,
     packages=packages,
     ext_modules=normal_extensions + cython_ext_list,
-    include_dirs=numpy.distutils.misc_util.get_numpy_include_dirs(),
+    include_dirs=numpy.distutils.misc_util.get_numpy_include_dirs()+common_include,
     package_data={'libnano': libnano_files},
     maintainer_email=EMAIL,
     description=DESCRIPTION,

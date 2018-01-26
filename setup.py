@@ -77,7 +77,7 @@ MODULE_PATH = pjoin(PACKAGE_PATH, 'libnano')
 # DATASETS_PATH =     pjoin(MODULE_PATH, 'datasets')
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ include dirs ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
-common_include = ['libnano/src']
+common_include = ['libnano/src', 'libnano/helpers']
 
 # Non-python files to include in the installation
 libnano_files = []
@@ -104,18 +104,18 @@ def addExtension(*ext_args, **ext_kwargs):
     cython_extensions.append(Extension(*ext_args, **ext_kwargs))
 
 addExtension(
-    'libnano.core.seqmetric.seqrepeat',
+    'libnano.metric.seqrepeat',
     depends=[],
     sources=['libnano/src/si_seqint.c',
              'libnano/src/sr_seqrepeat.c',
-             'libnano/core/seqmetric/seqrepeat.pyx'],
+             'libnano/metric/seqrepeat.pyx'],
     include_dirs=common_include + [numpy.get_include()],
     extra_compile_args=extra_compile_args
 )
 
 addExtension(
-    'libnano.core.seqsearch.seedfinder',
-    sources=['libnano/core/seqsearch/seedfinder.pyx'],
+    'libnano.search.seedfinder',
+    sources=['libnano/search/seedfinder.pyx'],
     extra_compile_args=extra_compile_args
 )
 
@@ -126,8 +126,8 @@ addExtension(
 )
 
 addExtension(
-    'libnano.core.seqsearch.seedmatch',
-    sources=['libnano/core/seqsearch/seedmatch.pyx',
+    'libnano.search.seedmatch',
+    sources=['libnano/search/seedmatch.pyx',
              'libnano/src/shl_seedhashlist.c',
              'libnano/src/ss_seqstr.c'],
     include_dirs=common_include,
@@ -135,65 +135,65 @@ addExtension(
 )
 
 addExtension(
-    'libnano.core.seqsearch.submerpool',
-    sources=['libnano/core/seqsearch/submerpool.pyx'],
+    'libnano.search.submerpool',
+    sources=['libnano/search/submerpool.pyx'],
     include_dirs=common_include,
     extra_compile_args=extra_compile_args
 )
 
 addExtension(
-    'libnano.core.seqint',
+    'libnano.seqint',
     depends=[],
-    sources=[   'libnano/core/seqint.pyx',
+    sources=[   'libnano/seqint.pyx',
                 'libnano/src/si_seqint.c'],
     include_dirs=common_include,
     extra_compile_args=extra_compile_args
 )
-libnano_files.append('libnano/core/seqint.pxd')
+libnano_files.append('libnano/seqint.pxd')
 libnano_files.append('libnano/datastructures/list_bisect.pxd')
 
 addExtension(
-    'libnano.core.seqstr',
+    'libnano.seqstr',
     depends=[],
-    sources=['libnano/core/seqstr.pyx',
+    sources=['libnano/seqstr.pyx',
              'libnano/src/ss_seqstr.c'],
     include_dirs=common_include + [numpy.get_include()],
     extra_compile_args=extra_compile_args
 )
-libnano_files.append('libnano/core/seqstr.pxd')
+libnano_files.append('libnano/seqstr.pxd')
 
 addExtension(
-    'libnano.core.seqgraph',
+    'libnano.seqgraph',
     depends=[],
-    sources=['libnano/core/seqgraph.pyx',
+    sources=['libnano/seqgraph.pyx',
              'libnano/src/ss_seqstr.c'],
     include_dirs=common_include + [numpy.get_include()],
     extra_compile_args=extra_compile_args
 )
 
 addExtension(
-    'libnano.core.seqmetric.seqscreen',
+    'libnano.metric.seqscreen',
     depends=[],
     sources=['libnano/src/si_seqint.c',
              'libnano/src/sf_seqscreen.c',
-             'libnano/core/seqmetric/seqscreen.pyx'],
+             'libnano/metric/seqscreen.pyx'],
     include_dirs=common_include,
     extra_compile_args=extra_compile_args
 )
 
 addExtension(
-    'libnano.core.seqmetric.seqmetric',
+    'libnano.metric.seqmetric',
     depends=[],
     sources=['libnano/src/sm_seqmetric.c',
-             'libnano/core/seqmetric/seqmetric.pyx'],
+             'libnano/metric/seqmetric.pyx'],
     include_dirs=common_include,
     extra_compile_args=extra_compile_args
 )
 
 addExtension(
-    'libnano.core.seqsearch.restriction',
+    'libnano.search.restriction',
     depends=[],
-    sources=['libnano/core/seqsearch/restriction.pyx'],
+    sources=['libnano/search/restriction.pyx'],
     include_dirs=common_include,
     extra_compile_args=extra_compile_args
 )
@@ -219,9 +219,9 @@ addExtension(
 )
 
 addExtension(
-    'libnano.core.simplethermo',
+    'libnano.simplethermo',
     depends=[],
-    sources=['libnano/core/simplethermo.pyx'],
+    sources=['libnano/simplethermo.pyx'],
     include_dirs=common_include,
     extra_compile_args=extra_compile_args,
 )
@@ -243,10 +243,10 @@ libnano_files = list(set(libnano_files))
 # pprint.pprint(libnano_files)
 # sys.exit(1)
 
-packages = ['libnano', 'libnano.core', 'libnano.fileio',
-            'libnano.helpers', 'libnano.cymem', 'libnano.core.seqsearch',
+packages = ['libnano', 'libnano.fileio',
+            'libnano.helpers', 'libnano.cymem', 'libnano.search',
             'libnano.datastructures', 'libnano.datastructures.seqrecord',
-            'libnano.datasets', 'libnano.core.seqmetric']
+            'libnano.datasets', 'libnano.metric']
 
 # Commented out by NC 2018.01.05 since we are rolling towards PyPi
 script_args = sys.argv[1:]
@@ -270,7 +270,7 @@ if '--rmbuilt' in script_args:
     script_args.remove('--rmbuilt')
 
 # ~~~~~~~~~~~~~~~~~~~~~~~ cythonize cython extensions ~~~~~~~~~~~~~~~~~~~~~~~ #
-cython_ext_list = cythonize(cython_extensions)
+cython_ext_list = cythonize(cython_extensions, include_path=common_include)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ rock and roll ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 install_requires = ['six',

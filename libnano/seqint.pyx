@@ -1,4 +1,4 @@
-from libnano.helpers cimport c_util
+cimport c_util
 from cpython.mem cimport PyMem_Malloc, PyMem_Realloc, PyMem_Free
 
 cdef extern from "si_seqint.h":

@@ -1,5 +1,5 @@
 
-from libnano.helpers cimport c_util
+cimport c_util
 from cpython.ref cimport Py_INCREF
 from cpython.mem cimport PyMem_Malloc, PyMem_Realloc, PyMem_Free
 from libnano.cymem.cymem cimport Pool

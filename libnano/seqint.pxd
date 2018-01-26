@@ -10,6 +10,6 @@ that are wrapped in seqintx.pyx such that those functions need not
 be recompiled nor the associated headers included
 """
 from libnano.helpers.inttypes cimport uint64_t
-cdef inline int2Seq_c(uint64_t, char*, int)
+cdef int2Seq_c(uint64_t, char*, int)
 
 

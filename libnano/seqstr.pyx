@@ -9,7 +9,7 @@ complement, reverse, reverse complement, etc)
 Includes hamming distance method and derivative heuristic methods.
 """
 
-from libnano.helpers cimport c_util
+cimport c_util
 import numpy as np
 import random
 cimport numpy as cnp

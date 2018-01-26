@@ -25,6 +25,8 @@ install:
 
   - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION cython numpy setuptools six jinja2
   - source activate test-environment
+  - conda update numpy
+  - pip install numpy --upgrade
   - python setup.py build_ext --inplace
 
 script:

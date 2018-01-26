@@ -261,7 +261,7 @@ def removeBuiltFiles():
     for root, dirs, files in os.walk(MODULE_PATH):
         if not re.search(ads, root):
             for f in files:
-                if f.endswith('.c') or f.endswith('.so'):
+                if f.endswith('.c') or f.endswith('.so') or f.endswith('.pyd'):
                     print('Removing %s' % pjoin(MODULE_PATH, root, f))
                     os.remove(pjoin(MODULE_PATH, root, f))
 

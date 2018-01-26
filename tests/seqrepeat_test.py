@@ -9,7 +9,7 @@ from os.path import join, abspath, dirname
 sys.path.insert(0, abspath(join(dirname(__file__), '..')))
 import _setup
 
-from libnano.core.seqmetric import seqrepeat
+from libnano.metric import seqrepeat
 from libnano.fileio import fasta
 
 LOCAL_DIR = abspath(dirname(__file__))

@@ -11,7 +11,7 @@ from os.path import join, abspath, dirname
 sys.path.insert(0, abspath(join(dirname(__file__), '..')))
 import _setup
 
-from libnano.core.seqsearch import seedfinder
+from libnano.search import seedfinder
 
 LOCAL_DIR = abspath(dirname(__file__))
 

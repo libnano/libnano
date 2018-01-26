@@ -8,7 +8,7 @@ from os.path import join, abspath, dirname
 sys.path.insert(0, abspath(join(dirname(__file__), '..')))
 
 import _setup
-from libnano.core.seqsearch import restriction
+from libnano.seqsearch import restriction
 from libnano.datasets import dataset_container, qcEnzymeDataset
 
 

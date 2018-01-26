@@ -9,7 +9,7 @@ LOCAL_DIR = abspath(dirname(__file__))
 sys.path.insert(0, abspath(join(dirname(__file__), '..')))
 
 import _setup
-from libnano.core.prostr import dnaToAA, rnaToAA, ReverseTranslator, \
+from libnano.prostr import dnaToAA, rnaToAA, ReverseTranslator, \
                                 WeightedReverseTranslator
 from libnano.datasets import dataset_container
 

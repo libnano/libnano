@@ -13,7 +13,7 @@ import _setup
 
 from libnano.search import seedfinder
 
-LOCAL_DIR = abspath(dirname(__file__))
+
 
 """ TODO Fix this file for the submer module
 This also tests

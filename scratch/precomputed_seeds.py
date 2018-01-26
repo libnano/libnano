@@ -1,4 +1,4 @@
-from libnano.seqsearch import seedfinder
+from libnano.search import seedfinder
 
 START_LIM = 9
 END_LIM = 11

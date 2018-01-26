@@ -77,7 +77,7 @@ MODULE_PATH = pjoin(PACKAGE_PATH, 'libnano')
 # DATASETS_PATH =     pjoin(MODULE_PATH, 'datasets')
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ include dirs ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
-common_include = ['libnano/src', 'libnano/dev/src']
+common_include = ['libnano/src']
 
 # Non-python files to include in the installation
 libnano_files = []
@@ -226,16 +226,6 @@ addExtension(
     extra_compile_args=extra_compile_args,
 )
 
-if IS_PY_THREE:
-    addExtension(
-        'libnano.helpers.bytesfmt',
-        depends=[],
-        sources=['libnano/helpers/bytesfmt.pyx',
-                 'libnano/src/_bytesfmt.c'],
-        include_dirs=common_include,
-        extra_compile_args=extra_compile_args,
-    )
-
 # add header files or extra c files
 for path in common_include:
     libnano_files += [rpath(pjoin(path, f)) for f in
@@ -258,16 +248,8 @@ packages = ['libnano', 'libnano.core', 'libnano.fileio',
             'libnano.datastructures', 'libnano.datastructures.seqrecord',
             'libnano.datasets', 'libnano.core.seqmetric']
 
-# ~~~~~~~~~~~~~~~ inject and build dev extensions if specified ~~~~~~~~~~~~~~ #
-
 # Commented out by NC 2018.01.05 since we are rolling towards PyPi
 script_args = sys.argv[1:]
-# if '--dev' in script_args:
-#     normal_extensions += dev_setup.normal_extensions
-#     cython_extensions += dev_setup.cython_extensions
-#     libnano_files += dev_setup.libnano_files
-#     script_args.remove('--dev')
-#     # packages.append('libnano.dev')
 
 # ~~~~~~~~~~~~~~~~~~~ remove old built files if specified ~~~~~~~~~~~~~~~~~~~ #
 def removeBuiltFiles():

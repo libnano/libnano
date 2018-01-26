@@ -29,5 +29,5 @@ install:
   - python setup.py build_ext --inplace
 
 script:
-  ls libnano
-  nosetests -v tests/seqstr_test.py
+  - ls libnano
+  - nosetests -v tests/seqstr_test.py

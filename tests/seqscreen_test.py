@@ -6,9 +6,9 @@ from os.path import join, abspath, dirname
 
 # For package imports
 sys.path.insert(0, abspath(join(dirname(__file__), '..')))
+import _setup
 
 from libnano.core.seqmetric import seqscreen
-import _setup
 
 class TestSeqFilter(unittest.TestCase):
 

@@ -77,7 +77,7 @@ MODULE_PATH = pjoin(PACKAGE_PATH, 'libnano')
 # DATASETS_PATH =     pjoin(MODULE_PATH, 'datasets')
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ include dirs ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
-common_include = ['libnano/src', 'libnano/core/src', 'libnano/dev/src']
+common_include = ['libnano/src', 'libnano/dev/src']
 
 # Non-python files to include in the installation
 libnano_files = []
@@ -106,8 +106,8 @@ def addExtension(*ext_args, **ext_kwargs):
 addExtension(
     'libnano.core.seqmetric.seqrepeat',
     depends=[],
-    sources=['libnano/core/src/si_seqint.c',
-             'libnano/core/src/sr_seqrepeat.c',
+    sources=['libnano/src/si_seqint.c',
+             'libnano/src/sr_seqrepeat.c',
              'libnano/core/seqmetric/seqrepeat.pyx'],
     include_dirs=common_include + [numpy.get_include()],
     extra_compile_args=extra_compile_args
@@ -128,8 +128,8 @@ addExtension(
 addExtension(
     'libnano.core.seqsearch.seedmatch',
     sources=['libnano/core/seqsearch/seedmatch.pyx',
-             'libnano/core/src/shl_seedhashlist.c',
-             'libnano/core/src/ss_seqstr.c'],
+             'libnano/src/shl_seedhashlist.c',
+             'libnano/src/ss_seqstr.c'],
     include_dirs=common_include,
     extra_compile_args=extra_compile_args
 )
@@ -144,7 +144,8 @@ addExtension(
 addExtension(
     'libnano.core.seqint',
     depends=[],
-    sources=['libnano/core/seqint.pyx', 'libnano/core/src/si_seqint.c'],
+    sources=[   'libnano/core/seqint.pyx',
+                'libnano/src/si_seqint.c'],
     include_dirs=common_include,
     extra_compile_args=extra_compile_args
 )
@@ -155,7 +156,7 @@ addExtension(
     'libnano.core.seqstr',
     depends=[],
     sources=['libnano/core/seqstr.pyx',
-             'libnano/core/src/ss_seqstr.c'],
+             'libnano/src/ss_seqstr.c'],
     include_dirs=common_include + [numpy.get_include()],
     extra_compile_args=extra_compile_args
 )
@@ -165,7 +166,7 @@ addExtension(
     'libnano.core.seqgraph',
     depends=[],
     sources=['libnano/core/seqgraph.pyx',
-             'libnano/core/src/ss_seqstr.c'],
+             'libnano/src/ss_seqstr.c'],
     include_dirs=common_include + [numpy.get_include()],
     extra_compile_args=extra_compile_args
 )
@@ -173,8 +174,8 @@ addExtension(
 addExtension(
     'libnano.core.seqmetric.seqscreen',
     depends=[],
-    sources=['libnano/core/src/si_seqint.c',
-             'libnano/core/src/sf_seqscreen.c',
+    sources=['libnano/src/si_seqint.c',
+             'libnano/src/sf_seqscreen.c',
              'libnano/core/seqmetric/seqscreen.pyx'],
     include_dirs=common_include,
     extra_compile_args=extra_compile_args
@@ -183,7 +184,7 @@ addExtension(
 addExtension(
     'libnano.core.seqmetric.seqmetric',
     depends=[],
-    sources=['libnano/core/src/sm_seqmetric.c',
+    sources=['libnano/src/sm_seqmetric.c',
              'libnano/core/seqmetric/seqmetric.pyx'],
     include_dirs=common_include,
     extra_compile_args=extra_compile_args

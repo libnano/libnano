@@ -6,11 +6,11 @@ import json
 LOCAL_DIR = abspath(dirname(__file__))
 # For package imports
 sys.path.insert(0, abspath(join(dirname(__file__), '..')))
+import _setup
 
 from libnano.datastructures.seqrecord import SeqRecord, fromGenbankLike
 from libnano.datastructures.seqrecord import Feature, locationStr2Feature
 from libnano.datastructures.seqrecord import Location
-import _setup
 
 class TestSeqRecord(unittest.TestCase):
 

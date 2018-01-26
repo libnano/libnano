@@ -8,11 +8,11 @@ import time
 from os.path import join, abspath, dirname
 
 # For package imports
-# sys.path.insert(0, abspath(join(dirname(__file__), '..')))
+sys.path.insert(0, abspath(join(dirname(__file__), '..')))
+import _setup
 
 # from libnano.core.seqsearch import submerpool, seedfinder
 from libnano.fileio import fasta
-import _setup
 
 LOCAL_DIR = abspath(dirname(__file__))
 

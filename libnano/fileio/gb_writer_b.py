@@ -3,16 +3,13 @@ import sys
 if sys.version_info[0] > 2:
     try:
         import libnano.helpers.textwrap as textwrap
-        from libnano.helpers.bytesfmt import bformat
     except:
         # For package imports
         from os.path import join, abspath, dirname
         sys.path.append(abspath(join(dirname(__file__), '..', '..')))
         import libnano.helpers.textwrap as textwrap
-        from libnano.helpers.bytesfmt import bformat
 else:
     import textwrap
-    bformat = lambda x, y: x % y
 
 def write(fd, d, order_qualifiers=False):
     d_info = d[b'info']
@@ -83,7 +80,7 @@ def writeLocus(fd, d):
     if mod_date is None:
         mod_date = b''
 
-    out_str =  bformat(b"%s%-16s %11d bp    %-6s  %8s %s %s\n" ,
+    out_str =  (b"%s%-16s %11d bp    %-6s  %8s %s %s\n" %
         (locus_str, name, d[b'length'], molecule_type, form, gb_division, mod_date))
     fd.write(out_str)
 # end def
@@ -99,25 +96,25 @@ def writeDefinition(fd, d):
 
 def writeAccession(fd, d):
     accession_str = b"ACCESSION   %s\n"
-    fd.write(bformat(accession_str, (d[b'accession'])))
+    fd.write(accession_str % d[b'accession'])
 # end def
 
 def writeVersion(fd, d):
     version = d[b'version']
     if version is not None:
         gi = d[b'GI']
-        fd.write(bformat(b"VERSION     %s  GI:%s\n", (version, gi) ))
+        fd.write(b"VERSION     %s  GI:%s\n" % (version, gi) )
 # end def
 
 def writeDBLINK(fd, d):
     if b'dblink' in d:
         if d[b'dblink'] is not None:
-            fd.write(bformat(b"DBLINK      %s\n", (d[b'dblink'])))
+            fd.write(b"DBLINK      %s\n" % (d[b'dblink']))
 # end def
 
 def writeKeywords(fd, d):
     keywords_str = b"KEYWORDS    %s\n"
-    fd.write(bformat(keywords_str, (d[b'keywords'])))
+    fd.write(keywords_str % (d[b'keywords']))
 # end def
 
 def writeSource(fd, d):
@@ -145,12 +142,11 @@ def writeReference(fd, ref, i):
     journal_str = b"  JOURNAL   "
     pubmed_str = b"  PUBMED    "
     if ref[b'start_idx'] is not None:
-        idx_str = bformat(b"  (bases %d to %d)",
-                            (ref[b'start_idx'], ref[b'end_idx']))
+        idx_str = b"  (bases %d to %d)" % (ref[b'start_idx'], ref[b'end_idx'])
     else:
         idx_str = b''
     out_list = [reference_str,
-            bformat(b"%d%s\n", (i, idx_str)),
+            b"%d%s\n" % (i, idx_str),
             authors_str,
             multiline_spaces(ref[b'authors'], indent_str), b'\n',
             title_str,
@@ -203,18 +199,18 @@ def writeFeatures(fd, d, order_qualifiers):
                     value_list = [value_list]
                 for value in sorted(value_list): # assumes value_list is all the same type
                     if key in (b'codon_start', b'transl_table'):    # codon start is a weird edge case
-                        out_list += [bformat(b"                     /%s=%d\n", (key, value))]
+                        out_list += [b"                     /%s=%d\n" % (key, value)]
                     elif key == b'transl_except':
-                        out_list += [bformat(b"                     /%s=%s\n", (key, value))]
+                        out_list += [b"                     /%s=%s\n" % (key, value)]
                     elif key == b'translation':
-                        qualifier_str = bformat(b"/%s=\"%s\"", (key, value))
+                        qualifier_str = b"/%s=\"%s\"" % (key, value)
                         qual_list = multiline(qualifier_str, indent_str, lim=58) # or 58
                         out_list += [b"                     " + qual_list, b'\n']
                     else:
                         if value is None:
-                            qualifier_str = bformat(b"/%s\n", (key))
+                            qualifier_str = b"/%s\n" % (key)
                         else:
-                            qualifier_str = bformat(b"/%s=\"%s\"\n", (key, value))
+                            qualifier_str = b"/%s=\"%s\"\n" % (key, value)
                         qual_list = multiline_spaces(qualifier_str, indent_str, lim=58)  #or 58
                         out_list += [b"                     " + qual_list, b'\n']
         else:
@@ -223,18 +219,18 @@ def writeFeatures(fd, d, order_qualifiers):
                     value_list = [value_list]
                 for value in value_list:
                     if key in (b'codon_start', b'transl_table'):    # codon start is a weird edge case
-                        out_list += [bformat(b"                     /%s=%d\n", (key, value))]
+                        out_list += [b"                     /%s=%d\n" % (key, value)]
                     elif key == b'transl_except':
-                        out_list += [bformat(b"                     /%s=%s\n", (key, value))]
+                        out_list += [b"                     /%s=%s\n" % (key, value)]
                     elif key == b'translation':
-                        qualifier_str = bformat(b"/%s=\"%s\"", (key, value))
+                        qualifier_str = b"/%s=\"%s\"" % (key, value)
                         qual_list = multiline(qualifier_str, indent_str, lim=58) # or 58
                         out_list += [b"                     " + qual_list, b'\n']
                     else:
                         if value is None:
-                            qualifier_str = bformat(b"/%s\n", (key))
+                            qualifier_str = b"/%s\n" % (key)
                         else:
-                            qualifier_str = bformat(b"/%s=\"%s\"\n", (key, value))
+                            qualifier_str = b"/%s=\"%s\"\n" % (key, value)
                         qual_list = multiline_spaces(qualifier_str, indent_str, lim=58)  #or 58
                         out_list += [b"                     " + qual_list, b'\n']
         fd.write(b''.join(out_list))
@@ -249,7 +245,7 @@ def writeOrigin(fd, d):
     count = len(origin) - 60
     while i < count:
         str_tup = (i+1, ) + tuple([origin[j:j+10] for j in range(i, i+60, 10) ])
-        fd.write(bformat(format_string, str_tup))
+        fd.write(format_string % (str_tup))
         i += 60
     last_str = origin[i:]
     last_str = last_str + (60-(len(last_str)))*b" "
@@ -257,7 +253,7 @@ def writeOrigin(fd, d):
     last_list = [x.rstrip() for x in last_list if x[0] != b" "[0]]
     str_tup = (i+1, ) + tuple(last_list)
     format_string = b'%9d' + b" %s"*len(last_list) + b'\n'
-    fd.write(bformat(format_string, str_tup))
+    fd.write(format_string % (str_tup))
     fd.write(b"//\n")
 # end def
 

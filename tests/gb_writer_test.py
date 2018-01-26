@@ -10,8 +10,8 @@ LOCAL_DIR = abspath(dirname(__file__))
 # For package imports
 sys.path.insert(0, abspath(join(dirname(__file__), '..')))
 
-from libnano.fileio import gb_reader, gb_writer
 import _setup
+from libnano.fileio import gb_reader, gb_writer
 
 IS_PY_3 = int(sys.version_info[0] > 2)
 

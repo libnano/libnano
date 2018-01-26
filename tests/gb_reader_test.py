@@ -7,8 +7,8 @@ LOCAL_DIR = abspath(dirname(__file__))
 # For package imports
 sys.path.insert(0, abspath(join(dirname(__file__), '..')))
 
-from libnano.fileio import gb_reader
 import _setup
+from libnano.fileio import gb_reader
 
 
 class TestGBReader(unittest.TestCase):

@@ -2,16 +2,16 @@ import unittest
 import sys
 from os.path import join, abspath, dirname
 import json
+import itertools
 
 LOCAL_DIR = abspath(dirname(__file__))
 # For package imports
 sys.path.insert(0, abspath(join(dirname(__file__), '..')))
 
+import _setup
 from libnano.core.prostr import dnaToAA, rnaToAA, ReverseTranslator, \
                                 WeightedReverseTranslator
 from libnano.datasets import dataset_container
-import itertools
-import _setup
 
 
 class TestProStr(unittest.TestCase):

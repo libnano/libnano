@@ -11,8 +11,7 @@ from tempfile import NamedTemporaryFile
 import filecmp
 
 LOCAL_DIR = abspath(dirname(__file__))
-# For package imports
-sys.path.insert(0, abspath(join(dirname(__file__), '..')))
+
 
 import _setup
 from libnano.fileio import gb_reader, gb_writer

@@ -3,29 +3,14 @@ import sys
 import random
 import unittest
 import time
-from os.path import (
-    join,
-    abspath,
-    dirname
-)
-# For package imports
-sys.path.insert(0, abspath(join(dirname(__file__), '..')))
+
 import _setup
 
 from libnano.metric import seqrepeat
 from libnano.fileio import fasta
 
-LOCAL_DIR = abspath(dirname(__file__))
 
 class TestSeqRepeat(unittest.TestCase):
-
-    # def setUp(self):
-    #     recs = fasta.parseFasta(join(LOCAL_DIR, 'test_data/MG1655.fa'))
-    #     self.mg1655 = recs[0][1]
-
-    # def shortDescription(self):
-    #     "stop docstring test"
-    #     return None
 
     def test_gapCheck(self):
         """ test the gapCheck

@@ -1,15 +1,14 @@
 import unittest
 import sys
+import json
+import io
+
 from os.path import (
     join,
     abspath,
     dirname
 )
-import json
-import io
 LOCAL_DIR = abspath(dirname(__file__))
-# For package imports
-sys.path.insert(0, abspath(join(dirname(__file__), '..')))
 
 import _setup
 from libnano.fileio import gb_reader

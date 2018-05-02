@@ -1,15 +1,14 @@
 import unittest
 import sys
+import json
+
 from os.path import (
     join,
     abspath,
     dirname
 )
-import json
-
 LOCAL_DIR = abspath(dirname(__file__))
-# For package imports
-sys.path.insert(0, abspath(join(dirname(__file__), '..')))
+
 import _setup
 
 from libnano.datastructures.seqrecord import (

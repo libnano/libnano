@@ -1,19 +1,17 @@
 import unittest
 import sys
 import os
-from os.path import (
-    join,
-    abspath,
-    dirname
-)
 import json
 from tempfile import NamedTemporaryFile
 import filecmp
 import _setup
 
+from os.path import (
+    join,
+    abspath,
+    dirname
+)
 LOCAL_DIR = abspath(dirname(__file__))
-# For package imports
-sys.path.insert(0, abspath(join(dirname(__file__), '..')))
 
 from libnano.fileio import gb_reader_b
 from libnano.fileio import gb_writer_b

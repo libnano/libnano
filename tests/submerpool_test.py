@@ -5,13 +5,19 @@ import random
 import unittest
 import re
 import time
-from os.path import join, abspath, dirname
-
+from os.path import (
+    join,
+    abspath,
+    dirname
+)
 # For package imports
 sys.path.insert(0, abspath(join(dirname(__file__), '..')))
 import _setup
 
-from libnano.search import submerpool, seedfinder
+from libnano.search import (
+    submerpool,
+    seedfinder
+)
 from libnano.fileio import fasta
 
 LOCAL_DIR = abspath(dirname(__file__))

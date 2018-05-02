@@ -1,6 +1,10 @@
 import unittest
 import sys
-from os.path import join, abspath, dirname
+from os.path import (
+    join,
+    abspath,
+    dirname
+)
 import json
 
 LOCAL_DIR = abspath(dirname(__file__))
@@ -8,8 +12,14 @@ LOCAL_DIR = abspath(dirname(__file__))
 sys.path.insert(0, abspath(join(dirname(__file__), '..')))
 import _setup
 
-from libnano.datastructures.seqrecord import SeqRecord, fromGenbankLike
-from libnano.datastructures.seqrecord import Feature, locationStr2Feature
+from libnano.datastructures.seqrecord import (
+    SeqRecord,
+    fromGenbankLike
+)
+from libnano.datastructures.seqrecord import (
+    Feature,
+    locationStr2Feature
+)
 from libnano.datastructures.seqrecord import Location
 
 class TestSeqRecord(unittest.TestCase):

@@ -18,7 +18,10 @@ from cython.operator cimport postincrement as inc
 
 cnp.import_array()
 
-from cpython.mem cimport PyMem_Malloc, PyMem_Free
+from cpython.mem cimport (
+    PyMem_Malloc,
+    PyMem_Free
+)
 
 __doc__ = "Basic operations on DNA, RNA, and amino acid sequences"
 

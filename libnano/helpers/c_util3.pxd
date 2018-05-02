@@ -1,8 +1,17 @@
 from cpython.ref cimport PyObject
-from cpython.mem cimport PyMem_Malloc, PyMem_Realloc, PyMem_Free
-from libc.string cimport memset
-from libc.string cimport memcpy
-from libc.stdlib cimport malloc, free
+from cpython.mem cimport (
+    PyMem_Malloc,
+    PyMem_Realloc,
+    PyMem_Free
+)
+from libc.string cimport (
+    memset,
+    memcpy
+)
+from libc.stdlib cimport (
+    malloc,
+    free
+)
 from cpython.version cimport PY_MAJOR_VERSION
 
 cdef inline bytes _bytes(s):

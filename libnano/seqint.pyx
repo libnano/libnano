@@ -1,5 +1,9 @@
 cimport c_util
-from cpython.mem cimport PyMem_Malloc, PyMem_Realloc, PyMem_Free
+from cpython.mem cimport (
+    PyMem_Malloc,
+    PyMem_Realloc,
+    PyMem_Free
+)
 
 cdef extern from "si_seqint.h":
     uint64_t si_seq2Int(char*, int)

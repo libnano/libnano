@@ -1,6 +1,9 @@
 cimport numpy as cnp
 from copy import copy, deepcopy
-from libnano.seqstr import reverseComplement, complement
+from libnano.seqstr import (
+    reverseComplement,
+    complement
+)
 
 cdef class DoubleSequence:
     """ forward strand index is always

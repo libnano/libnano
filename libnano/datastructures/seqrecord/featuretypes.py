@@ -1,4 +1,7 @@
-from bisect import bisect_left, insort_left
+from bisect import (
+    bisect_left,
+    insort_left
+)
 
 class FeatureTypes(object):
     """ Data structure to enumerate and track feature types

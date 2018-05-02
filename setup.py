@@ -36,10 +36,15 @@ CLASSIFIERS = [
 ]
 
 try:
-    from setuptools import setup, Extension
+    from setuptools import (
+        setup,
+        Extension
+    )
 except ImportError:
-    from distutils.core import setup, Extension
-
+    from distutils.core import (
+        setup,
+        Extension
+    )
 from Cython.Build import cythonize
 import numpy.distutils.misc_util
 import os

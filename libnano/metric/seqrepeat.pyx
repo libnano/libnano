@@ -1,14 +1,16 @@
 cimport c_util
-import numpy as np
 
+import numpy as np
 cimport numpy as cnp
 
-from cpython.ref cimport PyObject
-from cpython.mem cimport PyMem_Malloc, PyMem_Realloc, PyMem_Free
-from cpython.ref cimport Py_XDECREF
+from cpython.ref cimport (
+    PyObject
+)
+from cpython.mem cimport (
+    PyMem_Malloc,
+    PyMem_Free
+)
 from cpython.int cimport PyInt_FromLong
-
-from libc.stdlib cimport free
 from libc.string cimport memset
 
 __doc__ = "Find repeats in a DNA sequence"

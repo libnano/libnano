@@ -1,6 +1,10 @@
 import unittest
 import sys
-from os.path import join, abspath, dirname
+from os.path import (
+    join,
+    abspath,
+    dirname
+)
 import json
 import io
 LOCAL_DIR = abspath(dirname(__file__))

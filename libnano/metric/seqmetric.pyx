@@ -1,5 +1,8 @@
 
-from libc.stdlib cimport calloc, free
+from libc.stdlib cimport (
+        calloc,
+        free
+)
 from cpython cimport array
 import array
 

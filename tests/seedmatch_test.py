@@ -4,7 +4,12 @@ from __future__ import print_function
 import sys
 import random
 import unittest
-from os.path import join, abspath, dirname
+from os.path import (
+    join,
+    abspath,
+    dirname
+)
+
 sys.path.insert(0, abspath(join(dirname(__file__), '..')))
 import _setup
 

@@ -5,7 +5,11 @@ import random
 import unittest
 import re
 import time
-from os.path import join, abspath, dirname
+from os.path import (
+    join,
+    abspath,
+    dirname
+)
 
 # For package imports
 sys.path.insert(0, abspath(join(dirname(__file__), '..')))

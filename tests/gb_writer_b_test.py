@@ -1,7 +1,11 @@
 import unittest
 import sys
 import os
-from os.path import join, abspath, dirname
+from os.path import (
+    join,
+    abspath,
+    dirname
+)
 import json
 from tempfile import NamedTemporaryFile
 import filecmp

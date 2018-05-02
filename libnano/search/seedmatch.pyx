@@ -1,7 +1,5 @@
 
 cimport c_util
-from cpython.ref cimport Py_INCREF
-from cpython.mem cimport PyMem_Malloc, PyMem_Realloc, PyMem_Free
 from libnano.cymem.cymem cimport Pool
 from cython.operator cimport postincrement as inc
 from libc.string cimport memcpy

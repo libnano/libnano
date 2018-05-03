@@ -18,7 +18,7 @@ from libnano.fileio import gb_writer_b
 
 IS_PY_3 = int(sys.version_info[0] > 2)
 
-@unittest.skip("Binary writer needs line ending fix for Windows \\r\\n")
+# @unittest.skip("Binary writer needs line ending fix for Windows \\r\\n")
 class TestGBWriter(unittest.TestCase):
 
     def setUp(self):

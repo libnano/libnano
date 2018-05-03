@@ -1,5 +1,6 @@
 import re
 import io
+import sys
 from collections import OrderedDict
 
 try:
@@ -14,6 +15,9 @@ All keys are native strings, as are values, except the origin which is always
 a python2/3 byte string (not unicode)
 """
 
+NEWLINE_STR = '\r\n' if sys.platform == 'win32' else '\n'
+NEWLINE_BYT = b'\r\n' if sys.platform == 'win32' else b'\n'
+
 def parse(filepath, is_ordered=False):
     """
     is_ordered == True will retain the order of the qualifiers
@@ -25,7 +29,7 @@ def parse(filepath, is_ordered=False):
     with io.open(filepath, 'rb') as fd:
         raw = fd.read()
     start, _, origin = raw.partition(b"ORIGIN")
-    start, _, features = start.partition(b"FEATURES             Location/Qualifiers\n")
+    start, _, features = start.partition(b"FEATURES             Location/Qualifiers%s" % (NEWLINE_BYT))
 
     parseLocus(start, d_info)
     parseDefinition(start, d_info)
@@ -47,11 +51,11 @@ def parse(filepath, is_ordered=False):
 def parseComment(d, comment):
     if comment != b'':
         # get rid of ApE empty comment
-        if comment.startswith(b"\nCOMMENT     "):
+        if comment.startswith(b"%sCOMMENT     " % (NEWLINE_BYT)):
             comment = comment[13:]
         idx_genome_asm_data = -1
         genome_asm_data_newline_count = 0
-        lines = comment.split(b'\n')
+        lines = comment.split(NEWLINE_BYT)
         lines = [line.strip() for line in lines]
         # print(lines)
         # handle ##Genome-Assembly-Data-START## edge case
@@ -76,50 +80,52 @@ re_locus = [
                 " +(?P<name>[\w|.]+)",                      # name
                 " +(?P<length>[0-9]+) bp",                  # sequence length
                 "(?: +(?P<stranded>[a-z]{2})-)?",           # opt: ss, ds, ms
-                " *(?P<molecule_type>[a-z|A-Z|-|]{2,6})",     # molecule type
-                " +(?P<form>[\w]{6,8})?",               # linear or circular
-                " +(?P<gb_division>[a-z|A-Z]{3})?",          # Genbank division
+                " *(?P<molecule_type>[a-z|A-Z|-|]{2,6})",   # molecule type
+                " +(?P<form>[\w]{6,8})?",                   # linear or circular
+                " +(?P<gb_division>[a-z|A-Z]{3})?",         # Genbank division
                 " +(?P<mod_date>[0-9]+-[A-Z]+-[0-9]+)",     # modification date
-                ".*\n"                                      # match line end
+                ".*%s" % (NEWLINE_STR)                      # match line end
             ]
 re_locus = six.b("".join(re_locus))
 
 re_definition = [   "^DEFINITION",                         # field
-                    " +(?P<definition>(?:.*\n)(?: .*\n)*)"  # look ahead assertion for multiline
+                    " +(?P<definition>(?:.*%s)(?: .*%s)*)" % (NEWLINE_STR, NEWLINE_STR) # look ahead assertion for multiline
                 ]
 re_definition = six.b("".join(re_definition))
 
-re_accession = [   "^ACCESSION",                           # field
+re_accession = [   "^ACCESSION",                 # field
                     " +(?P<accession>[\w|.]*)"   # look ahead assertion for multiline
-                    ".*\n"                                  # match line end
+                    ".*",                        # match line end
+                    NEWLINE_STR
                 ]
 re_accession = six.b("".join(re_accession))
 
 re_version = [   "^VERSION",                     # field
                     " +(?P<version>[\w|.]+)",    # version
                     " +GI:(?P<GI>[\w|.]+)"       # gi field
-                    ".*\n"                       # match line end
+                    ".*",                        # match line end
+                    NEWLINE_STR
                 ]
 re_version= six.b("".join(re_version))
 
-re_dblink = b"^DBLINK +(?P<dblink>[\w|:| |.]+)\n"
-# re_dblink = "^DBLINK +(?P<dblink>[\w|\:| |.]+).*\n"
+re_dblink = b"^DBLINK +(?P<dblink>[\w|:| |.]+)" + NEWLINE_BYT
 
 re_keywords = ["^KEYWORDS",
                 " +(?P<keywords>[\w|.]*)"
-                ".*\n"
+                ".*",
+                NEWLINE_STR
             ]
 re_keywords= six.b("".join(re_keywords))
 
 re_source = ["^SOURCE",
             " +(?P<source>.*)",
-            "\n"
+            NEWLINE_STR
 ]
 re_source = six.b("".join(re_source))
 
 re_organism =  [   "^  ORGANISM",                          # field
-                    "(?: +(?P<organism0>(?:.*\n))?",
-                    "(?: +(?P<organism1>(?:.*\n)(?: .*\n)*))?)"  # multiline
+                    "(?: +(?P<organism0>(?:.*%s))?" % NEWLINE_STR,
+                    "(?: +(?P<organism1>(?:.*%s)(?: .*%s)*))?)" % (NEWLINE_STR, NEWLINE_STR) # multiline
                 ]
 re_organism = six.b("".join(re_organism))
 
@@ -142,7 +148,7 @@ def parseDefinition(raw, d_out):
     else:
         d = m.groupdict()
         if d['definition'] is not None:
-            temp_l = d['definition'].split(b'\n')
+            temp_l = d['definition'].split(NEWLINE_BYT)
             temp_l = [x.strip() for x in temp_l]
             d_out[b'definition'] = b" ".join(temp_l)[:-1]
         else:
@@ -208,13 +214,13 @@ def parseOrganism(raw, d_out):
     else:
         d = m.groupdict()
 
-        temp_l = d['organism0'].split(b'\n')
+        temp_l = d['organism0'].split(NEWLINE_BYT)
         temp_l = [x.strip() for x in temp_l]
         org0 = b" ".join(temp_l)[:-1]
 
         org1 = None
         if d['organism1'] is not None:
-            temp_l = d['organism1'].split(b'\n')
+            temp_l = d['organism1'].split(NEWLINE_BYT)
             temp_l = [x.strip() for x in temp_l]
             org1 = b" ".join(temp_l)[:-1]
 
@@ -231,14 +237,16 @@ REFERENCE   1  (bases 1 to 5028)
 """
 re_reference = [    "^REFERENCE",
                     " +(?P<r_index>[0-9]+)(?: +\(bases (?P<start_idx>[0-9]+) to (?P<end_idx>[0-9]+)\)){0,1}",
-                    ".*\n",
+                    ".*",
+                    NEWLINE_STR,
                     "^  AUTHORS",
-                    " +(?P<authors>.+)\n",
+                    " +(?P<authors>.+)",
+                    NEWLINE_STR,
                     "^  TITLE",                             # field
-                    " +(?P<title>(?:.*\n)(?: .*\n)*)",      # multiline
+                    " +(?P<title>(?:.*%s)(?: .*%s)*)" % (NEWLINE_STR, NEWLINE_STR),      # multiline
                     "^  JOURNAL",
-                    " +(?P<journal_info>.+\n(?: {12}.+\n)*)",
-                    "(?:^  PUBMED +(?P<pubmed>[0-9]+)\n){0,1}"
+                    " +(?P<journal_info>.+%s(?: {12}.+%s)*)" % (NEWLINE_STR, NEWLINE_STR),
+                    "(?:^  PUBMED +(?P<pubmed>[0-9]+)%s){0,1}" % (NEWLINE_STR)
 ]
 re_reference = six.b("".join(re_reference))
 re_comp_ref = re.compile(re_reference, flags=re.M)
@@ -250,11 +258,11 @@ def parseReference(raw):
     for m in re.finditer(re_comp_ref, raw):
         d_temp = {}
         d = m.groupdict()
-        temp_l = d['title'].split(b'\n')
+        temp_l = d['title'].split(NEWLINE_BYT)
         temp_l = [x.strip() for x in temp_l]
         d_temp[b'title'] = b" ".join(temp_l)[:-1]
 
-        temp_l = d['journal_info'].split(b'\n')
+        temp_l = d['journal_info'].split(NEWLINE_BYT)
         temp_l = [x.strip() for x in temp_l]
         d_temp[b'journal_info'] = b" ".join(temp_l)[:-1]
 
@@ -289,8 +297,9 @@ def addMultivalue(d, key, val):
 see section 3.4 Location
 """
 re_feature = [  "^ {5}(?P<feature_key>[\w]+)",
-                " +(?P<location>.+)\n",
-                "(?P<qualifiers>(?:^ {21}.*\n)*)"
+                " +(?P<location>.+)",
+                NEWLINE_STR,
+                "(?P<qualifiers>(?:^ {21}.*%s)*)" % (NEWLINE_STR)
 ]
 re_feature = six.b("".join(re_feature))
 re_comp_feature = re.compile(re_feature, flags=re.M)
@@ -327,7 +336,7 @@ def parseFeatures(raw, is_ordered=False):
             key = q_list[0]
             yes_val = True
             try:
-                q_list = q_list[1].split(b'\n')
+                q_list = q_list[1].split(NEWLINE_BYT)
                 if q_list[-1] == b'':
                     q_list.pop() # remove ending '' item
             except:
@@ -357,7 +366,7 @@ def parseFeatures(raw, is_ordered=False):
 def parseOrigin(raw):
     out_list = []
 
-    all_lines = raw.split(b'\n')
+    all_lines = raw.split(NEWLINE_BYT)
     start = 1 if all_lines[0].strip() == b'' else 0
     for line in all_lines[start:-1]:
         temp = line.split()

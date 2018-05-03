@@ -11,6 +11,8 @@ if sys.version_info[0] > 2:
 else:
     import textwrap
 
+NEWLINE_BYT = b'\r\n' if sys.platform == 'win32' else b'\n'
+
 def write(fd, d, order_qualifiers=False):
     d_info = d[b'info']
     writeLocus(fd, d_info)
@@ -80,47 +82,50 @@ def writeLocus(fd, d):
     if mod_date is None:
         mod_date = b''
 
-    out_str =  (b"%s%-16s %11d bp    %-6s  %8s %s %s\n" %
-        (locus_str, name, d[b'length'], molecule_type, form, gb_division, mod_date))
+    out_str =  (b"%s%-16s %11d bp    %-6s  %8s %s %s%s" %
+        (   locus_str, name, d[b'length'],
+            molecule_type, form, gb_division,
+            mod_date, NEWLINE_BYT
+        ))
     fd.write(out_str)
 # end def
 
 def writeDefinition(fd, d):
     definition_str = b"DEFINITION  "
-    indent_str = b"\n            "
+    indent_str = b"%s            " % (NEWLINE_BYT)
     out_list = [definition_str,
                 multiline_spaces(d[b'definition'], indent_str),
-                b'\n']
+                NEWLINE_BYT]
     fd.write(b''.join(out_list))
 # end def
 
 def writeAccession(fd, d):
-    accession_str = b"ACCESSION   %s\n"
-    fd.write(accession_str % d[b'accession'])
+    accession_str = b"ACCESSION   %s%s"
+    fd.write(accession_str % (d[b'accession'], NEWLINE_BYT))
 # end def
 
 def writeVersion(fd, d):
     version = d[b'version']
     if version is not None:
         gi = d[b'GI']
-        fd.write(b"VERSION     %s  GI:%s\n" % (version, gi) )
+        fd.write(b"VERSION     %s  GI:%s%s" % (version, gi, NEWLINE_BYT) )
 # end def
 
 def writeDBLINK(fd, d):
     if b'dblink' in d:
         if d[b'dblink'] is not None:
-            fd.write(b"DBLINK      %s\n" % (d[b'dblink']))
+            fd.write(b"DBLINK      %s%s" % (d[b'dblink'], NEWLINE_BYT))
 # end def
 
 def writeKeywords(fd, d):
-    keywords_str = b"KEYWORDS    %s\n"
-    fd.write(keywords_str % (d[b'keywords']))
+    keywords_str = b"KEYWORDS    %s%s"
+    fd.write(keywords_str % (d[b'keywords'], NEWLINE_BYT))
 # end def
 
 def writeSource(fd, d):
     source_str = b"SOURCE      "
-    organism_str = b"\n  ORGANISM  "
-    indent_str = b"\n            "
+    organism_str = b"%s  ORGANISM  " % (NEWLINE_BYT)
+    indent_str = b"%s            " % (NEWLINE_BYT)
     org = d[b'organism']
     out_list = [source_str, d[b'source'],
                 organism_str,
@@ -128,7 +133,7 @@ def writeSource(fd, d):
     if org[1] is not None:
         out_list += [   indent_str,
                         multiline_spaces(org[1], indent_str)]
-    out_list += [b'\n']
+    out_list += [NEWLINE_BYT]
     fd.write(b''.join(out_list))
 # end def
 
@@ -138,7 +143,7 @@ def writeReference(fd, ref, i):
     reference_str = b"REFERENCE   "
     authors_str = b"  AUTHORS   "
     title_str = b"  TITLE     "
-    indent_str = b"\n            "
+    indent_str = b"%s            " % (NEWLINE_BYT)
     journal_str = b"  JOURNAL   "
     pubmed_str = b"  PUBMED    "
     if ref[b'start_idx'] is not None:
@@ -146,23 +151,23 @@ def writeReference(fd, ref, i):
     else:
         idx_str = b''
     out_list = [reference_str,
-            b"%d%s\n" % (i, idx_str),
+            b"%d%s%s" % (i, idx_str, NEWLINE_BYT),
             authors_str,
-            multiline_spaces(ref[b'authors'], indent_str), b'\n',
+            multiline_spaces(ref[b'authors'], indent_str), NEWLINE_BYT,
             title_str,
-            multiline_spaces(ref[b'title'], indent_str), b'\n',
+            multiline_spaces(ref[b'title'], indent_str), NEWLINE_BYT,
             journal_str,
-            multiline_spaces(ref[b'journal_info'], indent_str), b'\n',
+            multiline_spaces(ref[b'journal_info'], indent_str), NEWLINE_BYT,
             ]
     if ref[b'pubmed'] is not None:
-        out_list += [pubmed_str, ref[b'pubmed'], b'\n']
+        out_list += [pubmed_str, ref[b'pubmed'], NEWLINE_BYT]
 
     fd.write(b''.join(out_list))
 # end def
 
 def writeComment(fd, d):
     comment_str = b"COMMENT     "
-    indent_str = b"\n            "
+    indent_str = b"%s            " % NEWLINE_BYT
     indent_str_gb_asm = b"            "
     if b'comment' in d:
         comment = d[b'comment']
@@ -170,18 +175,18 @@ def writeComment(fd, d):
             out_list = [comment_str,
                 multiline_spaces(comment[0], indent_str),
                 indent_str, indent_str, indent_str,
-                indent_str.join(comment[1]), b'\n'
+                indent_str.join(comment[1]), NEWLINE_BYT
                 ]
         else:
-            out_list = [comment_str, multiline_spaces(comment, indent_str), b'\n']
+            out_list = [comment_str, multiline_spaces(comment, indent_str), NEWLINE_BYT]
         fd.write(b''.join(out_list))
 # end def
 
 
 def writeFeatures(fd, d, order_qualifiers):
-    feature_header = b"FEATURES             Location/Qualifiers\n"
+    feature_header = b"FEATURES             Location/Qualifiers%s" % (NEWLINE_BYT)
     feature_type_prefix_str = b"     "
-    indent_str = b"\n                     "
+    indent_str = b"%s                     " % (NEWLINE_BYT)
     feature_type_field_size = 16
     fd.write(feature_header)
     for feature in d[b'features']:
@@ -189,7 +194,7 @@ def writeFeatures(fd, d, order_qualifiers):
         location_str = feature[b'location']
         out_list = [feature_type_prefix_str,
                     ftype, (feature_type_field_size - len(ftype))*b" ",
-                    location_str, b'\n'
+                    location_str, NEWLINE_BYT
                     ]
         if order_qualifiers:
             quals = feature[b'qualifiers']
@@ -199,52 +204,54 @@ def writeFeatures(fd, d, order_qualifiers):
                     value_list = [value_list]
                 for value in sorted(value_list): # assumes value_list is all the same type
                     if key in (b'codon_start', b'transl_table'):    # codon start is a weird edge case
-                        out_list += [b"                     /%s=%d\n" % (key, value)]
+                        out_list += [b"                     /%s=%d%s" % (key, value, NEWLINE_BYT)]
                     elif key == b'transl_except':
-                        out_list += [b"                     /%s=%s\n" % (key, value)]
+                        out_list += [b"                     /%s=%s%s" % (key, value, NEWLINE_BYT)]
                     elif key == b'translation':
                         qualifier_str = b"/%s=\"%s\"" % (key, value)
                         qual_list = multiline(qualifier_str, indent_str, lim=58) # or 58
-                        out_list += [b"                     " + qual_list, b'\n']
+                        out_list += [b"                     " + qual_list, NEWLINE_BYT]
                     else:
                         if value is None:
-                            qualifier_str = b"/%s\n" % (key)
+                            qualifier_str = b"/%s%s" % (key, NEWLINE_BYT)
                         else:
-                            qualifier_str = b"/%s=\"%s\"\n" % (key, value)
+                            qualifier_str = b"/%s=\"%s\"%s" % (key, value, NEWLINE_BYT)
                         qual_list = multiline_spaces(qualifier_str, indent_str, lim=58)  #or 58
-                        out_list += [b"                     " + qual_list, b'\n']
+                        out_list += [b"                     " + qual_list, NEWLINE_BYT]
         else:
             for key, value_list in feature[b'qualifiers'].items():
                 if not isinstance(value_list, list):
                     value_list = [value_list]
                 for value in value_list:
                     if key in (b'codon_start', b'transl_table'):    # codon start is a weird edge case
-                        out_list += [b"                     /%s=%d\n" % (key, value)]
+                        out_list += [b"                     /%s=%d%s" % (key, value, NEWLINE_BYT)]
                     elif key == b'transl_except':
-                        out_list += [b"                     /%s=%s\n" % (key, value)]
+                        out_list += [b"                     /%s=%s%s" % (key, value, NEWLINE_BYT)]
                     elif key == b'translation':
                         qualifier_str = b"/%s=\"%s\"" % (key, value)
                         qual_list = multiline(qualifier_str, indent_str, lim=58) # or 58
-                        out_list += [b"                     " + qual_list, b'\n']
+                        out_list += [b"                     " + qual_list, NEWLINE_BYT]
                     else:
                         if value is None:
-                            qualifier_str = b"/%s\n" % (key)
+                            qualifier_str = b"/%s%s" % (key, NEWLINE_BYT)
                         else:
-                            qualifier_str = b"/%s=\"%s\"\n" % (key, value)
+                            qualifier_str = b"/%s=\"%s\"%s" % (key, value, NEWLINE_BYT)
                         qual_list = multiline_spaces(qualifier_str, indent_str, lim=58)  #or 58
-                        out_list += [b"                     " + qual_list, b'\n']
+                        out_list += [b"                     " + qual_list, NEWLINE_BYT]
         fd.write(b''.join(out_list))
 # end def
 
 def writeOrigin(fd, d):
     i = 0
-    format_string = b'%9d %s %s %s %s %s %s\n'
-    origin_header = b"ORIGIN      \n"
+    format_string = b'%9d %s %s %s %s %s %s%s'
+    origin_header = b"ORIGIN      %s" % (NEWLINE_BYT)
     fd.write(origin_header)
     origin = d[b'seq']
     count = len(origin) - 60
     while i < count:
-        str_tup = (i+1, ) + tuple([origin[j:j+10] for j in range(i, i+60, 10) ])
+        str_tup = ( (i+1, ) +
+                    tuple([origin[j:j+10] for j in range(i, i+60, 10) ]) +
+                    (NEWLINE_BYT, ) )
         fd.write(format_string % (str_tup))
         i += 60
     last_str = origin[i:]
@@ -252,9 +259,9 @@ def writeOrigin(fd, d):
     last_list = [last_str[j:j+10] for j in range(0, 60, 10) ]
     last_list = [x.rstrip() for x in last_list if x[0] != b" "[0]]
     str_tup = (i+1, ) + tuple(last_list)
-    format_string = b'%9d' + b" %s"*len(last_list) + b'\n'
+    format_string = b'%9d' + b" %s"*len(last_list) + NEWLINE_BYT
     fd.write(format_string % (str_tup))
-    fd.write(b"//\n")
+    fd.write(b"//%s" % (NEWLINE_BYT))
 # end def
 
 if __name__ == '__main__':

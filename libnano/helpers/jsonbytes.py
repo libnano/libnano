@@ -9,8 +9,12 @@ as bytes objects, rather than unicode.
 import json
 import sys
 from collections import OrderedDict
+from typing import (
+    List,
+    Union
+)
 
-def base_decode_list(data):
+def base_decode_list(data: List) -> List:
     local_str_t = str
     res = []
     for item in data:
@@ -24,7 +28,7 @@ def base_decode_list(data):
     return res
 # end def
 
-def base_decode_dict(data):
+def base_decode_dict(data: dict) -> dict:
     local_str_t = str
     res = {}
     for key, value in data.items():
@@ -61,25 +65,39 @@ class BOrderedDict(OrderedDict):
         super(BOrderedDict, self).__setitem__(key, value, dict_setitem)
 # end class
 
-def load(fp, cls=None, parse_float=None,
-          parse_int=None, parse_constant=None, ordered=False, **kw):
-    return loads(fp.read(),
+def load(   fd: '_io.TextIOWrapper',
+            cls=None,
+            parse_float=None,
+            parse_int=None,
+            parse_constant=None,
+            ordered: bool = False,
+            **kw):
+    return loads(fd.read(),
         cls=cls,
         parse_float=parse_float, parse_int=parse_int,
         parse_constant=parse_constant, ordered=ordered, **kw)
 # end def
 
 
-def loads(s, encoding=None, cls=None, parse_float=None,
-          parse_int=None, parse_constant=None, ordered=False, **kw):
+def loads(s, encoding=None,
+            cls=None,
+            parse_float=None,
+            parse_int=None,
+            parse_constant=None,
+            ordered: bool = False,
+            **kw) -> Union[List, dict, BOrderedDict]:
     if ordered:
         return json.loads(s,
             cls=cls,
-            parse_float=parse_float, parse_int=parse_int,
-            parse_constant=parse_constant, object_pairs_hook=BOrderedDict, **kw)
+            parse_float=parse_float,
+            parse_int=parse_int,
+            parse_constant=parse_constant,
+            object_pairs_hook=BOrderedDict, **kw)
     else:
         return json.loads(s,
-            cls=cls, object_hook=base_decode_dict,
-            parse_float=parse_float, parse_int=parse_int,
+            cls=cls,
+            object_hook=base_decode_dict,
+            parse_float=parse_float,
+            parse_int=parse_int,
             parse_constant=parse_constant, **kw)
 # end def

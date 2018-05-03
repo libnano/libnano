@@ -61,13 +61,17 @@ import re
 import os
 import sys
 import urllib.request as urllib2
+from typing import (
+    Dict,
+    List
+)
 
 from libnano import seqstr
 from libnano.helpers.jsonbytes import base_decode_dict
 
-LOCAL_DIR = os.path.dirname(os.path.realpath(__file__))
+LOCAL_DIR: str = os.path.dirname(os.path.realpath(__file__))
 
-REGEX_BASE_LUT = {
+REGEX_BASE_LUT: Dict[str, str] = {
     'A': 'A',
     'C': 'C',
     'G': 'G',
@@ -85,13 +89,13 @@ REGEX_BASE_LUT = {
     'N': 'N'        # leave N's put
 }
 
-NEB_ALPHABET = ''.join(REGEX_BASE_LUT.keys())
+NEB_ALPHABET: str = ''.join(REGEX_BASE_LUT.keys())
 
 # Checks for symmetric + internal cutsite annotation
-NEB_I_SHORTHAND_RE = re.compile('^[\^' + NEB_ALPHABET + ']+$')
+NEB_I_SHORTHAND_RE: '_sre.SRE_Pattern' = re.compile('^[\^' + NEB_ALPHABET + ']+$')
 
 # Pulls out indices and sequence from a parenthetical cutsite annotation
-NEB_P_SHORTHAND_RE = re.compile(
+NEB_P_SHORTHAND_RE: '_sre.SRE_Pattern'  = re.compile(
     r'^(?:\((?P<startidx>[\d|-]+)/(?P<startrevidx>[\d|-]+)\))?'
      '(?P<seq>[' + NEB_ALPHABET + ']+)'
     r'(?:\((?P<endidx>[\d|-]+)/(?P<endrevidx>[\d|-]+)\))?$')
@@ -99,7 +103,7 @@ NEB_P_SHORTHAND_RE = re.compile(
 rc = seqstr.reverseComplement
 condInt = lambda i: int(i) if i is not None else None
 
-def seqToRegex(seq):
+def seqToRegex(seq: str) -> str:
     if seq is None:
         return None
     regex_str = ''
@@ -121,7 +125,7 @@ def seqToRegex(seq):
     return regex_str
 
 
-def getRebaseList():
+def getRebaseList() -> Tuple[int, List, List]:
     ''' Get the latest list of restriction enzymes from NEB Rebase.
 
     Returns:

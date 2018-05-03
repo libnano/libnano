@@ -10,6 +10,7 @@ a python 3 byte string (not unicode)
 import re
 import io
 from collections import OrderedDict
+from typing import List
 
 def parse(filepath: str, is_ordered: bool = False) -> dict:
     """
@@ -41,7 +42,7 @@ def parse(filepath: str, is_ordered: bool = False) -> dict:
     return d
 # end def
 
-def parseComment(d, comment):
+def parseComment(d: dict, comment: str):
     if comment != '':
         # get rid of ApE empty comment
         if comment.startswith("\nCOMMENT     "):
@@ -68,75 +69,87 @@ def parseComment(d, comment):
                     lines[idx_genome_asm_data:-1]]
 # end def
 
-re_locus = [
-                "^LOCUS",                                   # field
-                " +(?P<name>[\w|.]+)",                      # name
-                " +(?P<length>[0-9]+) bp",                  # sequence length
-                "(?: +(?P<stranded>[a-z]{2})-)?",           # opt: ss, ds, ms
-                " *(?P<molecule_type>[a-z|A-Z|-|]{2,6})",     # molecule type
-                " +(?P<form>[\w]{6,8})?",               # linear or circular
-                " +(?P<gb_division>[a-z|A-Z]{3})?",          # Genbank division
-                " +(?P<mod_date>[0-9]+-[A-Z]+-[0-9]+)",     # modification date
-                ".*\n"                                      # match line end
-            ]
-re_locus: str = "".join(re_locus)
+re_locus: List[str] = [
+    "^LOCUS",                                   # field
+    " +(?P<name>[\w|.]+)",                      # name
+    " +(?P<length>[0-9]+) bp",                  # sequence length
+    "(?: +(?P<stranded>[a-z]{2})-)?",           # opt: ss, ds, ms
+    " *(?P<molecule_type>[a-z|A-Z|-|]{2,6})",   # molecule type
+    " +(?P<form>[\w]{6,8})?",                   # linear or circular
+    " +(?P<gb_division>[a-z|A-Z]{3})?",         # Genbank division
+    " +(?P<mod_date>[0-9]+-[A-Z]+-[0-9]+)",     # modification date
+    ".*\n"                                      # match line end
+]
+RE_LOCUS: str = "".join(re_locus)
 
-re_definition = [   "^DEFINITION",                         # field
-                    " +(?P<definition>(?:.*\n)(?: .*\n)*)"  # look ahead assertion for multiline
-                ]
-re_definition: str = "".join(re_definition)
+re_definition: List[str] = [
+    "^DEFINITION",                          # field
+    " +(?P<definition>(?:.*\n)(?: .*\n)*)"  # look ahead assertion for multiline
+]
+RE_DEFINITION: str = "".join(re_definition)
 
-re_accession = [   "^ACCESSION",                           # field
+re_accession: List[str] = [
+                    "^ACCESSION",                           # field
                     " +(?P<accession>[\w|.]*)"   # look ahead assertion for multiline
                     ".*\n"                                  # match line end
-                ]
-re_accession: str = "".join(re_accession)
-
-re_version = [   "^VERSION",                     # field
-                    " +(?P<version>[\w|.]+)",    # version
-                    " +GI:(?P<GI>[\w|.]+)"       # gi field
-                    ".*\n"                       # match line end
-                ]
-
-re_dblink: str = "^DBLINK +(?P<dblink>[\w|:| |.]+)\n"
-
-re_version: str = "".join(re_version)
-
-re_keywords = ["^KEYWORDS",
-                " +(?P<keywords>[\w|.]*)"
-                ".*\n"
-            ]
-re_keywords= "".join(re_keywords)
-
-re_source = ["^SOURCE",
-            " +(?P<source>.*)",
-            "\n"
 ]
-re_source: str = "".join(re_source)
+RE_ACCESSION: str = "".join(re_accession)
 
-re_organism =  [   "^  ORGANISM",                          # field
-                    "(?: +(?P<organism0>(?:.*\n))?",
-                    "(?: +(?P<organism1>(?:.*\n)(?: .*\n)*))?)"  # multiline
-                ]
-re_organism = "".join(re_organism)
+re_version: List[str] = [
+    "^VERSION",                     # field
+    " +(?P<version>[\w|.]+)",    # version
+    " +GI:(?P<GI>[\w|.]+)"       # gi field
+    ".*\n"                       # match line end
+]
 
-re_preamble = re_locus + re_definition + \
-            re_accession + re_version + re_dblink +\
-             re_keywords + re_source + re_organism
+RE_DBLINK: str = "^DBLINK +(?P<dblink>[\w|:| |.]+)\n"
 
-re_comp_preable = re.compile(re_preamble, flags=re.M)
+RE_VERSION: str = "".join(re_version)
 
-re_comp_locus = re.compile(re_locus, flags=re.M)
-def parseLocus(raw, isbytes=False):
-    m = re.match(re_comp_locus, raw)
+re_keywords: List[str] = [
+    "^KEYWORDS",
+    " +(?P<keywords>[\w|.]*)"
+    ".*\n"
+]
+RE_KEYWORDS= "".join(re_keywords)
+
+re_source: List[str] = [
+    "^SOURCE",
+    " +(?P<source>.*)",
+    "\n"
+]
+RE_SOURCE: str = "".join(re_source)
+
+re_organism: List[str] =  [
+    "^  ORGANISM",                          # field
+    "(?: +(?P<organism0>(?:.*\n))?",
+    "(?: +(?P<organism1>(?:.*\n)(?: .*\n)*))?)"  # multiline
+]
+RE_ORGANISM: str = "".join(re_organism)
+
+RE_PREAMBLE: str = (RE_LOCUS +
+                    RE_DEFINITION +
+                    RE_ACCESSION +
+                    RE_VERSION +
+                    RE_DBLINK +
+                    RE_KEYWORDS +
+                    RE_SOURCE +
+                    RE_ORGANISM
+)
+RE_COMP_PREABLE: '_sre.SRE_Pattern' = re.compile(RE_PREAMBLE, flags=re.M)
+
+RE_COMP_LOCUS: '_sre.SRE_Pattern' = re.compile(RE_LOCUS, flags=re.M)
+
+def parseLocus(raw: str, isbytes: str = False) -> dict:
+    m = re.match(RE_COMP_LOCUS, raw)
     d = m.groupdict()
     d['length'] = int(d['length'])
     return d
 #end def
 
-re_comp_definition = re.compile(re_definition, flags=re.M)
-def parseDefinition(raw, isbytes=False):
-    m = re.search(re_comp_definition, raw)
+RE_COMP_DEFINITION = re.compile(RE_DEFINITION, flags=re.M)
+def parseDefinition(raw: str, isbytes: bool = False) -> dict:
+    m = re.search(RE_COMP_DEFINITION, raw)
     if m is None:
         return {'definition': None}
     d = m.groupdict()
@@ -147,18 +160,18 @@ def parseDefinition(raw, isbytes=False):
     return d
 #end def
 
-re_comp_accession = re.compile(re_accession, flags=re.M)
-def parseAccession(raw):
-    m = re.search(re_comp_accession, raw)
+RE_COMP_ACCESSION = re.compile(RE_ACCESSION, flags=re.M)
+def parseAccession(raw: str) -> dict:
+    m = re.search(RE_COMP_ACCESSION, raw)
     if m is None:
         return {'accession': None}
     d = m.groupdict()
     return d
 # end def
 
-re_comp_version = re.compile(re_version, flags=re.M)
-def parseVersion(raw):
-    m = re.search(re_comp_version, raw)
+RE_COMP_VERSION = re.compile(RE_VERSION, flags=re.M)
+def parseVersion(raw: str) -> dict:
+    m = re.search(RE_COMP_VERSION, raw)
     if m is None:
         # print("Version none")
         return {'version': None}
@@ -167,36 +180,36 @@ def parseVersion(raw):
     return d
 # end def
 
-re_comp_dblink = re.compile(re_dblink, flags=re.M)
-def parseDBLink(raw):
-    m = re.search(re_comp_dblink, raw)
+RE_COMP_DBLINK = re.compile(RE_DBLINK, flags=re.M)
+def parseDBLink(raw: str) -> dict:
+    m = re.search(RE_COMP_DBLINK, raw)
     if m is None:
         return {'dblink': None}
     d = m.groupdict()
     return d
 # end def
 
-re_comp_keywords = re.compile(re_keywords, flags=re.M)
-def parseKeywords(raw):
-    m = re.search(re_comp_keywords, raw)
+RE_COMP_KEYWORDS = re.compile(RE_KEYWORDS, flags=re.M)
+def parseKeywords(raw: str) -> dict:
+    m = re.search(RE_COMP_KEYWORDS, raw)
     if m is None:
         return {'keywords': None}
     d = m.groupdict()
     return d
 # end def
 
-re_comp_source = re.compile(re_source, flags=re.M)
-def parseSource(raw):
-    m = re.search(re_comp_source, raw)
+RE_COMP_SOURCE = re.compile(RE_SOURCE, flags=re.M)
+def parseSource(raw: str) -> dict:
+    m = re.search(RE_COMP_SOURCE, raw)
     if m is None:
         return {'source': None}
     d = m.groupdict()
     return d
 # end def
 
-re_comp_organism = re.compile(re_organism, flags=re.M)
-def parseOrganism(raw):
-    m = re.search(re_comp_organism, raw)
+RE_COMP_ORGANISM: '_sre.SRE_Pattern' = re.compile(RE_ORGANISM, flags=re.M)
+def parseOrganism(raw: str) -> dict:
+    m = re.search(RE_COMP_ORGANISM, raw)
     if m is None:
         return {'organism': [None, None]}
     d = m.groupdict()
@@ -226,25 +239,25 @@ REFERENCE   1  (bases 1 to 5028)
   JOURNAL   Yeast 10 (11), 1503-1509 (1994)
   PUBMED    7871890
 """
-re_reference = [    "^REFERENCE",
-                    " +(?P<r_index>[0-9]+)(?: +\(bases (?P<start_idx>[0-9]+) to (?P<end_idx>[0-9]+)\)){0,1}",
-                    ".*\n",
-                    "^  AUTHORS",
-                    " +(?P<authors>.+)\n",
-                    "^  TITLE",                             # field
-                    " +(?P<title>(?:.*\n)(?: .*\n)*)",      # multiline
-                    "^  JOURNAL",
-                    " +(?P<journal_info>.+\n(?: {12}.+\n)*)",
-                    "(?:^  PUBMED +(?P<pubmed>[0-9]+)\n){0,1}"
+re_reference: List[str] = [
+    "^REFERENCE",
+    " +(?P<r_index>[0-9]+)(?: +\(bases (?P<start_idx>[0-9]+) to (?P<end_idx>[0-9]+)\)){0,1}",
+    ".*\n",
+    "^  AUTHORS",
+    " +(?P<authors>.+)\n",
+    "^  TITLE",                             # field
+    " +(?P<title>(?:.*\n)(?: .*\n)*)",      # multiline
+    "^  JOURNAL",
+    " +(?P<journal_info>.+\n(?: {12}.+\n)*)",
+    "(?:^  PUBMED +(?P<pubmed>[0-9]+)\n){0,1}"
 ]
-re_reference = "".join(re_reference)
-re_comp_ref = re.compile(re_reference, flags=re.M)
+RE_REFERENCE: str = "".join(re_reference)
+RE_COMP_REF: '_sre.SRE_Pattern' = re.compile(RE_REFERENCE, flags=re.M)
 
-
-def parseReference(raw):
+def parseReference(raw: str) -> List[dict]:
     ref_list = []
 
-    for m in re.finditer(re_comp_ref, raw):
+    for m in re.finditer(RE_COMP_REF, raw):
         d = m.groupdict()
         temp_l = d['title'].split('\n')
         temp_l = [x.strip() for x in temp_l]
@@ -278,21 +291,22 @@ def addMultivalue(d, key, val):
 """
 see section 3.4 Location
 """
-re_feature = [  "^ {5}(?P<feature_key>[\w]+)",
-                " +(?P<location>.+)\n",
-                "(?P<qualifiers>(?:^ {21}.*\n)*)"
+re_feature: List[str] = [
+    "^ {5}(?P<feature_key>[\w]+)",
+    " +(?P<location>.+)\n",
+    "(?P<qualifiers>(?:^ {21}.*\n)*)"
 ]
-re_feature = "".join(re_feature)
-re_comp_feature = re.compile(re_feature, flags=re.M)
+RE_FEATURE: str = "".join(re_feature)
+RE_COMP_FEATURE = re.compile(RE_FEATURE, flags=re.M)
 
 
 # Qualifers can have tags with /'s in the value so it's tough to escape them
 # for now we need to split on "                     /"
 
-def parseFeatures(raw, is_ordered=False):
+def parseFeatures(raw: str, is_ordered: bool = False) -> List[dict]:
     features_list = []
 
-    for feature_match in re.finditer(re_comp_feature, raw):
+    for feature_match in re.finditer(RE_COMP_FEATURE, raw):
         feature = feature_match.groupdict()
         if 'qualifiers' not in feature:
             print(feature)
@@ -343,7 +357,7 @@ def parseFeatures(raw, is_ordered=False):
     return features_list
 #end def
 
-def parseOrigin(raw):
+def parseOrigin(raw: str) -> str:
     out_list = []
 
     all_lines = raw.split('\n')

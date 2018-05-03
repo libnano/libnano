@@ -1,29 +1,35 @@
+# -*- coding: utf-8 -*-
 from bisect import (
     bisect_left,
     insort_left
 )
+from typing import (
+    List,
+    Tuple,
+    Dict
+)
 
 class FeatureTypes(object):
-    """ Data structure to enumerate and track feature types
+    """Data structure to enumerate and track feature types
     """
     def __init__(self):
-        self.count = 0  # number of features registered
-        self.ftype_dict = {}
-        self.ftype_descriptions = {}
-        self.ftype_LUT = [] # lookup table keyed by assigned enumeration per type
-        self.recycle_bin = []
+        self.count: int = 0  # number of features registered
+        self.ftype_dict: Dict[str, int] = {}
+        self.ftype_descriptions: Dict[str, str] = {}
+        self.ftype_LUT: List[str] = [] # lookup table keyed by assigned enumeration per type
+        self.recycle_bin: List[int] = []
 
-    def __contains__(self, feature_name):
-        """ allow for
-            feature_name in feature_types
-        construction
+    def __contains__(self, feature_name: str) -> bool:
+        """allow for ``feature_name in feature_types`` construction
         """
         return feature_name in self.ftype_dict
 
-    def getFTID(self, feature_name):
+    def getFTID(self, feature_name: str) -> int:
         return self.ftype_dict[feature_name]
 
-    def addFeatureType(self, feature_name, description=None, ft_id=None):
+    def addFeatureType(self, feature_name: str,
+                            description: str = None,
+                            ft_id: int = None) -> int:
         """
         ft_id not None is used in a redo kind of operation
         """
@@ -63,7 +69,7 @@ class FeatureTypes(object):
             return ft_id
     # end def
 
-    def removeFeatureType(self, feature_name):
+    def removeFeatureType(self, feature_name: str) -> Tuple[int , str]:
         ftype_dict = self.ftype_dict
         desc = self.ftype_descriptions[feature_name]
         del self.ftype_descriptions[feature_name]

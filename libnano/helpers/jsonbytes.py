@@ -1,5 +1,5 @@
-'''
-libnano.helpers.jsonbytes
+# -*- coding: utf-8 -*-
+'''libnano.helpers.jsonbytes
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Patched json loading to return dictionary with all key and value strings

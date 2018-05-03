@@ -1,5 +1,5 @@
-'''
-libnano.datasets.build_condon_freq_dataset
+# -*- coding: utf-8 -*-
+'''libnano.datasets.build_condon_freq_dataset
 
 Includes methods for retrieving and parsing codon frequency data from the
 Kazusa DNA Research Institute codon usage database.

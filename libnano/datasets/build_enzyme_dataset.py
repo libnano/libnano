@@ -1,5 +1,5 @@
-'''
-libnano.datasets.build_enzyme_dataset
+# -*- coding: utf-8 -*-
+'''libnano.datasets.build_enzyme_dataset
 
 Includes methods for parsing and visualizing restriction enzyme cut sites
 from the NEB Rebase list found at:
@@ -63,7 +63,8 @@ import sys
 import urllib.request as urllib2
 from typing import (
     Dict,
-    List
+    List,
+    Tuple
 )
 
 from libnano import seqstr
@@ -174,28 +175,33 @@ def getRebaseList() -> Tuple[int, List, List]:
     return database_version, enzyme_data, references
 
 
-def processNebShorthand(neb_shorthand):
+def processNebShorthand(neb_shorthand: str) -> dict:
     ''' Process NEB shorthand for an enzyme cutsite.
 
     Args:
         neb_shorthand (str): a single cutsite represented by NEB shorthand
 
     Returns:
-        {
-            'core_seq': [fwd, revcomp],
-            'full_seq': [fwd, revcomp],
-            'core_regex': [fwd, revcomp],
-            'full_regex': [fwd, revcomp],
-            'cutsite_idxs' [[fwd], [rev]],
-            'shorthand': <NEB format>
-        }
-        where `core_seq`, `full_seq`, `core_regex`, and `full_regex`
-        are all lists of two strings (representing fwd and rev seqs), and
-        `cutsite_idxs` is a list of lists with the following format:
+        dictionary of the form::
 
-            [[fwd_idx_1, fwd_idx_2, ...], [rev_idx_1, rev_idx_2, ...]]
+            {
+                'core_seq': [fwd, revcomp],
+                'full_seq': [fwd, revcomp],
+                'core_regex': [fwd, revcomp],
+                'full_regex': [fwd, revcomp],
+                'cutsite_idxs' [[fwd], [rev]],
+                'shorthand': <NEB format>
+            }
+
+            where `core_seq`, `full_seq`, `core_regex`, and `full_regex` are
+            all lists of two strings (representing fwd and rev seqs), and
+            `cutsite_idxs` is a list of lists with the following format::
+
+                [[fwd_idx_1, fwd_idx_2, ...], [rev_idx_1, rev_idx_2, ...]]
+
             Indexing is from the 0th index of the expanded seq. and the cut
             occurs before the provided index
+
     Raises:
         ValueError (if the neb_shorthand is not in the proper format)
     '''
@@ -269,26 +275,10 @@ def processNebShorthand(neb_shorthand):
     return output_dict
 
 
-def processEnzymeRecord(record_tuple):
-    ''' Process a raw record tuple from NEB Rebase.
+def processEnzymeRecord(record_tuple: tuple) -> dict:
+    '''Process a raw record tuple from NEB Rebase.
 
-    Return a dictionary in the following format (see module docstring for more
-    information):
-
-    {
-      'name': <name>
-      'cutsites': [{
-          'core_seq': [fwd, revcomp],
-          'full_seq': [fwd, revcomp],
-          'core_regex': [fwd, revcomp],
-          'full_regex': [fwd, revcomp],
-          'cutsite_idxs' [[fwd], [rev]],
-          'shorthand': <NEB format>,
-          'availability', # NEB-format shorthand for avail.
-      }]
-    }
-
-    Recall the raw record tuple indexing is as follows:
+    Recall the raw record tuple indexing is as follows::
 
         Index       Contents
         ~~~~~       ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -300,6 +290,23 @@ def processEnzymeRecord(record_tuple):
           5         <METHYLATION SITE>
           6         <COMMERCIAL AVAILABILITY>
           7         <REFERENCES>
+
+    Returns:
+        a dictionary in the following format (see module docstring for more
+            information)::
+
+            {
+              'name': <name>
+              'cutsites': [{
+                  'core_seq': [fwd, revcomp],
+                  'full_seq': [fwd, revcomp],
+                  'core_regex': [fwd, revcomp],
+                  'full_regex': [fwd, revcomp],
+                  'cutsite_idxs' [[fwd], [rev]],
+                  'shorthand': <NEB format>,
+                  'availability', # NEB-format shorthand for avail.
+              }]
+            }
     '''
     neb_shorthand = record_tuple[4].strip()
     cutsites = []
@@ -318,8 +325,8 @@ def processEnzymeRecord(record_tuple):
     return enzyme_rec
 
 
-def qcEnzymeDataset(enzyme_dataset_by_name):
-    ''' Quick QC of an enzyme dataset, against expected records for common
+def qcEnzymeDataset(enzyme_dataset_by_name: dict):
+    '''Quick QC of an enzyme dataset, against expected records for common
     enzymes.
     '''
     expected_records = {
@@ -382,16 +389,17 @@ def qcEnzymeDataset(enzyme_dataset_by_name):
                     raise ValueError('Mismatch between expected value (%s) '
                                      'and value (%s) for key %s for enzyme '
                                      '%s' % (v, new_value, k, name))
-
+# end def
 
 def updateEnzymeDataset():
-    ''' Update the enzyme dataset if a new version is available.
+    '''Update the enzyme dataset if a new version is available.
 
-    The top-level JSON file structure is as follows:
-    {
-        'rebase_version': <integer version # of Rebase database>,
-        'enzyme_data: <dict of enzyme data keyed by enzyme name>,
-    }
+    The top-level JSON file structure is as follows::
+
+        {
+            'rebase_version': <integer version # of Rebase database>,
+            'enzyme_data: <dict of enzyme data keyed by enzyme name>,
+        }
     '''
     needs_update = True
     current_version = -1

@@ -60,8 +60,8 @@ rpath = os.path.relpath
 # BSD license
 # Copyright (c) 2015 by Armin Ronacher and contributors.
 # https://github.com/pallets/flask
-_version_re = re.compile(r'__version__\s+=\s+(.*)')
-
+# _version_re = re.compile(r'__version__\s+=\s+(.*)')
+_version_re = re.compile(r'__version__\: str\s+=\s+(.*)')
 with open('libnano/__init__.py', 'rb') as initfile:
     version = str(ast.literal_eval(_version_re.search(
                                    initfile.read().decode('utf-8')).group(1)))

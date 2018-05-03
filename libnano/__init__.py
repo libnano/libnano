@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
     libnano
     ~~~~~~
@@ -6,10 +7,12 @@
 
 """
 import os
-LOCAL_DIR = os.path.dirname(os.path.realpath(__file__))
+from typing import List
 
-def includes():
+LOCAL_DIR: str = os.path.dirname(os.path.realpath(__file__))
+
+def includes() -> List[str]:
     return [LOCAL_DIR]
 
-__author__ = "Nick Conway, Ben Pruitt"
-__version__ = '0.1.1.4'
+__author__: str = "Nick Conway, Ben Pruitt"
+__version__: str = '0.1.1.4'

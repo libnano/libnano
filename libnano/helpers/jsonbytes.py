@@ -10,13 +10,8 @@ import json
 import sys
 from collections import OrderedDict
 
-if sys.version_info[0] > 2:
-    STR_T = str
-else:
-    STR_T = unicode
-
 def base_decode_list(data):
-    local_str_t = STR_T
+    local_str_t = str
     res = []
     for item in data:
         if isinstance(item, local_str_t):
@@ -30,7 +25,7 @@ def base_decode_list(data):
 # end def
 
 def base_decode_dict(data):
-    local_str_t = STR_T
+    local_str_t = str
     res = {}
     for key, value in data.items():
         if isinstance(key, local_str_t):
@@ -53,8 +48,7 @@ class BOrderedDict(OrderedDict):
 
     def __setitem__(self, key, value,
                     dict_setitem=dict.__setitem__):
-        global STR_T
-        local_str_t = STR_T
+        local_str_t = str
         if isinstance(key, local_str_t):
             key = key.encode('utf-8')
         if isinstance(value, local_str_t):

@@ -1,16 +1,13 @@
+# -*- coding: utf-8 -*-
 from __future__ import print_function
-
-# For package imports
-import sys
 import random
 import unittest
 
 import _setup
-
 from libnano.search.seedmatch import SeedMatcher
 from libnano.search import seedfinder
 
-DEBUG = False
+DEBUG: bool = False
 
 class TestSeedMatch(unittest.TestCase):
 

@@ -1,16 +1,12 @@
+# -*- coding: utf-8 -*-
 from __future__ import print_function
-import sys
-
 import random
 import unittest
 import re
 import time
 
 import _setup
-
 from libnano.search import seedfinder
-
-
 
 """ TODO Fix this file for the submer module
 This also tests

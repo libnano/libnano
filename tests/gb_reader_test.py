@@ -1,17 +1,17 @@
+# -*- coding: utf-8 -*-
 import unittest
-import sys
 import json
 import io
-
 from os.path import (
     join,
     abspath,
     dirname
 )
-LOCAL_DIR = abspath(dirname(__file__))
 
 import _setup
 from libnano.fileio import gb_reader
+
+LOCAL_DIR: str = abspath(dirname(__file__))
 
 
 class TestGBReader(unittest.TestCase):

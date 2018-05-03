@@ -1,4 +1,4 @@
-
+# -*- coding: utf-8 -*-
 import unittest
 import sys
 from os.path import (
@@ -7,12 +7,10 @@ from os.path import (
     dirname
 )
 
-LOCAL_DIR = abspath(dirname(__file__))
-
 import _setup
 from libnano.fileio import fasta
 
-
+LOCAL_DIR: str = abspath(dirname(__file__))
 
 class TestFastaParsing(unittest.TestCase):
 

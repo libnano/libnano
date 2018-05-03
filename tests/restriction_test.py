@@ -1,9 +1,7 @@
-
-import sys
+# -*- coding: utf-8 -*-
 import unittest
 
 import _setup
-
 from libnano.search import restriction
 from libnano.datasets import (
     dataset_container,
@@ -17,11 +15,10 @@ class TestRestriction(unittest.TestCase):
         qcEnzymeDataset(dataset_container.ENZYME_DATASET)
 
     def test_bytesSupport(self):
-        if sys.version_info[0] > 2:
-            rs = restriction.RestrictionSearcher('EcoRI', 'BsaI', 'BaeI')
-            self.assertRaises(TypeError, rs.findSites, (b'ATTTGGACCAG'))
-            rs = restriction.RestrictionSearcher(b'EcoRI', b'BsaI', b'BaeI')
-            self.assertRaises(TypeError, rs.findSites, ('ATTTGGACCAG'))
+        rs = restriction.RestrictionSearcher('EcoRI', 'BsaI', 'BaeI')
+        self.assertRaises(TypeError, rs.findSites, (b'ATTTGGACCAG'))
+        rs = restriction.RestrictionSearcher(b'EcoRI', b'BsaI', b'BaeI')
+        self.assertRaises(TypeError, rs.findSites, ('ATTTGGACCAG'))
 
     def test_sitesPresent(self):
         ''' Test RestrictionSearcher.sitesPresent '''

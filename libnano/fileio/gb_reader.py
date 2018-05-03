@@ -1,18 +1,21 @@
-import re
-import io
-from collections import OrderedDict
-
+# -*- coding: utf-8 -*-
 """
 http://www.ncbi.nlm.nih.gov/Sitemap/samplerecord.html
 http://www.insdc.org/documents/feature_table.html
 
 All keys are native strings, as are values, except the origin which is always
-a python2/3 byte string (not unicode)
+a python 3 byte string (not unicode)
 """
 
-def parse(filepath, is_ordered=False):
+import re
+import io
+from collections import OrderedDict
+
+def parse(filepath: str, is_ordered: bool = False) -> dict:
     """
-    is_ordered == True will retain the order of the qualifiers
+    Args:
+        filepath:
+        is_ordered: default False. if True will retain the order of the qualifiers
     """
     d = {'info': {}}
     d_info = d['info']
@@ -20,7 +23,7 @@ def parse(filepath, is_ordered=False):
         raw = fd.read()
     start, _, origin = raw.partition("ORIGIN")
     start, _, features = start.partition("FEATURES             Location/Qualifiers\n")
-    
+
     d_info.update(parseLocus(start))
     d_info.update(parseDefinition(start))
     d_info.update(parseAccession(start))
@@ -76,18 +79,18 @@ re_locus = [
                 " +(?P<mod_date>[0-9]+-[A-Z]+-[0-9]+)",     # modification date
                 ".*\n"                                      # match line end
             ]
-re_locus = "".join(re_locus)
+re_locus: str = "".join(re_locus)
 
 re_definition = [   "^DEFINITION",                         # field
                     " +(?P<definition>(?:.*\n)(?: .*\n)*)"  # look ahead assertion for multiline
                 ]
-re_definition = "".join(re_definition)
+re_definition: str = "".join(re_definition)
 
 re_accession = [   "^ACCESSION",                           # field
                     " +(?P<accession>[\w|.]*)"   # look ahead assertion for multiline
                     ".*\n"                                  # match line end
                 ]
-re_accession = "".join(re_accession)
+re_accession: str = "".join(re_accession)
 
 re_version = [   "^VERSION",                     # field
                     " +(?P<version>[\w|.]+)",    # version
@@ -95,10 +98,9 @@ re_version = [   "^VERSION",                     # field
                     ".*\n"                       # match line end
                 ]
 
-re_dblink = "^DBLINK +(?P<dblink>[\w|:| |.]+)\n"
-# re_dblink = "^DBLINK +(?P<dblink>[\w|\:| |.]+).*\n"
+re_dblink: str = "^DBLINK +(?P<dblink>[\w|:| |.]+)\n"
 
-re_version= "".join(re_version)
+re_version: str = "".join(re_version)
 
 re_keywords = ["^KEYWORDS",
                 " +(?P<keywords>[\w|.]*)"
@@ -110,7 +112,7 @@ re_source = ["^SOURCE",
             " +(?P<source>.*)",
             "\n"
 ]
-re_source = "".join(re_source)
+re_source: str = "".join(re_source)
 
 re_organism =  [   "^  ORGANISM",                          # field
                     "(?: +(?P<organism0>(?:.*\n))?",
@@ -295,7 +297,7 @@ def parseFeatures(raw, is_ordered=False):
         if 'qualifiers' not in feature:
             print(feature)
             raise IOError("bad feature")
-        
+
         d = {'type': feature['feature_key'],
             'location': feature['location'],
             # 'partials': (feature['partial5'], feature['partial3']),

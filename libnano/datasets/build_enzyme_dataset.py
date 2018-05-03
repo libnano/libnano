@@ -60,29 +60,12 @@ import json
 import re
 import os
 import sys
+import urllib.request as urllib2
 
-if sys.version_info[0] > 2:
-    STR_T = str
-else:
-    STR_T = unicode
+from libnano import seqstr
+from libnano.helpers.jsonbytes import base_decode_dict
 
-IS_PY3 = True if int(sys.version[0]) > 2 else False
 LOCAL_DIR = os.path.dirname(os.path.realpath(__file__))
-
-try:
-    from libnano import seqstr
-    from libnano.helpers.jsonbytes import base_decode_dict
-except:
-    import os.path
-    LOCAL_DIR = os.path.abspath(os.path.dirname(__file__))
-    sys.path.insert(0, os.path.abspath(os.path.join(LOCAL_DIR, '..', '..')))
-    from libnano import seqstr
-    from libnano.helpers.jsonbytes import base_decode_dict
-if IS_PY3:
-    import urllib.request as urllib2
-else:
-    import urllib2
-
 
 REGEX_BASE_LUT = {
     'A': 'A',
@@ -381,7 +364,7 @@ def qcEnzymeDataset(enzyme_dataset_by_name):
     'name': 'BaeI'
     }
     }
-    if isinstance(list(enzyme_dataset_by_name.keys())[0], STR_T):
+    if isinstance(list(enzyme_dataset_by_name.keys())[0], str):
         coerce_b = lambda s: s
     else:
         coerce_b = lambda s: s.encode('utf-8')

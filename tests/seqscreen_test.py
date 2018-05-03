@@ -1,10 +1,8 @@
-import sys
-
+# -*- coding: utf-8 -*-
 import random
 import unittest
 
 import _setup
-
 from libnano.metric import seqscreen
 
 class TestSeqFilter(unittest.TestCase):

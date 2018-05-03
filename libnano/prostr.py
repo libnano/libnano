@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 '''
 libnano.prostr
 ~~~~~~~~~~~~~~~~~~~
@@ -14,13 +15,6 @@ import random
 import sys
 
 from libnano.datasets import dataset_container
-
-
-if sys.version_info[0] > 2:
-    STR_T = str
-else:
-    STR_T = unicode
-
 
 # Modified from http://eli.thegreenplace.net/2010/01/22/
 #                       weighted-random-generation-in-python
@@ -51,7 +45,7 @@ class ReverseTranslator(object):
     acid.
     '''
 
-    def __init__(self, aa_seq, na_type='DNA', codon_lut=None):
+    def __init__(self, aa_seq, na_type: str = 'DNA', codon_lut=None):
         '''
         Args:
             aa_seq (str): primary amino acid sequence in single letter code
@@ -109,7 +103,7 @@ class WeightedReverseTranslator(ReverseTranslator):
         self.na_type = na_type
         rng = random.Random(aa_seq)
 
-        if isinstance(aa_seq, STR_T):
+        if isinstance(aa_seq, str):
             coerce_type = lambda s: s.decode('utf-8')
             freq_lut = \
                 dataset_container.CODON_FREQ_DATASET_U[coerce_type(

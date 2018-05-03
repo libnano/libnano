@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 '''
 fasta.py
 Read in FASTA files
@@ -114,7 +115,7 @@ def write(fasta_fn, records, iotype, wrap_len=60):
 
 
 def writeRecord(fd, rec_id, rec_seq, wrap_len):
-    """ Write 
+    """ Write
     """
     fd.write('>' + rec_id + '\n')
     for i in range(0, len(rec_seq), wrap_len):
@@ -123,7 +124,7 @@ def writeRecord(fd, rec_id, rec_seq, wrap_len):
 # end def
 
 def writeRecordB(fd, rec_id, rec_seq, wrap_len):
-    """ Write 
+    """ Write
     """
     fd.write(b'>' + rec_id + b'\n')
     for i in range(0, len(rec_seq), wrap_len):

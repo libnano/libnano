@@ -24,8 +24,6 @@ from libnano.datasets.build_codon_freq_dataset import ( RNA_TO_AA,
                                                         updateCodonFreqDataset)
 
 _LOCAL_DIR = _os.path.dirname(_os.path.realpath(__file__))
-_IS_PY3 = _sys.version_info[0] > 2
-
 
 class DatasetContainer(object):
     ''' Supports lazy loading of datasets to minimize memory footprint
@@ -44,8 +42,6 @@ class DatasetContainer(object):
             raw_data = jsonlib.load(fd)
             if as_unicode:
                 self._CODON_FREQ_DATASET_U = raw_data
-            elif _IS_PY3:
-                self._CODON_FREQ_DATASET = raw_data
             else:
                 self._CODON_FREQ_DATASET = raw_data
 
@@ -78,12 +74,9 @@ class DatasetContainer(object):
             if as_unicode:
                 self._ENZYME_DATASET_U = raw_data[u'enzyme_data']
                 self._REBASE_VERSION = raw_data[u'rebase_version']
-            elif _IS_PY3:
+            else:
                 self._ENZYME_DATASET = raw_data[b'enzyme_data']
                 self._REBASE_VERSION = raw_data[b'rebase_version']
-            else:
-                self._ENZYME_DATASET = raw_data['enzyme_data']
-                self._REBASE_VERSION = raw_data['rebase_version']
 
     @property
     def ENZYME_DATASET(self):

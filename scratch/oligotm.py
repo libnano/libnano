@@ -4,16 +4,10 @@ import sys
 import random
 import math
 
-_PY3 = sys.version_info[0] == 3
-
-if _PY3:
-    maketrans = str.maketrans
-else:
-    from string import maketrans
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~ DNA Sequence Manipulation ~~~~~~~~~~~~~~~~~~~~~~~~ #
 
-_DNAcomp = maketrans('ACGTacgt','TGCATGCA')
+_DNAcomp = str.maketrans('ACGTacgt','TGCATGCA')
 
 def reverseComplement(seq):
     return seq.translate(_DNAcomp)[::-1]

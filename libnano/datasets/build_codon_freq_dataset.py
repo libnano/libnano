@@ -25,14 +25,7 @@ import re
 import os
 import sys
 
-if sys.version_info[0] > 2:
-    STR_T = str
-else:
-    STR_T = unicode
-
-IS_PY3 = True if int(sys.version[0]) > 2 else False
 LOCAL_DIR = os.path.dirname(os.path.realpath(__file__))
-
 
 _FTP_URLS = {
     'EBI': {

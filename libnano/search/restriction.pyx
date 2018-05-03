@@ -5,10 +5,6 @@ import sys
 
 from libnano.datasets import dataset_container
 
-if sys.version_info[0] > 2:
-    STR_T = str
-else:
-    STR_T = unicode
 
 # ~~~~~~~~~~~~~~~ Restriction site search functions / classes ~~~~~~~~~~~~~~~ #
 
@@ -30,7 +26,7 @@ cdef class RestrictionSearcher:
         self._str_type = type(enzyme_names[0])
         cdef object core_regexs = []
         cdef object full_regexs = []
-        if isinstance(enzyme_names[0], STR_T):
+        if isinstance(enzyme_names[0], str):
             coerce_type = lambda s: s
             enzyme_dataset = dataset_container.ENZYME_DATASET_U
         else:
@@ -169,7 +165,7 @@ def getEnzymeRegexs(enzyme_names, full_sites=True):
     '''
     cdef object regexs = []
     cdef object lookup = 'full_regex' if full_sites else 'core_regex'
-    if isinstance(enzyme_names[0], STR_T):
+    if isinstance(enzyme_names[0], str):
         enzyme_dataset = dataset_container.ENZYME_DATASET_U
     else:
         enzyme_dataset = dataset_container.ENZYME_DATASET

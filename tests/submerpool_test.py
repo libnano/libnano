@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from __future__ import print_function
 import sys
 
@@ -19,7 +20,7 @@ from libnano.search import (
 )
 from libnano.fileio import fasta
 
-LOCAL_DIR = abspath(dirname(__file__))
+LOCAL_DIR: str = abspath(dirname(__file__))
 
 """ TODO Fix this file for the submer module
 

@@ -1,5 +1,5 @@
+# -*- coding: utf-8 -*-
 import unittest
-import sys
 import json
 import itertools
 

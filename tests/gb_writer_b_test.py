@@ -1,24 +1,22 @@
+# -*- coding: utf-8 -*-
 import unittest
-import sys
 import os
 import json
 from tempfile import NamedTemporaryFile
 import filecmp
-import _setup
-
 from os.path import (
     join,
     abspath,
     dirname
 )
-LOCAL_DIR = abspath(dirname(__file__))
 
+import _setup
 from libnano.fileio import gb_reader_b
 from libnano.fileio import gb_writer_b
 
-IS_PY_3 = int(sys.version_info[0] > 2)
+LOCAL_DIR: str = abspath(dirname(__file__))
 
-# @unittest.skip("Binary writer needs line ending fix for Windows \\r\\n")
+
 class TestGBWriter(unittest.TestCase):
 
     def setUp(self):
@@ -37,10 +35,8 @@ class TestGBWriter(unittest.TestCase):
         fn_gb = join(LOCAL_DIR, 'test_data', fn)
         d_gb = gb_reader_b.parse(fn_gb, is_ordered=True)
 
-        if IS_PY_3:
-            f_temp = NamedTemporaryFile(mode='w', encoding='utf-8', delete=False)
-        else:
-            f_temp = NamedTemporaryFile(mode='w', delete=False)
+        f_temp = NamedTemporaryFile(mode='w', encoding='utf-8', delete=False)
+
         f_temp.close()
         gb_writer_b.write_file(f_temp.name, d_gb)
         if should_be_true:

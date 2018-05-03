@@ -1,23 +1,14 @@
-import sys
-
+# -*- coding: utf-8 -*-
 import timeit
 import random
 import unittest
 
 import _setup
-
 from libnano import seqstr
 
 # ~~~~~ Python implementations of sequence manipulations for comparison ~~~~~ #
 
-_PY3 = sys.version_info[0] == 3
-
-if _PY3:
-    maketrans = str.maketrans
-else:
-    from string import maketrans
-
-_compLUT = maketrans(
+_compLUT = str.maketrans(
     'ACGTUMRWSYKVHDBN\nacgtumrwsykvhdbn',
     'TGCAAKYWSRMBDHVN\ntgcaakywsrmbdhvn'
 )

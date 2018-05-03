@@ -1,11 +1,9 @@
-import sys
-
+# -*- coding: utf-8 -*-
 import random
 import unittest
 import time
 
 import _setup
-
 from libnano.metric import seqrepeat
 from libnano.fileio import fasta
 

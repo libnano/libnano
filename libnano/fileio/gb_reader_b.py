@@ -1,3 +1,12 @@
+# -*- coding: utf-8 -*-
+"""
+http://www.ncbi.nlm.nih.gov/Sitemap/samplerecord.html
+http://www.insdc.org/documents/feature_table.html
+
+All keys are native strings, as are values, except the origin which is always
+a python 3 byte string (not unicode)
+"""
+
 import re
 import io
 import sys
@@ -7,13 +16,7 @@ try:
     import six
 except ImportError:
     from libnano.helpers import six
-"""
-http://www.ncbi.nlm.nih.gov/Sitemap/samplerecord.html
-http://www.insdc.org/documents/feature_table.html
 
-All keys are native strings, as are values, except the origin which is always
-a python2/3 byte string (not unicode)
-"""
 
 NEWLINE_STR = '\r\n' if sys.platform == 'win32' else '\n'
 NEWLINE_BYT = b'\r\n' if sys.platform == 'win32' else b'\n'

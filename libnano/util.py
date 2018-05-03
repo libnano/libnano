@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
     libnano.util
     ~~~~~~~~~~~
@@ -9,21 +10,12 @@
 import random
 import sys
 import math
-
 from itertools import chain
 from collections import Counter
 
-_PY3 = sys.version_info[0] == 3
-
-if _PY3:
-    maketrans = str.maketrans
-else:
-    from string import maketrans
-
-
 # ~~~~~~~~~~~~~~~~~~~~~~~~ DNA Sequence Manipulation ~~~~~~~~~~~~~~~~~~~~~~~~ #
 
-_DNAcomp = maketrans('ACGTacgt','TGCATGCA')
+_DNAcomp = str.maketrans('ACGTacgt','TGCATGCA')
 
 def reverseComplement(seq):
     return seq.translate(_DNAcomp)[::-1]

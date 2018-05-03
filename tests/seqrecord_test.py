@@ -1,16 +1,13 @@
+# -*- coding: utf-8 -*-
 import unittest
-import sys
 import json
-
 from os.path import (
     join,
     abspath,
     dirname
 )
-LOCAL_DIR = abspath(dirname(__file__))
 
 import _setup
-
 from libnano.datastructures.seqrecord import (
     SeqRecord,
     fromGenbankLike
@@ -20,6 +17,8 @@ from libnano.datastructures.seqrecord import (
     locationStr2Feature
 )
 from libnano.datastructures.seqrecord import Location
+
+LOCAL_DIR: str = abspath(dirname(__file__))
 
 class TestSeqRecord(unittest.TestCase):
 

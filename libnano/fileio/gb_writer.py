@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import io
 import textwrap
 
@@ -25,13 +26,13 @@ def write_file(filepath, d, order_qualifiers=False):
 # end def
 
 """
-http://www.insdc.org/files/feature_table.html 
+http://www.insdc.org/files/feature_table.html
 
 section 4.1 shows a 79 character feature table format, as well as the LOCUS
 being 80 characters but BioPython files output an 80 character version
 
 However section 4.3 Data item positions shows
-    
+
     22-80              location
 
 as the 80th character is in play.
@@ -44,7 +45,7 @@ def multiline(main_str, indent_str, lim=67):
     return indent_str.join(o_list)
 
 def multiline_spaces(main_str, indent_str, lim=67):
-    main_list = textwrap.wrap(main_str, lim, drop_whitespace=True, 
+    main_list = textwrap.wrap(main_str, lim, drop_whitespace=True,
         break_on_hyphens=False)
     return indent_str.join(main_list)
 #end def
@@ -61,7 +62,7 @@ def writeLocus(fd, d):
         form = ''
     elif form == 'linear':
         form = 'linear  '
-    
+
     gb_division = d['gb_division']
     if gb_division is None:
         gb_division = ''
@@ -78,7 +79,7 @@ def writeLocus(fd, d):
 def writeDefinition(fd, d):
     definition_str = "DEFINITION  "
     indent_str = "\n            "
-    out_list = [definition_str, 
+    out_list = [definition_str,
                 multiline_spaces(d['definition'], indent_str),
                 '\n']
     fd.write(''.join(out_list))
@@ -113,7 +114,7 @@ def writeSource(fd, d):
     organism_str = "\n  ORGANISM  "
     indent_str = "\n            "
     org = d['organism']
-    out_list = [source_str, d['source'], 
+    out_list = [source_str, d['source'],
                 organism_str,
                 org[0]]
     if org[1] is not None:
@@ -121,7 +122,7 @@ def writeSource(fd, d):
                         multiline_spaces(org[1], indent_str)]
     out_list += ['\n']
     fd.write(''.join(out_list))
-# end def 
+# end def
 
 
 def writeReference(fd, ref, i):
@@ -136,11 +137,11 @@ def writeReference(fd, ref, i):
         idx_str ="  (bases %d to %d)" % (ref['start_idx'], ref['end_idx'])
     else:
         idx_str = ''
-    out_list = [reference_str, 
+    out_list = [reference_str,
             "%d%s\n" % (i, idx_str),
             authors_str,
             multiline_spaces(ref['authors'], indent_str), '\n',
-            title_str, 
+            title_str,
             multiline_spaces(ref['title'], indent_str), '\n',
             journal_str,
             multiline_spaces(ref['journal_info'], indent_str), '\n',
@@ -158,8 +159,8 @@ def writeComment(fd, d):
     if 'comment' in d:
         comment = d['comment']
         if isinstance(comment, list):
-            out_list = [comment_str, 
-                multiline_spaces(comment[0], indent_str), 
+            out_list = [comment_str,
+                multiline_spaces(comment[0], indent_str),
                 indent_str, indent_str, indent_str,
                 indent_str.join(comment[1]), '\n'
                 ]

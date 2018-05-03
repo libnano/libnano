@@ -1,17 +1,10 @@
+# -*- coding: utf-8 -*-
 import io
 import sys
-if sys.version_info[0] > 2:
-    try:
-        import libnano.helpers.textwrap as textwrap
-    except:
-        # For package imports
-        from os.path import join, abspath, dirname
-        sys.path.append(abspath(join(dirname(__file__), '..', '..')))
-        import libnano.helpers.textwrap as textwrap
-else:
-    import textwrap
 
-NEWLINE_BYT = b'\r\n' if sys.platform == 'win32' else b'\n'
+import libnano.helpers.textwrap as textwrap
+
+NEWLINE_BYT: bytes = b'\r\n' if sys.platform == 'win32' else b'\n'
 
 def write(fd, d, order_qualifiers=False):
     d_info = d[b'info']

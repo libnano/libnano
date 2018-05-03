@@ -2,7 +2,7 @@
 import io
 import textwrap
 
-def write(fd, d, order_qualifiers=False):
+def write(fd: '_io.TextIOWrapper', d: dict, order_qualifiers: bool = False):
     d_info = d['info']
     writeLocus(fd, d_info)
     writeDefinition(fd, d_info)
@@ -20,7 +20,7 @@ def write(fd, d, order_qualifiers=False):
     writeOrigin(fd, d)
 # end def
 
-def write_file(filepath, d, order_qualifiers=False):
+def write_file(filepath: str, d: dict, order_qualifiers: bool = False):
     with io.open(filepath, 'w', encoding='utf-8') as fd:
         write(fd, d, order_qualifiers=order_qualifiers)
 # end def
@@ -40,17 +40,17 @@ as the 80th character is in play.
 This code sticks with 79 character limit
 """
 
-def multiline(main_str, indent_str, lim=67):
+def multiline(main_str: str, indent_str: str, lim: int = 67) -> str:
     o_list = [ main_str[i:i+lim] for i in range(0, len(main_str), lim) ]
     return indent_str.join(o_list)
 
-def multiline_spaces(main_str, indent_str, lim=67):
+def multiline_spaces(main_str: str, indent_str: str, lim: int = 67) -> str:
     main_list = textwrap.wrap(main_str, lim, drop_whitespace=True,
         break_on_hyphens=False)
     return indent_str.join(main_list)
 #end def
 
-def writeLocus(fd, d):
+def writeLocus(fd: '_io.TextIOWrapper', d: dict):
     """
     Locus in sample file is not valid
     """
@@ -76,7 +76,7 @@ def writeLocus(fd, d):
     fd.write(out_str)
 # end def
 
-def writeDefinition(fd, d):
+def writeDefinition(fd: '_io.TextIOWrapper', d: dict):
     definition_str = "DEFINITION  "
     indent_str = "\n            "
     out_list = [definition_str,
@@ -85,12 +85,12 @@ def writeDefinition(fd, d):
     fd.write(''.join(out_list))
 # end def
 
-def writeAccession(fd, d):
+def writeAccession(fd: '_io.TextIOWrapper', d: dict):
     accession_str = "ACCESSION   "
     fd.write(''.join([accession_str, d['accession'], '\n']))
 # end def
 
-def writeVersion(fd, d):
+def writeVersion(fd: '_io.TextIOWrapper', d: dict):
     version_str = "VERSION     "
     version = d['version']
     if version is not None:
@@ -98,18 +98,18 @@ def writeVersion(fd, d):
         fd.write(''.join([version_str, "%s  GI:%s" % (version, gi), '\n']))
 # end def
 
-def writeDBLINK(fd, d):
+def writeDBLINK(fd: '_io.TextIOWrapper', d: dict):
     if 'dblink' in d:
         if d['dblink'] is not None:
             fd.write("DBLINK      %s\n" % (d['dblink']))
 # end def
 
-def writeKeywords(fd, d):
+def writeKeywords(fd: '_io.TextIOWrapper', d: dict):
     keywords_str = "KEYWORDS    "
     fd.write(''.join([keywords_str, d['keywords'], '\n']))
 # end def
 
-def writeSource(fd, d):
+def writeSource(fd: '_io.TextIOWrapper', d: dict):
     source_str = "SOURCE      "
     organism_str = "\n  ORGANISM  "
     indent_str = "\n            "
@@ -125,7 +125,7 @@ def writeSource(fd, d):
 # end def
 
 
-def writeReference(fd, ref, i):
+def writeReference(fd: '_io.TextIOWrapper', ref: dict, i: int):
     assert(ref['r_index'] == i)
     reference_str = "REFERENCE   "
     authors_str = "  AUTHORS   "
@@ -152,7 +152,7 @@ def writeReference(fd, ref, i):
     fd.write(''.join(out_list))
 # end def
 
-def writeComment(fd, d):
+def writeComment(fd: '_io.TextIOWrapper', d: dict):
     comment_str = "COMMENT     "
     indent_str = "\n            "
     indent_str_gb_asm = "            "
@@ -170,7 +170,7 @@ def writeComment(fd, d):
 # end def
 
 
-def writeFeatures(fd, d, order_qualifiers):
+def writeFeatures(fd: '_io.TextIOWrapper', d: dict, order_qualifiers: bool):
     feature_header = "FEATURES             Location/Qualifiers\n"
     feature_type_prefix_str = "     "
     indent_str = "\n                     "
@@ -228,7 +228,7 @@ def writeFeatures(fd, d, order_qualifiers):
         fd.write(''.join(out_list))
 # end def
 
-def writeOrigin(fd, d):
+def writeOrigin(fd: '_io.TextIOWrapper', d: dict):
     i = 0
     format_string = '%9d %s %s %s %s %s %s\n'
     origin_header = "ORIGIN      \n"

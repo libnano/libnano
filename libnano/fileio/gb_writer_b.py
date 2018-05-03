@@ -6,7 +6,7 @@ import libnano.helpers.textwrap as textwrap
 
 NEWLINE_BYT: bytes = b'\r\n' if sys.platform == 'win32' else b'\n'
 
-def write(fd, d, order_qualifiers=False):
+def write(fd: '_io.TextIOWrapper', d: dict, order_qualifiers: bool = False):
     d_info = d[b'info']
     writeLocus(fd, d_info)
     writeDefinition(fd, d_info)
@@ -24,7 +24,7 @@ def write(fd, d, order_qualifiers=False):
     writeOrigin(fd, d)
 # end def
 
-def write_file(filepath, d, order_qualifiers=False):
+def write_file(filepath: str, d: dict, order_qualifiers: bool = False):
     with io.open(filepath, 'wb') as fd:
         write(fd, d, order_qualifiers=order_qualifiers)
 # end def
@@ -44,17 +44,17 @@ as the 80th character is in play.
 This code sticks with 79 character limit
 """
 
-def multiline(main_str, indent_str, lim=67):
+def multiline(main_str: str, indent_str: str, lim: int = 67):
     o_list = [ main_str[i:i+lim] for i in range(0, len(main_str), lim) ]
     return indent_str.join(o_list)
 
-def multiline_spaces(main_str, indent_str, lim=67):
+def multiline_spaces(main_str: str, indent_str: str, lim: int = 67):
     main_list = textwrap.wrap(main_str, lim, drop_whitespace=True,
         break_on_hyphens=False)
     return indent_str.join(main_list)
 #end def
 
-def writeLocus(fd, d):
+def writeLocus(fd: '_io.TextIOWrapper', d: dict):
     """
     Locus in sample file is not valid
     """
@@ -83,7 +83,7 @@ def writeLocus(fd, d):
     fd.write(out_str)
 # end def
 
-def writeDefinition(fd, d):
+def writeDefinition(fd: '_io.TextIOWrapper', d: dict):
     definition_str = b"DEFINITION  "
     indent_str = b"%s            " % (NEWLINE_BYT)
     out_list = [definition_str,
@@ -92,30 +92,30 @@ def writeDefinition(fd, d):
     fd.write(b''.join(out_list))
 # end def
 
-def writeAccession(fd, d):
+def writeAccession(fd: '_io.TextIOWrapper', d: dict):
     accession_str = b"ACCESSION   %s%s"
     fd.write(accession_str % (d[b'accession'], NEWLINE_BYT))
 # end def
 
-def writeVersion(fd, d):
+def writeVersion(fd: '_io.TextIOWrapper', d: dict):
     version = d[b'version']
     if version is not None:
         gi = d[b'GI']
         fd.write(b"VERSION     %s  GI:%s%s" % (version, gi, NEWLINE_BYT) )
 # end def
 
-def writeDBLINK(fd, d):
+def writeDBLINK(fd: '_io.TextIOWrapper', d: dict):
     if b'dblink' in d:
         if d[b'dblink'] is not None:
             fd.write(b"DBLINK      %s%s" % (d[b'dblink'], NEWLINE_BYT))
 # end def
 
-def writeKeywords(fd, d):
+def writeKeywords(fd: '_io.TextIOWrapper', d: dict):
     keywords_str = b"KEYWORDS    %s%s"
     fd.write(keywords_str % (d[b'keywords'], NEWLINE_BYT))
 # end def
 
-def writeSource(fd, d):
+def writeSource(fd: '_io.TextIOWrapper', d: dict):
     source_str = b"SOURCE      "
     organism_str = b"%s  ORGANISM  " % (NEWLINE_BYT)
     indent_str = b"%s            " % (NEWLINE_BYT)
@@ -131,7 +131,7 @@ def writeSource(fd, d):
 # end def
 
 
-def writeReference(fd, ref, i):
+def writeReference(fd: '_io.TextIOWrapper', ref: dict, i: int):
     assert(ref[b'r_index'] == i)
     reference_str = b"REFERENCE   "
     authors_str = b"  AUTHORS   "
@@ -158,7 +158,7 @@ def writeReference(fd, ref, i):
     fd.write(b''.join(out_list))
 # end def
 
-def writeComment(fd, d):
+def writeComment(fd: '_io.TextIOWrapper', d: dict):
     comment_str = b"COMMENT     "
     indent_str = b"%s            " % NEWLINE_BYT
     indent_str_gb_asm = b"            "
@@ -176,7 +176,7 @@ def writeComment(fd, d):
 # end def
 
 
-def writeFeatures(fd, d, order_qualifiers):
+def writeFeatures(fd: '_io.TextIOWrapper', d: dict, order_qualifiers: bool):
     feature_header = b"FEATURES             Location/Qualifiers%s" % (NEWLINE_BYT)
     feature_type_prefix_str = b"     "
     indent_str = b"%s                     " % (NEWLINE_BYT)
@@ -234,7 +234,7 @@ def writeFeatures(fd, d, order_qualifiers):
         fd.write(b''.join(out_list))
 # end def
 
-def writeOrigin(fd, d):
+def writeOrigin(fd: '_io.TextIOWrapper', d: dict):
     i = 0
     format_string = b'%9d %s %s %s %s %s %s%s'
     origin_header = b"ORIGIN      %s" % (NEWLINE_BYT)

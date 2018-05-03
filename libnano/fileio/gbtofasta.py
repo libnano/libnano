@@ -9,7 +9,7 @@ Rips the sequence out of a genbank file and outputs a fasta file:
 
 import os
 
-def genbankToFasta(genbank_fp, seq_record=None):
+def genbankToFasta(genbank_fp: str, seq_record: dict = None):
     if seq_record:
         primary_rec = seq_record
     else:

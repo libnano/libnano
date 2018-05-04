@@ -13,6 +13,9 @@ from collections import Counter
 import math
 import random
 import sys
+from typing import (
+    Dict
+)
 
 from libnano.datasets import dataset_container
 
@@ -45,7 +48,7 @@ class ReverseTranslator(object):
     acid.
     '''
 
-    def __init__(self, aa_seq, na_type: str = 'DNA', codon_lut=None):
+    def __init__(self, aa_seq: str, na_type: str = 'DNA', codon_lut: dict = None):
         '''
         Args:
             aa_seq (str): primary amino acid sequence in single letter code
@@ -62,7 +65,7 @@ class ReverseTranslator(object):
                                                         rng)
     # end def
 
-    def _generateRandomCodonGens(self, codon_lut, na_type, rng):
+    def _generateRandomCodonGens(self, codon_lut: dict, na_type: str, rng):
         # Need to wrap lambda function for list scoping
         def _gen(codon_list):
             return lambda: rng.choice(codon_list)
@@ -74,8 +77,8 @@ class ReverseTranslator(object):
         return codon_gens
     # end def
 
-    def revTranslate(self):
-        ''' Generate a random reverse translation
+    def revTranslate(self) -> str:
+        '''Generate a random reverse translation
 
         Returns:
             str: reverse translation of `self.aa_seq`
@@ -119,7 +122,7 @@ class WeightedReverseTranslator(ReverseTranslator):
                                                           rng)
     # end def
 
-    def _applyFreqThreshold(self, freq_lut, freq_threshold):
+    def _applyFreqThreshold(self, freq_lut: dict, freq_threshold: float) -> dict:
         '''
         Args:
             freq_lut (dict):
@@ -136,7 +139,7 @@ class WeightedReverseTranslator(ReverseTranslator):
         return n_freq_lut
     # end def
 
-    def _findHighestFreqCodons(self, freq_lut):
+    def _findHighestFreqCodons(self, freq_lut: dict) -> Dict[str, str]:
         '''
         Args:
             freq_lut (dict): Look up table for a an amino acid to get the codons
@@ -155,7 +158,7 @@ class WeightedReverseTranslator(ReverseTranslator):
         return n_freq_lut
     # end def
 
-    def _generateWeightedCodonGens(self, freq_lut, na_type, rng):
+    def _generateWeightedCodonGens(self, freq_lut: dict, na_type: str, rng) -> dict:
         '''
         Args:
             freq_lut (dict):
@@ -176,8 +179,8 @@ class WeightedReverseTranslator(ReverseTranslator):
         return codon_gens
     # end def
 
-    def revTranslate(self, highest_freq_only=False):
-        ''' generate a reverse translation from a frequency table.
+    def revTranslate(self, highest_freq_only: bool = False) -> str:
+        '''Generate a reverse translation from a frequency table.
         Use with seqscreen module to determine sequence acceptability
         returns codon sequence in DNA
 
@@ -185,7 +188,7 @@ class WeightedReverseTranslator(ReverseTranslator):
             highest_freq_only (Optional[bool]):
 
         Returns:
-            str:
+            string
         '''
         if highest_freq_only:
             trans = ''.join(map(
@@ -198,7 +201,7 @@ class WeightedReverseTranslator(ReverseTranslator):
 # end class
 
 
-def dnaToAA(seq):
+def dnaToAA(seq: str) -> str:
     ''' Translate a DNA sequence into a primary amino acid sequence.
 
     Uses the first reading frame and assumes that the sequence contains
@@ -215,7 +218,7 @@ def dnaToAA(seq):
                     range(0, len(seq), 3)])
 # end def
 
-def rnaToAA(seq):
+def rnaToAA(seq: str) -> str:
     ''' Translate an RNA sequence into a primary amino acid sequence.
 
     Uses the first reading frame and assumes that the sequence contains

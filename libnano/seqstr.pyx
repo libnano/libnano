@@ -9,19 +9,28 @@ complement, reverse, reverse complement, etc)
 Includes hamming distance method and derivative heuristic methods.
 """
 
-cimport c_util
+
 import random
-cimport numpy as cnp
-import numpy as np
+from typing import (
+    Tuple,
+    Union,
+    Iterable,
+    List
+)
 
 from cython.operator cimport postincrement as inc
 
+import numpy as np
+cimport numpy as cnp
 cnp.import_array()
-
 from cpython.mem cimport (
     PyMem_Malloc,
     PyMem_Free
 )
+
+cimport c_util
+
+STR_T = Union[str, bytes]
 
 __doc__ = "Basic operations on DNA, RNA, and amino acid sequences"
 
@@ -35,8 +44,8 @@ cdef extern from "ss_seqstr.h":
                         int, int, int, int*)
     int ss_minHammingThreshold(const char*, const char*, int, int, int)
 
-def randomer(int length):
-    """ Create a randomer of length `length`
+def randomer(int length) -> str:
+    """Create a randomer of length `length`
 
     Args:
         length (int): length of the randomer
@@ -49,29 +58,28 @@ def randomer(int length):
     return ''.join([f(choices) for i in range(length)])
 # end def
 
-def dsRandomer(int length, bint do_print=False):
-    """ Create a double stranded randomer
+def dsRandomer(int length, bint do_print = False) -> Tuple[str, str]:
+    """Create a double stranded randomer
 
     Args:
         length (int): length of the randomer
         do_print (Optional, bool): False by default
 
     Returns:
-        None or tuple of strings (str)
+        tuple of strings (str)
     """
     s = randomer(length)
     comp = complement(s)
     if do_print:
         print(s + '\n\r' + comp)
-    else:
-        return s, comp
+    return s, comp
 # end def
 
-def reverse(object seq):
-    """ Compute the reverse of a DNA/RNA/amino acid sequence
+def reverse(seq: STR_T) -> STR_T:
+    """Compute the reverse of a DNA/RNA/amino acid sequence
 
     Args:
-        seq (str): DNA, RNA, or amino acid sequence
+        seq: DNA, RNA, or amino acid sequence
 
     Returns:
         The reverse of the sequence (as a string)
@@ -104,8 +112,8 @@ cdef inline void reverse_cb(char* seq, char* out, int length):
 # end def
 
 
-def complement(object seq):
-    """ Compute the complement of a DNA/RNA/amino acid sequence
+def complement(seq: STR_T) -> STR_T:
+    """Compute the complement of a DNA/RNA/amino acid sequence
 
     Args:
         seq (str): DNA, RNA, or amino acid sequence
@@ -140,8 +148,8 @@ cdef inline void complement_cb(char* seq, char* out, int length):
 # end def
 
 
-def reverseComplement(object seq):
-    """ Compute the reverse complement of a DNA/RNA/amino acid sequence
+def reverseComplement(seq: STR_T) -> STR_T:
+    """Compute the reverse complement of a DNA/RNA/amino acid sequence
 
     Args:
         seq (str): DNA, RNA, or amino acid sequence
@@ -175,8 +183,8 @@ cdef inline void reverseComplement_cb(char* seq, char* out, int length):
 # end def
 
 
-def hammingDistance(object seq1, object seq2):
-    """ Compute the Hamming distance between two DNA/RNA/AA sequences
+def hammingDistance(seq1: STR_T, seq2: STR_T) -> int:
+    """Compute the Hamming distance between two DNA/RNA/AA sequences
 
     Args:
         seq1 (str): DNA/RNA/AA sequence
@@ -197,7 +205,7 @@ def hammingDistance(object seq1, object seq2):
 # end def
 
 cdef inline int hammingDistance_c(char* seq1, char* seq2, int len1):
-    """ Compute the Hamming distance between two strings
+    """Compute the Hamming distance between two strings
     seq: DNA, RNA, or amino acid sequence
     """
     return ss_hamming(  <const char *> seq1,
@@ -208,8 +216,8 @@ cdef inline int hammingDistance_c(char* seq1, char* seq2, int len1):
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Simple heuristics ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 
 
-def minHammingDistance(object seq1, object seq_list):
-    """ Compute the min. hamming distance between a seq and as list of seqs.
+def minHammingDistance(seq1: STR_T, seq_list: List[STR_T]) -> int:
+    """Compute the min. hamming distance between a seq and as list of seqs.
 
     All of the sequences in `seq_list` must have the same length as
     `seq1` (raises ValueError).
@@ -248,8 +256,10 @@ def minHammingDistance(object seq1, object seq_list):
     return min_hd
 # end def
 
-def thresholdRollingHammingList(object target, list seq_list, int threshold):
-    """ Compute the min. hamming distance between a seq and as list of seqs.
+def thresholdRollingHammingList(target: STR_T,
+                                seq_list: List[STR_T],
+                                int threshold) -> int:
+    """Compute the min. hamming distance between a seq and as list of seqs.
 
     All of the sequences in `seq_list` must have the same length as
     `target` (raises ValueError).
@@ -313,7 +323,7 @@ def thresholdRollingHammingList(object target, list seq_list, int threshold):
     return out_list
 # end def
 
-def rollingHammingDistance(object seq1, object seq2, int overlap=0):
+def rollingHammingDistance(seq1: STR_T, seq2: STR_T, int overlap=0) -> np.ndarray:
     """Compute the Hamming distance between seq1 and seq2 at each idx of seq2
 
     Args:
@@ -382,9 +392,10 @@ cdef inline void rollingHammingDistance_c(char* seq1, char* seq2,
                       len1, len2, overlap, hamming_distance_arr)
 # end def
 
-def misprimeCheck(putative_seq, sequences, int hamming_threshold):
-    """
-    Calculate the heterodimer formation thermodynamics of a DNA
+def misprimeCheck(  putative_seq: STR_T,
+                    sequences: Iterable[STR_T],
+                    int hamming_threshold) -> bool:
+    """Calculate the heterodimer formation thermodynamics of a DNA
     sequence, ``putative_seq`` with a list of sequences relative to
     a melting temperature threshold
 

@@ -25,7 +25,7 @@ cdef struct hamming_node_3p_t:
 @cython.boundscheck(True)
 @cython.wraparound(True)
 def _find_cliques(cnp.uint8_t[:,:] data_graph):
-    """ Adapted from networkx 1.9.1 clique.py BSD license
+    """Adapted from networkx 1.9.1 clique.py BSD license
 
     Search for all maximal cliques in a graph.
     Maximal cliques are the largest complete subgraph containing
@@ -33,7 +33,7 @@ def _find_cliques(cnp.uint8_t[:,:] data_graph):
     the maximum clique.
 
 
-    for some reason I can't type data as a buffer type due to some function
+    NOTE: for some reason I can't type data as a buffer type due to some function
     local variable thing in cython that I don't fully get why this is different
 
     Uses cython memory views for args:
@@ -161,8 +161,8 @@ def find_cliques(data_graph, int num_seeds_needed, int cutoff):
     return out_list
 # end def
 
-def hammingGraphEqual(list sequences):
-    """ Compute hamming distance between all strings in a list
+def hammingGraphEqual(list sequences) -> np.ndarray:
+    """Compute hamming distance between all strings in a list
 
     Args:
         sequences (list): list of python strings,
@@ -215,7 +215,7 @@ def hammingGraphEqual(list sequences):
     return hm_np
 #end def
 
-def hammingGraph(list sequences):
+def hammingGraph(list sequences) -> np.ndarray:
     """Compute hamming distance between all strings in a list. Strings
     can be different lengths but must be sorted longest to shortest
 
@@ -272,7 +272,7 @@ def hammingGraph(list sequences):
 # end def
 
 def hamming2XGraph( list sequences,
-                    int min_distance=2):
+                    int min_distance=2) -> np.ndarray:
     """ Compute the graph of having a hamming distance at least `min_distance`
     between every sequence in both the forward and reverse direction
 
@@ -328,7 +328,7 @@ def hamming2XGraph( list sequences,
 # end def
 
 def hammingAnd3pMismatchGraph(  list sequences,
-                                int min_distance=2):
+                                int min_distance = 2) -> np.ndarray:
     """ Compute the graph of having a hamming distance
     greater than min_distance between elements and having at least one mismatch
     in the last 3 basepairs at the 3 prime end

@@ -4,6 +4,9 @@ from cpython.mem cimport (
     PyMem_Realloc,
     PyMem_Free
 )
+from typing import Union
+
+STR_T = Union[str, bytes]
 
 cdef extern from "si_seqint.h":
     uint64_t si_seq2Int(char*, int)
@@ -16,22 +19,19 @@ cdef extern from "si_seqint.h":
     uint64_t si_seqIntSubstring(uint64_t, int, int, int)
     uint64_t si_addToWindow(uint64_t, char, int)
 
-"""
-Compact integer representations of DNA sequences\n
+"""Compact integer representations of DNA sequences\n
 """
 
-def tester(s):
+def tester(s: STR_T) -> str:
     cdef Py_ssize_t slen
     cdef char* s_copy_cstr
     c_util.copy_obj_to_cstr(s, &slen, &s_copy_cstr)
     return c_util.cstr_to_obj(s_copy_cstr, slen, 0)
 
-def seq2Int(seq_obj):
-    """
-    Convert a DNA sequence to an integer representation\n\n
+def seq2Int(seq_obj: STR_T) -> float:
+    """Convert a DNA sequence to an integer representation\n\n
     seq: DNA sequence comprised of the bases A/a, T/t, G/g, and C/c\n
     """
-    #cdef bytes py_seq
     cdef char*           seq
     cdef uint64_t        seqint
     cdef int length
@@ -47,9 +47,8 @@ def seq2Int(seq_obj):
     return seqint
 # end def
 
-def reverseComplement(uint64_t seqint, int length):
-    """
-    Return the reverse complement seqint representation of `seqint`\n\n
+def reverseComplement(uint64_t seqint, int length) -> float:
+    """Return the reverse complement seqint representation of `seqint`\n\n
     seqint: integer representation of a DNA sequence\n
     length: length of the represented sequence in bases\n
     """
@@ -61,9 +60,8 @@ def reverseComplement(uint64_t seqint, int length):
 # end def
 
 
-def complement(uint64_t seqint, int length):
-    """
-    Return the complement seqint representation of `seqint`\n\n
+def complement(uint64_t seqint, int length) -> float:
+    """Return the complement seqint representation of `seqint`\n\n
     seqint: integer representation of a DNA sequence\n
     length: length of the represented sequence in bases\n
     """
@@ -74,9 +72,8 @@ def complement(uint64_t seqint, int length):
     return seqintrc
 # end def
 
-def reverse(uint64_t seqint, int length):
-    """
-    Return the reverse complement seqint representation of `seqint`\n\n
+def reverse(uint64_t seqint, int length) -> float:
+    """Return the reverse complement seqint representation of `seqint`\n\n
     seqint: integer representation of a DNA sequence\n
     length: length of the represented sequence in bases\n
     """
@@ -88,9 +85,8 @@ def reverse(uint64_t seqint, int length):
 # end def
 
 
-def addBase(uint64_t seqint, base_obj):
-    """
-    Add a base to the right-hand side of a seqint\n\n
+def addBase(uint64_t seqint, base_obj: STR_T) -> float:
+    """Add a base to the right-hand side of a seqint\n\n
     seqint: integer representation of a DNA sequence\n
     base: base (A/a, T/t, G/g, or C/c) to be added\n
     length: length of the represented sequence in bases\n
@@ -107,9 +103,8 @@ def addBase(uint64_t seqint, base_obj):
 # end def
 
 
-def removeBase(uint64_t seqint, int length):
-    """
-    Remove a base from the right-hand side of a seqint\n\n
+def removeBase(uint64_t seqint, int length) -> float:
+    """Remove a base from the right-hand side of a seqint\n\n
     seqint: integer representation of a DNA sequence\n
     length: length of the represented sequence in bases\n
     """
@@ -120,9 +115,8 @@ def removeBase(uint64_t seqint, int length):
     return seqintmod
 # end def
 
-def addToWindow(uint64_t seqint, base_obj, int length):
-    """
-    Add a base to the right-hand side of a seqint (fixed length window)\n\n
+def addToWindow(uint64_t seqint, base_obj: STR_T, int length) -> float:
+    """Add a base to the right-hand side of a seqint (fixed length window)\n\n
     seqint: integer representation of a DNA sequence\n
     base: base (A/a, T/t, G/g, or C/c) to be added\n
     length: length of the represented sequence in bases\n
@@ -138,13 +132,17 @@ def addToWindow(uint64_t seqint, base_obj, int length):
     return seqintmod
 # end def
 
-def getSubstring(uint64_t seqint, int start_idx, int end_idx, int length):
-    """
-    Return the seqint representing the defined substring\n\n
-    seqint: integer representation of a DNA sequence\n
-    start_idx: substring start index (inclusive, 0-based)\n
-    start_idx: substring end index (exclusive)\n
-    length: length of the represented sequence in bases\n
+def getSubstring(uint64_t seqint, int start_idx, int end_idx, int length) -> float:
+    """Return the seqint representing the defined substring
+
+    Args:
+        seqint: integer representation of a DNA sequence
+        start_idx: substring start index (inclusive, 0-based)\n
+        start_idx: substring end index (exclusive)\n
+        length: length of the represented sequence in bases\n
+
+    Returns:
+        float
     """
     cdef uint64_t    seqintmod
 
@@ -153,11 +151,12 @@ def getSubstring(uint64_t seqint, int start_idx, int end_idx, int length):
     return seqintmod
 # end def
 
-def int2Seq(uint64_t seqint, int length):
-    """
-    Return the DNA sequence string represented by `seqint`\n\n
-    seqint: integer representation of a DNA sequence\n
-    length: length of the represented sequence in bases\n
+def int2Seq(uint64_t seqint, int length) -> str:
+    """Return the DNA sequence string represented by ``seqint``
+
+    Args:
+        seqint: integer representation of a DNA sequence
+        length: length of the represented sequence in bases
     """
     cdef object ret_obj
     cdef char* out_seq
@@ -182,7 +181,6 @@ def int2Seq(uint64_t seqint, int length):
 # end def
 
 cdef inline int2Seq_c(uint64_t seqint, char* out, int length):
-    """
-    cython header exposed wrapper for si_int2Seq
+    """cython header exposed wrapper for si_int2Seq
     """
     return si_int2Seq(seqint, out, length)

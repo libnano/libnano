@@ -1,9 +1,17 @@
+from typing import (
+    Union,
+    List,
+    Tuple
+)
 
-cimport c_util
-from libnano.cymem.cymem cimport Pool
 from cython.operator cimport postincrement as inc
 from libc.string cimport memcpy
 from libc.stdio cimport printf
+
+cimport c_util
+from libnano.cymem.cymem cimport Pool
+
+STR_T = Union[str, bytes]
 
 cdef extern from "shl_seedhashlist.h":
     # leave out a few members
@@ -69,7 +77,13 @@ cdef class SeedMatcher:
         self.seed_cstr = NULL
         self.search_obj = NULL
 
-    def __init__(self, seed, list reference_list, debug=False):
+    def __init__(self, seed: STR_T, list reference_list, debug: bool = False):
+        '''
+        Args:
+            seed:
+            reference_list (List[STR_T]):
+            debug:
+        '''
         cdef Py_ssize_t i, j, k
         cdef Py_ssize_t reference_list_length, total_seq_length
         cdef Py_ssize_t seed_len
@@ -162,7 +176,7 @@ cdef class SeedMatcher:
     def _checkht(self):
         checkht(self.search_obj)
 
-    def match(self, target, int mismatches):
+    def match(self, target: STR_T, int mismatches) -> List[Tuple[int, int]]:
         cdef int repeat_count
         cdef char* target_cstr = NULL
         cdef Py_ssize_t target_len

@@ -37,7 +37,7 @@ def randomSeq(length: int) -> str:
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Filters ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ (from nucleic) ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
-def gc_percent(seq, gc_min: float, gc_max: float):
+def gc_percent(seq: str, gc_min: float, gc_max: float) -> bool:
     ''' Return True if seq has a gc percentage betweeen gc_min and gc_max
     (inclusive)
 
@@ -98,9 +98,9 @@ def max_run(seq: str,
             max_g: float = None,
             max_c: float = None,
             max_at: float = None,
-            max_gc: float = None):
-    ''' Return True of seq has maximum A, T, G, C, AT, or GC run <= a provided
-    maximum.
+            max_gc: float = None) -> bool:
+    '''Return ``True`` of ``seq`` has maximum A, T, G, C, AT, or
+    GC run <= a provided maximum.
     '''
     prev = ''
     lrun = 0
@@ -180,14 +180,13 @@ def duplicateWordCount(seq: str, word_size: int, include_rc: bool = True) -> int
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~ Random sequence generation ~~~~~~~~~~~~~~~~~~~~~~~ #
 
-def _buildBaseList(probs: dict) -> list:
+def _buildBaseList(probs: Dict[str, float]) -> List[str]:
     base_list = []
-    # print("the probs", probs)
     for base, freq in probs.items():
         base_list += [base] * freq
     return base_list
 
-def weighted_choice(weights) -> float:
+def weighted_choice(weights: List[float]) -> int:
     choice = random.random() * sum(weights)
     for i, w in enumerate(weights):
         choice -= w
@@ -195,60 +194,62 @@ def weighted_choice(weights) -> float:
             return i
 # end def
 
-def randSeqInv(add_length, probs, start_length=None):
-    """ Probs format {'A':25, 'T':25, 'G':25, 'C':25}
-    (25% liklihood of each)
-    or
-    Probs format {'A':0.25, 'T':0.25, 'G':0.25, 'C':0.25}
+# def randSeqInv( add_length: int,
+#                 probs: Dict[str, float],
+#                 start_length: int = None):
+#     """Probs format {'A':25, 'T':25, 'G':25, 'C':25}
+#     (25% liklihood of each)
+#     or
+#     Probs format {'A':0.25, 'T':0.25, 'G':0.25, 'C':0.25}
 
-    Computes the inverse distribution from the probs
+#     Computes the inverse distribution from the probs
 
-    start_length is the length that the original weights
-    was calculated from and if not None will rebalance the
-    distribution as the sequence is built up
-    """
-    seq = ''
-    L = start_length
-    weights = list(probs.values())
-    bases = list(probs.keys())
-    # bases = ['A', 'T', 'G', 'C']
-    invweights = [0,0,0,0] # initialize
-    for x in range(add_length):
-        enum_weights = [x for x in enumerate(weights)]
-        # sort by weight
-        enum_weights_sorted = sorted(enum_weights, key=lambda x: x[1])
-        # swap high and low
-        invweights[invweight_sorted[0][0]] = invweight_sorted[3][1]
-        invweights[invweight_sorted[3][0]] = invweight_sorted[0][1]
-        invweights[invweight_sorted[1][0]] = invweight_sorted[2][1]
-        invweights[invweight_sorted[2][0]] = invweight_sorted[1][1]
+#     start_length is the length that the original weights
+#     was calculated from and if not None will rebalance the
+#     distribution as the sequence is built up
+#     """
+#     seq = ''
+#     L = start_length
+#     weights = list(probs.values())
+#     bases = list(probs.keys())
+#     # bases = ['A', 'T', 'G', 'C']
+#     invweights = [0, 0, 0, 0] # initialize
+#     for x in range(add_length):
+#         enum_weights = [i for i in enumerate(weights)]
+#         # sort by weight
+#         enum_weights_sorted = sorted(enum_weights, key=lambda i: i[1])
+#         # swap high and low
+#         invweights[invweight_sorted[0][0]] = invweight_sorted[3][1]
+#         invweights[invweight_sorted[3][0]] = invweight_sorted[0][1]
+#         invweights[invweight_sorted[1][0]] = invweight_sorted[2][1]
+#         invweights[invweight_sorted[2][0]] = invweight_sorted[1][1]
 
-        base_idx = weighted_choice(invweights)
-        seq += bases[base_idx]
+#         base_idx = weighted_choice(invweights)
+#         seq += bases[base_idx]
 
-        if L is not None:
-            # recalculate weights
-            weights[base_idx] = (weights[base_idx]*L+1)/(L+1)
-            for b in bases:
-                if b == base_idx:
-                    continue
-                else:
-                    weights[b] = weights[b]*L/(L+1)
-# end def
+#         if L is not None:
+#             # recalculate weights
+#             weights[base_idx] = (weights[base_idx]*L+1)/(L+1)
+#             for b in bases:
+#                 if b == base_idx:
+#                     continue
+#                 else:
+#                     weights[b] = weights[b]*L/(L+1)
+# # end def
 
-def randSeq(length, probs=None):
+def randSeq(length: int, probs: Dict[str, float] = None) -> str:
     """ Probs format {'A':25, 'T':25, 'G':25, 'C':25} (25% liklihood of each)
     """
     if probs is None:
-        probs = {'A':25, 'T':25, 'G':25, 'C':25}
+        probs = {'A': 25, 'T': 25, 'G': 25, 'C': 25}
     weights = list(probs.values())
     bases = list(probs.keys())
     return ''.join([bases[weighted_choice(weights)] for x in range(length)])
 # end def
 
-def _checkAgainstWords(seq, word_list):
+def _checkAgainstWords(seq: str, word_list: List[str]) -> bool:
     word_size = len(word_list[0])
-    sub_seqs = [seq[idx:idx+word_size].upper() for idx in
+    sub_seqs = [seq[idx:idx + word_size].upper() for idx in
                  range(len(seq) - word_size)]
     if len(list(set(sub_seqs) & set(word_list))) > 0: # Length of intersection
         return False
@@ -256,8 +257,11 @@ def _checkAgainstWords(seq, word_list):
         return True
 # end def
 
-def randSeqAvoidWords(length, flank_left='', flank_right='', probs=None,
-                      word_list=[]):
+def randSeqAvoidWords(  length: int,
+                        flank_left: str = '',
+                        flank_right: str = '',
+                        probs: Dict[str, float] = None,
+                        word_list: List[str] = []) -> str:
     while True:
         raw_rand = randSeq(length, probs=probs)
         if homopol_run(raw_rand, 3):

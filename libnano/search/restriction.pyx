@@ -2,14 +2,19 @@
 import itertools
 import re
 import sys
+from typing import (
+    Union,
+    List
+)
 
 from libnano.datasets import dataset_container
 
+STR_T = Union[str, bytes]
 
 # ~~~~~~~~~~~~~~~ Restriction site search functions / classes ~~~~~~~~~~~~~~~ #
 
 cdef class RestrictionSearcher:
-    ''' Base class for restriction enzyme searches. Instantiated with a list
+    '''Base class for restriction enzyme searches. Instantiated with a list
     of restriction enzyme names and can then be used to search for presence,
     count or indicies of the respective cutsites in the provided sequence.
     '''
@@ -51,17 +56,17 @@ cdef class RestrictionSearcher:
         self._full_regexs = full_regexs
 
     property enzyme_list:
-        ''' Public-facing enzyme list '''
+        '''Public-facing enzyme list '''
         def __get__(RestrictionSearcher self):
             return self._enzyme_names
 
     property str_type:
-        ''' Check str_type of searcher, for testing purposes '''
+        '''Check str_type of searcher, for testing purposes '''
         def __get__(RestrictionSearcher self):
             return self._str_type
 
     property _enzyme_names:
-        ''' List of enzyme names provided at instantiation '''
+        '''List of enzyme names provided at instantiation '''
         def __set__(RestrictionSearcher self, object name_list):
             self._enzyme_names = name_list
 
@@ -69,7 +74,7 @@ cdef class RestrictionSearcher:
             return self._enzyme_names
 
     property _num_enzymes:
-        ''' List of enzyme names provided at instantiation '''
+        '''List of enzyme names provided at instantiation '''
         def __set__(RestrictionSearcher self, object num_enzymes):
             self._num_enzymes = num_enzymes
 
@@ -77,7 +82,7 @@ cdef class RestrictionSearcher:
             return self._num_enzymes
 
     property _core_regexs:
-        ''' List of core enzyme recognition seq. regexs '''
+        '''List of core enzyme recognition seq. regexs '''
         def __set__(RestrictionSearcher self, object regex_list):
             self._core_regexs = [re.compile(regex) for regex in regex_list]
 
@@ -85,15 +90,17 @@ cdef class RestrictionSearcher:
             return self._core_regexs
 
     property _full_regexs:
-        ''' List of full enzyme recognition seq. regexs '''
+        '''List of full enzyme recognition seq. regexs '''
         def __set__(RestrictionSearcher self, object regex_list):
             self._full_regexs = [re.compile(regex) for regex in regex_list]
 
         def __get__(RestrictionSearcher self):
             return self._full_regexs
 
-    def sitesPresent(RestrictionSearcher self, seq, full_sites=True):
-        ''' Return a boolean True or False if any of the restriction sites
+    def sitesPresent(RestrictionSearcher self,
+                    seq: STR_T,
+                    full_sites: bool = True) -> bool:
+        '''Return a boolean ``True`` or ``False`` if any of the restriction sites
         are present within `seq` or its reverse complement.
         '''
         regexs = self._full_regexs if full_sites else self._core_regexs
@@ -108,8 +115,10 @@ cdef class RestrictionSearcher:
                             ' with {} type enzyme names'.format(type(seq),
                             self._str_type))
 
-    def countSites(RestrictionSearcher self, seq, full_sites=True):
-        ''' Return a list of counts indexed by enzyme (order as provided at
+    def countSites(RestrictionSearcher self,
+                    seq: STR_T,
+                    full_sites: bool = True) -> int:
+        '''Return a list of counts indexed by enzyme (order as provided at
         instantiation). Palindromic sites will be counted twice (once per
         strand)
         '''
@@ -125,8 +134,10 @@ cdef class RestrictionSearcher:
                             ' with {} type enzyme names'.format(type(seq),
                             self._str_type))
 
-    def findSites(RestrictionSearcher self, seq, full_sites=True):
-        ''' Return a list of lists, with the outer list indexed by enzyme
+    def findSites(RestrictionSearcher self,
+                    seq: STR_T,
+                    full_sites: bool = True) -> List[List[Tuple[int, int, int]]]:
+        '''Return a list of lists, with the outer list indexed by enzyme
         (order as provided at instantiation) and will inner lists comprised
         of tuples indicating the (<strand>, <start index>, <end index>) of
         cutsites.
@@ -158,8 +169,8 @@ cdef class RestrictionSearcher:
         return self.__repr__()
 
 
-def getEnzymeRegexs(enzyme_names, full_sites=True):
-    ''' Get the enzyme regexs for the provided enzyme names. If `full_sites` is
+def getEnzymeRegexs(enzyme_names: STR_T, full_sites: bool = True) -> STR_T:
+    '''Get the enzyme regexs for the provided enzyme names. If `full_sites` is
     True, the regexs will be for the full restriction sites, otherwise the
     regexs will be for the core restriction sites.
     '''
@@ -180,8 +191,10 @@ def getEnzymeRegexs(enzyme_names, full_sites=True):
     return regexs
 
 
-def sitesPresent(seq, enzyme_names, full_sites=True):
-    ''' Return a boolean True or False if any of the restriction sites
+def sitesPresent(seq: STR_T,
+                enzyme_names: List[STR_T],
+                full_sites: bool = True) -> bool:
+    '''Return a boolean True or False if any of the restriction sites
     are present within `seq` or its reverse complement.
     '''
     regexs = getEnzymeRegexs(enzyme_names, full_sites=full_sites)
@@ -197,8 +210,10 @@ def sitesPresent(seq, enzyme_names, full_sites=True):
 
 
 
-def countSites(seq, enzyme_names, full_sites=True):
-    ''' Return a list of counts indexed by enzyme (order as provided at
+def countSites(seq: STR_T,
+                enzyme_names: List[STR_T],
+                full_sites: bool = True) -> int:
+    '''Return a list of counts indexed by enzyme (order as provided at
     instantiation). Palindromic sites will be counted twice (once per
     strand)
     '''
@@ -214,8 +229,10 @@ def countSites(seq, enzyme_names, full_sites=True):
                         type(enzyme_names[0])))
 
 
-def findSites(seq, enzyme_names, full_sites=True):
-    ''' Return a list of lists, with the outer list indexed by enzyme
+def findSites(seq: STR_T,
+                enzyme_names: List[STR_T],
+                full_sites: bool = True) -> List[List[Tuple[int, int, int]]]:
+    '''Return a list of lists, with the outer list indexed by enzyme
     (order as provided at instantiation) and will inner lists comprised
     of tuples indicating the (<strand>, <start index>, <end index>) of
     cutsites.

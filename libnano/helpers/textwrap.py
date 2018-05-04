@@ -7,6 +7,10 @@
 # Ported to be bytes strings only for Python 3 by Nick Conway (C) 2015
 
 import re
+from typing import (
+    Generator,
+    List
+)
 
 __all__ = ['TextWrapper', 'wrap', 'fill', 'dedent', 'indent', 'shorten']
 
@@ -410,11 +414,11 @@ def dedent(text):
     # Look for the longest leading string of spaces and tabs common to
     # all lines.
     margin = None
-    print("pooop", text)
+    # print("pooop", text)
     text = _whitespace_only_re.sub(b'', text)
-    print("subws", text)
+    # print("subws", text)
     indents = _leading_whitespace_re.findall(text)
-    print("indents", indents)
+    # print("indents", indents)
     for indent in indents:
         if margin is None:
             margin = indent
@@ -447,7 +451,7 @@ def dedent(text):
     return text
 
 
-def indent(text, prefix, predicate=None):
+def indent(text, prefix, predicate=None) -> Generator[bytes, None, bytes]:
     """Adds 'prefix' to the beginning of selected lines in 'text'.
 
     If 'predicate' is provided, 'prefix' will only be added to the lines

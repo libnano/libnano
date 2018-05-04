@@ -1,5 +1,11 @@
 # generate seeds and such
 import itertools as it
+from typing import (
+    List,
+    Union,
+    Tuple,
+    Generator
+)
 
 """
 Generate seed strings for use in homology searches
@@ -16,8 +22,8 @@ Kucherov G, Noe L, Roytberg M (2005) Multiseed lossless filtration.
 IEEE/ACM Trans Comput Biol Bioinformatics 2: 51–61.
 """
 
-def checkSeed(seed, m, k_min=1, k_max=3):
-    """ Check that a seed is valid
+def checkSeed(seed: str, m: int, k_min: int = 1, k_max: int = 3) -> int:
+    """Check that a seed is valid
 
     Args:
         seed (str): candidate seed string composed of `#` and `-` characters
@@ -46,8 +52,11 @@ def checkSeed(seed, m, k_min=1, k_max=3):
     return best_k
 #end def
 
-def checkSeedAtK(seed, m, perm_list, perm_limit):
-    """ Given a list of permutations for a given mismatch k (calculated by
+def checkSeedAtK(   seed: str,
+                    m: int,
+                    perm_list: List[int],
+                    perm_limit: int) -> Tuple[bool, Union[List[str], None]]:
+    """Given a list of permutations for a given mismatch k (calculated by
     caller) determine if a seed satisfies finding those mismatches
 
     Args:
@@ -87,8 +96,11 @@ def checkSeedAtK(seed, m, perm_list, perm_limit):
         return True, None
 #end def
 
-def checkSeeds(seeds, m, k_min=1, k_max=3):
-    """ check a list of seeds for their combined mismatch screening power
+def checkSeeds( seeds: List[str],
+                m: int,
+                k_min: int = 1,
+                k_max: int = 3) -> int:
+    """Check a list of seeds for their combined mismatch screening power
 
     Args:
         seeds (List[str]): candidate seed strings composed of `#` and `-` characters
@@ -131,8 +143,10 @@ def checkSeeds(seeds, m, k_min=1, k_max=3):
     return best_k
 #end def
 
-cdef object seedhashseq(object seed_idxs, object seq, int num_tests):
-    """ use a seed to hash a sequence object since the length of the seed
+cdef list seedhashseq(  seed_idxs: List[int],
+                        seq: List[int],
+                        int num_tests):
+    """Use a seed to hash a sequence object since the length of the seed
     will be shorter than the length of the seq
 
     Args:
@@ -164,8 +178,8 @@ comput the idx list of the non-jokers in a seed
 
 iterate over the m-mer list with the seed idx list using
 """
-def combo(m, k):
-    """ Generator of all lists of length m
+def combo(m: int, k: int) -> Generator[List[int], None, None]:
+    """Generator of all lists of length m
     with k substitions/mismatches represented with a 0
     and correct bases represented with a 1
 
@@ -198,7 +212,7 @@ def combo(m, k):
     return nest(m, k0, 0, 0)
 # end def
 
-def seed_combo(n, weight):
+def seed_combo(n: int, weight: int) -> Generator[str, None, None]:
     """given a seed of length n get all of a certain weight
     uses combo to do the comination despite creating something different
     than other calls to combo in this mode
@@ -208,7 +222,7 @@ def seed_combo(n, weight):
         weight (int): weight of the seed (number of `#`'s)
 
     Returns:
-        Generator[List[int]]: Generator Seed strings with `#` representing
+        Generator[str]: Generator Seed strings with `#` representing
             must matches and `-` representing don't care /skip for the hashing
     """
     for val in combo(n, weight):
@@ -235,8 +249,13 @@ then the (im,(i + 1)k − 1)-problem is solved both by family
 F and by its i-regular expansion Fi = i ⊗ F.
 
 """
-def findSeed(m, k, wmin=0.4, wmax=0.8, nmin=.74, nmax=.76):
-    """ find a seed that satisfies m, k givven weight restrictions and length of
+def findSeed(   m: int,
+                k: int,
+                wmin: float = 0.4,
+                wmax: float = 0.8,
+                nmin: float = 0.74,
+                nmax: float = 0.76) -> List[Tuple[int, int, str, int, int]]:
+    """Find a seed that satisfies m, k givven weight restrictions and length of
     seed restrictions
 
     Args:
@@ -269,13 +288,18 @@ def findSeed(m, k, wmin=0.4, wmax=0.8, nmin=.74, nmax=.76):
     return seed_list
 #end def
 
-
-def findSeedPairs(m, k, w_min_frac=0.6, w_max_frac=0.8,
-                        w_exact=None,
-                        n_min_frac=.7, n_max_frac=.9,
-                        n_exact=None,
-                        is_greedy=True, debug=False):
-    """ Find a pair of seeds A and B for the `m, k` problem
+SP_T = Tuple[str, str, int, float, float, int, float, float, int]
+def findSeedPairs(  m: int,
+                    k: int,
+                    w_min_frac: float = 0.6,
+                    w_max_frac: float = 0.8,
+                    w_exact: Tuple[float, float] = None,
+                    n_min_frac: float = 0.7,
+                    n_max_frac: float = 0.9,
+                    n_exact: Tuple[float, float] = None,
+                    is_greedy: bool = True,
+                    debug: bool = False) -> SP_T:
+    """Find a pair of seeds A and B for the `m, k` problem
     keep the highest of weight only.  Greedy so continues once it gets
     one answer for a given weight.  This needs a little cleaning up.
 

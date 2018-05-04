@@ -10,7 +10,8 @@ from typing import (
     Dict,
     List,
     Tuple,
-    Union
+    Union,
+    Generator
 )
 
 _fasta_re: str = r'>(.+)[\n\r]+((?:[^>\S]|[{}]+[\n\r]+)+)'
@@ -71,8 +72,10 @@ def parseFasta( fasta_fn: str,
     return d
 # end def
 
-def parseFastaGen(fasta_fn: str, alphabet: str = 'DNA', not_allowed: str = None):
-    ''' Generator that returns parsed records (ID, sequence) from a FASTA
+def parseFastaGen(  fasta_fn: str,
+                    alphabet: str = 'DNA',
+                    not_allowed: str = None) -> Generator[Tuple[str, str], None, None]:
+    '''Generator that returns parsed records (ID, sequence) from a FASTA
     file.
     '''
 

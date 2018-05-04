@@ -1,10 +1,15 @@
 #cython: boundscheck=False, wraparound=False
-cimport c_util
+from typing import (
+    Generator,
+    List
+)
+
 cimport cython
 import numpy as np
 cimport numpy as cnp
 cnp.import_array()
 
+cimport c_util
 
 __doc__ = "graph operations on sets of DNA, RNA, and amino acid sequences"
 
@@ -24,7 +29,7 @@ cdef struct hamming_node_3p_t:
 
 @cython.boundscheck(True)
 @cython.wraparound(True)
-def _find_cliques(cnp.uint8_t[:,:] data_graph):
+def _find_cliques(cnp.uint8_t[:,:] data_graph) -> Generator[List[int]]:
     """Adapted from networkx 1.9.1 clique.py BSD license
 
     Search for all maximal cliques in a graph.

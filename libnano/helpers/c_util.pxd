@@ -12,19 +12,15 @@ from libc.stdlib cimport (
     malloc,
     free
 )
-from cpython.version cimport PY_MAJOR_VERSION
 
 cdef inline bytes _bytes(s):
-    if PY_MAJOR_VERSION > 2:
-        if isinstance(s, str):
-            # encode to the specific encoding used inside of the module
-            return (<str>s).encode('utf8')
-        else:
-            return s
+    if isinstance(s, str):
+        # encode to the specific encoding used inside of the module
+        return (<str>s).encode('utf8')
     else:
         return s
+# end def
 
-"One difference of c_util3.pxd version c_util2.pxd"
 cdef extern from "Python.h":
     cdef bint PyBytes_Check(object)
     cdef int PyBytes_AsStringAndSize(object, char **, Py_ssize_t *)
@@ -51,9 +47,9 @@ For Python 3 it can take a bytes object or a unicode object
 This is unsafe for single characters in cpython due to object reuse
 https://github.com/python/cpython/blob/master/Objects/unicodeobject.c#L4688
 """
-cdef inline object copy_obj_to_cstr_unsafe(    object o1,
-                                        Py_ssize_t *length,
-                                        char** c_str2):
+cdef inline object copy_obj_to_cstr_unsafe( object      o1,
+                                            Py_ssize_t* length,
+                                            char**      c_str2):
 
     cdef object o2
     cdef char* c_str1
@@ -93,9 +89,9 @@ returns:
 For Python 3 it can take a bytes object or a unicode object
 
 """
-cdef inline int copy_obj_to_cstr(object o1,
-                            Py_ssize_t *length,
-                            char** c_str2) except -1:
+cdef inline int copy_obj_to_cstr(   object      o1,
+                                    Py_ssize_t* length,
+                                    char**      c_str2) except -1:
 
     cdef char* c_str1 = NULL
     cdef char* temp = NULL
@@ -134,9 +130,9 @@ obj_type - for Python 3
 returns:
     obj - a python string object and frees the memory associated with c_str
 """
-cdef inline cstr_to_obj(char* c_str,
-                        Py_ssize_t length,
-                        int obj_type):
+cdef inline cstr_to_obj(char*       c_str,
+                        Py_ssize_t  length,
+                        int         obj_type):
     cdef object obj
     if obj_type:
         obj = PyBytes_FromStringAndSize(c_str, length)
@@ -146,9 +142,9 @@ cdef inline cstr_to_obj(char* c_str,
     free(c_str)
     return obj
 # end cdef
-cdef inline cstr_to_obj_nofree(char* c_str,
-                        Py_ssize_t length,
-                        int obj_type):
+cdef inline cstr_to_obj_nofree( char*       c_str,
+                                Py_ssize_t  length,
+                                int         obj_type):
     cdef object obj
     if obj_type:
         obj = PyBytes_FromStringAndSize(c_str, length)
@@ -157,8 +153,8 @@ cdef inline cstr_to_obj_nofree(char* c_str,
     return obj
 # end cdef
 
-cdef inline cstr_to_obj_nolength(char* c_str,
-                                int obj_type):
+cdef inline cstr_to_obj_nolength(   char*   c_str,
+                                    int     obj_type):
     cdef object obj
     if obj_type:
         obj = PyBytes_FromString(c_str)
@@ -195,7 +191,8 @@ cdef inline char* obj_to_cstr(object o1):
 """
 Same as above but fetches the string length too
 """
-cdef inline char* obj_to_cstr_len(object o1, Py_ssize_t *length):
+cdef inline char* obj_to_cstr_len(  object      o1,
+                                    Py_ssize_t* length):
     cdef char* c_str1
     if PyBytes_Check(o1):
         if PyBytes_AsStringAndSize(o1, &(c_str1), length) == -1:
@@ -209,7 +206,8 @@ cdef inline char* obj_to_cstr_len(object o1, Py_ssize_t *length):
 # end IF
 
 
-cdef inline char* copy_string(char* in_str, int length):
+cdef inline char* copy_string(  char*   in_str,
+                                int     length):
     cdef int i
     cdef char * out_str = <char *> PyMem_Malloc((length+1)*sizeof(char))
     if out_str == NULL:
@@ -217,6 +215,8 @@ cdef inline char* copy_string(char* in_str, int length):
     memcpy(out_str, in_str, length+1)
     return out_str
 
-cdef inline void copy_string_buffer(char* in_str, char* out_str, int length):
-    memcpy(out_str, in_str, length+1)
+cdef inline void copy_string_buffer(char*   in_str,
+                                    char*   out_str,
+                                    int     length):
+    memcpy(out_str, in_str, length + 1)
 

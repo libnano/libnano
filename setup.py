@@ -68,8 +68,6 @@ with open('libnano/__init__.py', 'rb') as initfile:
 # end Flask derived code
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ platform info ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
-IS_PY_THREE = int(sys.version_info[0] > 2)
-
 if sys.platform == 'win32':
     extra_compile_args = ['']
 else:
@@ -95,11 +93,7 @@ cython_extensions = []
 
 # ~~~~~~~~~~~~~~~~~~~ add helpers pyx, pxd, and py filess ~~~~~~~~~~~~~~~~~~~ #
 helpers_fp = pjoin(MODULE_PATH, 'helpers')
-# copy python 2/3 specific version of c_util.pxd to use
-if IS_PY_THREE:
-    shutil.copyfile(pjoin(helpers_fp, 'c_util3.pxd'), pjoin(helpers_fp, 'c_util.pxd'))
-else:
-    shutil.copyfile(pjoin(helpers_fp, 'c_util2.pxd'), pjoin(helpers_fp, 'c_util.pxd'))
+
 libnano_files += [rpath(pjoin(helpers_fp, f)) for f in
                   os.listdir(helpers_fp) if ('.py' in f or '.pyx' in f or '.pxd' in f)]
 

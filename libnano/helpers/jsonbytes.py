@@ -15,10 +15,9 @@ from typing import (
 )
 
 def base_decode_list(data: List) -> List:
-    local_str_t = str
     res = []
     for item in data:
-        if isinstance(item, local_str_t):
+        if isinstance(item, str):
             item = item.encode('utf-8')
         elif isinstance(item, (tuple, list)):
             item = base_decode_list(item)
@@ -29,12 +28,11 @@ def base_decode_list(data: List) -> List:
 # end def
 
 def base_decode_dict(data: dict) -> dict:
-    local_str_t = str
     res = {}
     for key, value in data.items():
-        if isinstance(key, local_str_t):
+        if isinstance(key, str):
             key = key.encode('utf-8')
-        if isinstance(value, local_str_t):
+        if isinstance(value, str):
             value = value.encode('utf-8')
         elif isinstance(value, list):
             value = base_decode_list(value)
@@ -52,15 +50,14 @@ class BOrderedDict(OrderedDict):
 
     def __setitem__(self, key, value,
                     dict_setitem=dict.__setitem__):
-        local_str_t = str
-        if isinstance(key, local_str_t):
+        if isinstance(key, str):
             key = key.encode('utf-8')
-        if isinstance(value, local_str_t):
+        if isinstance(value, str):
             value = value.encode('utf-8')
         elif isinstance(value, list):
             for i in range(len(value)):
                 item = value[i]
-                if isinstance(item, local_str_t):
+                if isinstance(item, str):
                     value[i] = item.encode('utf-8')
         super(BOrderedDict, self).__setitem__(key, value, dict_setitem)
 # end class
@@ -71,7 +68,7 @@ def load(   fd: '_io.TextIOWrapper',
             parse_int=None,
             parse_constant=None,
             ordered: bool = False,
-            **kw):
+            **kw) -> Union[dict, BOrderedDict]:
     return loads(fd.read(),
         cls=cls,
         parse_float=parse_float, parse_int=parse_int,
@@ -85,7 +82,7 @@ def loads(s, encoding=None,
             parse_int=None,
             parse_constant=None,
             ordered: bool = False,
-            **kw) -> Union[List, dict, BOrderedDict]:
+            **kw) -> Union[dict, BOrderedDict]:
     if ordered:
         return json.loads(s,
             cls=cls,

@@ -18,7 +18,7 @@ __all__ = ['TextWrapper', 'wrap', 'fill', 'dedent', 'indent', 'shorten']
 # same as any other whitespace char, which is clearly wrong (it's a
 # *non-breaking* space), 2) possibly cause problems with Unicode,
 # since 0xa0 is not in range(128).
-_whitespace = b'\t\n\x0b\x0c\r '
+_whitespace: bytes = b'\t\n\x0b\x0c\r '
 
 class TextWrapper:
     """
@@ -69,8 +69,8 @@ class TextWrapper:
         Append to the last line of truncated text.
     """
 
-    unicode_whitespace_trans = bytes.maketrans(_whitespace, 
-                                                b" "*len(_whitespace)) 
+    unicode_whitespace_trans = bytes.maketrans(_whitespace,
+                                                b" "*len(_whitespace))
     # This funky little regex is just the trick for splitting
     # text up into word-wrappable chunks.  E.g.
     #   "Hello there -- you goof-ball, use the -b option!"
@@ -78,7 +78,7 @@ class TextWrapper:
     #   Hello/ /there/ /--/ /you/ /goof-/ball,/ /use/ /the/ /-b/ /option!
     # (after stripping out empty strings).
     wordsep_re = re.compile(
-        (r'(\s+|'                                  # any whitespace
+        (r'(\s+|'                                 # any whitespace
         r'[^\s\w]*\w+[^0-9\W]-(?=\w+[^0-9\W])|'   # hyphenated words
         r'(?<=[\w\!\"\'\&\.\,\?])-{2,}(?=\w))').encode('utf-8'))   # em-dash
 
@@ -439,7 +439,7 @@ def dedent(text):
     if 0 and margin:
         for line in text.split(b"\n"):
             assert not line or line.startswith(margin), \
-                   "line = %r, margin = %r" % (line.decode('utf-8'), 
+                   "line = %r, margin = %r" % (line.decode('utf-8'),
                                                 margin.decode('utf-8'))
 
     if margin:

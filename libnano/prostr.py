@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-'''
-libnano.prostr
+'''libnano.prostr
 ~~~~~~~~~~~~~~~~~~~
 
 Methods to translate from DNA/RNA to amino acid sequence and vice versa

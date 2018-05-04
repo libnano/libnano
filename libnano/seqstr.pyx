@@ -1,6 +1,5 @@
 #cython: boundscheck=False, wraparound=False
-"""
-libnano.seqstr
+"""libnano.seqstr
 ~~~~~~~~~~~~~~
 
 Basic operations of DNA, RNA, and amino acid (AA) sequences (e.g.,
@@ -53,7 +52,7 @@ def randomer(int length) -> str:
     Returns:
         str
     """
-    choices = ['A', 'C', 'G', 'T']
+    choices = ('A', 'C', 'G', 'T')
     f = random.choice
     return ''.join([f(choices) for i in range(length)])
 # end def

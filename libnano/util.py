@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""
-    libnano.util
+"""libnano.util
     ~~~~~~~~~~~
 
     Helpful functions and data structures
@@ -12,29 +11,33 @@ import sys
 import math
 from itertools import chain
 from collections import Counter
+from typing import (
+    List,
+    Dict
+)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~ DNA Sequence Manipulation ~~~~~~~~~~~~~~~~~~~~~~~~ #
 
 _DNAcomp = str.maketrans('ACGTacgt','TGCATGCA')
 
-def reverseComplement(seq):
+def reverseComplement(seq: str) -> str:
     return seq.translate(_DNAcomp)[::-1]
 # end def
 
 rc = reverseComplement
 
-def complement(seq):
+def complement(seq: str) -> str:
     return seq.translate(_DNAcomp)
 # end def
 
-def randomSeq(length):
+def randomSeq(length: int) -> str:
     return ''.join([random.choice('ATGC') for x in range(length)])
 # end def
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Filters ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ (from nucleic) ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
-def gc_percent(seq, gc_min, gc_max):
+def gc_percent(seq, gc_min: float, gc_max: float):
     ''' Return True if seq has a gc percentage betweeen gc_min and gc_max
     (inclusive)
 
@@ -45,8 +48,8 @@ def gc_percent(seq, gc_min, gc_max):
     return gc_min <= gc/len(seq) <= gc_max
 
 
-def gc_run(seq, run_length):
-    ''' Return True of seq has a maximum GC run length <= run_length
+def gc_run(seq: str, run_length: int) -> bool:
+    '''Return ``True`` of seq has a maximum GC run length <= run_length
     '''
     lrun = 0
     for b in seq:
@@ -59,8 +62,8 @@ def gc_run(seq, run_length):
     return True
 
 
-def at_run(seq, run_length):
-    ''' Return True of seq has a maximum AT run length <= run_length
+def at_run(seq: str, run_length: int) -> bool:
+    '''Return ``True`` of seq has a maximum AT run length <= run_length
     '''
     lrun = 0
     for b in seq:
@@ -73,8 +76,8 @@ def at_run(seq, run_length):
     return True
 
 
-def homopol_run(seq, run_length):
-    ''' Return True of seq has a maximum homopolymer run length <= run_length
+def homopol_run(seq: str, run_length: int) -> bool:
+    '''Return ``True`` of seq has a maximum homopolymer run length <= run_length
     '''
     prev = ''
     lrun = 1
@@ -89,8 +92,13 @@ def homopol_run(seq, run_length):
     return True
 
 
-def max_run(seq, max_a=None, max_t=None, max_g=None, max_c=None,
-                 max_at=None, max_gc=None):
+def max_run(seq: str,
+            max_a: float = None,
+            max_t: float = None,
+            max_g: float = None,
+            max_c: float = None,
+            max_at: float = None,
+            max_gc: float = None):
     ''' Return True of seq has maximum A, T, G, C, AT, or GC run <= a provided
     maximum.
     '''
@@ -126,18 +134,17 @@ def max_run(seq, max_a=None, max_t=None, max_g=None, max_c=None,
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Word dictionary ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 
 class SeqSet(object):
-    def __init__(self, max_run):
-        self.seqs = []
+    def __init__(self, max_run: int):
+        self.seqs: List[str] = []
         self.max_run = max_run
 
-    def addSeq(self, seq):
+    def addSeq(self, seq: str):
         self.seqs.append(seq)
 
     def reset(self):
         self.seqs = []
-        self.word_list = []
 
-    def checkAgainstWords(self, seq):
+    def checkAgainstWords(self, seq: str) -> bool:
         for seq2 in self.seqs:
             run_len = 0
             for idx, b in enumerate(seq):
@@ -150,7 +157,7 @@ class SeqSet(object):
             return True
 
 
-def genWordList(seq, word_size, include_rc=True):
+def genWordList(seq: str, word_size: int, include_rc: bool = True) -> List[str]:
     word_list = [seq[idx:idx+word_size].upper() for idx in
                  range(len(seq) - word_size)]
     if include_rc:
@@ -160,12 +167,12 @@ def genWordList(seq, word_size, include_rc=True):
     return word_list
 # end def
 
-def genWordDict(seq, word_size, include_rc=True):
+def genWordDict(seq: str, word_size: int, include_rc: bool = True) -> dict:
     word_list = genWordList(seq, word_size, include_rc)
     return Counter(word_list)
 # end def
 
-def duplicateWordCount(seq, word_size, include_rc=True):
+def duplicateWordCount(seq: str, word_size: int, include_rc: bool = True) -> int:
     word_list = genWordList(seq, word_size, include_rc)
     return len([k for k,v in Counter(word_list).items() if v>1])
 # end def
@@ -173,14 +180,14 @@ def duplicateWordCount(seq, word_size, include_rc=True):
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~ Random sequence generation ~~~~~~~~~~~~~~~~~~~~~~~ #
 
-def _buildBaseList(probs):
+def _buildBaseList(probs: dict) -> list:
     base_list = []
     # print("the probs", probs)
     for base, freq in probs.items():
         base_list += [base] * freq
     return base_list
 
-def weighted_choice(weights):
+def weighted_choice(weights) -> float:
     choice = random.random() * sum(weights)
     for i, w in enumerate(weights):
         choice -= w

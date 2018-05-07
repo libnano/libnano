@@ -199,7 +199,7 @@ addExtension(
 # Restriction dataset(s)
 res_data_fp = pjoin(MODULE_PATH, 'datasets')
 libnano_files += [rpath(pjoin(root, f), MODULE_PATH) for root, _, files in
-                  os.walk(res_data_fp) for f in files if '.json' in f]
+                  os.walk(res_data_fp) for f in files if ('.json' in f or '.yaml' in f)]
 
 addExtension(
     'libnano.datastructures.seqrecord.feature',
@@ -272,7 +272,10 @@ cython_ext_list = cythonize(cython_extensions, include_path=common_include)
 install_requires = ['six',
                     'cython',
                     'jinja2',
-                    'numpy'
+                    'numpy',
+                    'PyYAML',
+                    'requests',
+                    'Click'
                     ]
 
 setup(

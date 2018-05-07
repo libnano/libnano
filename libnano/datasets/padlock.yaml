@@ -1,0 +1,10 @@
+T2S_SEQ:              ACTTCAGCTGCCCCGGGTGAAGA
+# Calculated on 2018.03.07 using Randomers and filtering GC content, clamping,
+# Tm > 60, and heterodimerization
+ILLLUMINA_SEQ:        CAGGACGCGCTCGAGGCATG
+SCAFFOLD_SEQ_SOLID:   ["{armr}TTCCTTT{barcode}{t2s5p}", "{t2s3p}TCTT{arml}"]
+SCAFFOLD_SEQ_ILUMINA: ["{armr}TTCCTTT{t2s5p}",
+                      "{t2s3p}{barcode}TCTT{arml}"]
+SCAFFOLD_SEQ_HYBRID:  ["{armr}TTT{il5p}]",
+                      "{il3p}{barcode}{t2s5p}",
+                      "{t2s3p}TCTT{arml}"]

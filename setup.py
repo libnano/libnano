@@ -275,7 +275,7 @@ install_requires = ['six',
                     'numpy',
                     'PyYAML',
                     'requests',
-                    'Click'
+                    'click'
                     ]
 
 setup(

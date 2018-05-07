@@ -22,9 +22,9 @@ install:
   # Useful for debugging any issues with conda
   - conda info -a
 
-  - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION cython numpy setuptools six jinja2 nose
+  - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION cython numpy setuptools six jinja2 pytest
   - source activate test-environment
   - python setup.py build_ext --inplace
 
 script:
-  - nosetests -v
+  - pytest

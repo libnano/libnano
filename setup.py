@@ -275,6 +275,7 @@ install_requires = ['six',
                     'numpy',
                     'PyYAML',
                     'requests',
+                    'primer3-py',
                     'click'
                     ]
 

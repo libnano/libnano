@@ -18,7 +18,8 @@ install:
   # Useful for debugging any issues with conda
   - conda info -a
 
-  - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION cython numpy setuptools six jinja2 click PyYAML requests primer3-py pytest
+  - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION cython numpy setuptools six jinja2 click PyYAML requests pytest
+  - pip3 install primer3-py
   - source activate test-environment
   - python setup.py build_ext --inplace
 

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-'''gsp.barcode_tools
+'''libnano.barcode_tools
 
 Barcode generation and assignment methods
 
@@ -21,7 +21,7 @@ BARCODE_SETS_DIR = os.path.join(DATASET_DIR, 'barcode_sets')
 
 
 def _getCliques(seq_list, num_needed, min_hd=2, cutoff=1):
-    ''' Helper function for finding sequence groups w/ min inter-seq hd
+    '''Helper function for finding sequence groups w/ min inter-seq hd
     '''
     hg = hammingGraph(seq_list)
     f = np.vectorize(lambda x: x[0])
@@ -32,7 +32,7 @@ def _getCliques(seq_list, num_needed, min_hd=2, cutoff=1):
 
 
 def getBarcodeSet(set_name, path=None):
-    ''' Load a pre-computed barcode set from the `barcode_sets` folder
+    '''Load a pre-computed barcode set from the `barcode_sets` folder
 
     Args:
         set_name (str): barcode set filename w/o .json extension
@@ -72,7 +72,7 @@ class BarcodeGen(object):
             json.dump(self.bcs, fh)
 
     def getBc(self, remove=False):
-        ''' Gets a barcode but does not remove it from the internal set
+        '''Gets a barcode but does not remove it from the internal set
         '''
         bc_seq = random.choice(self.bcs)
         if remove:
@@ -80,7 +80,7 @@ class BarcodeGen(object):
         return bc_seq
 
     def removeBc(self, bc_seq):
-        ''' Removes a barcode from the internal set
+        '''Removes a barcode from the internal set
         '''
         try:
             self.bcs.remove(bc_seq)
@@ -88,7 +88,7 @@ class BarcodeGen(object):
             pass
 
     def findHammingSet(self, min_hd=2, set_size=50, cutoff=1, raise_exc=True):
-        ''' Find a subset of the current bc meeting the `min_hd` and `set_size`
+        '''Find a subset of the current bc meeting the `min_hd` and `set_size`
 
         Args:
             min_hd (int): min hamming distance between any two set members
@@ -116,7 +116,7 @@ class BarcodeGen(object):
         return filtered_bcs
 
     def _filterBcs(self, bcs, bc_len):
-        ''' Remove homopolymers of 4 or more and high GC content bcs
+        '''Remove homopolymers of 4 or more and high GC content bcs
         '''
         filtered_bcs = []
         homopols = ['AAAA', 'TTTT', 'GGGG', 'CCCC']

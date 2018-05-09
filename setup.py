@@ -296,5 +296,9 @@ setup(
     classifiers=CLASSIFIERS,
     script_args=script_args,
     zip_safe=False,
-    install_requires=install_requires
+    install_requires=install_requires,
+    entry_points='''
+        [console_scripts]
+        geneprober=libnano.scripts.geneprober:cli
+    '''
 )

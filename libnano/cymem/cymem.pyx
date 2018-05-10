@@ -6,6 +6,8 @@ from libc.string cimport memcpy
 
 """
 modified to be more like standard lib malloc, calloc, and realloc
+
+see: https://github.com/explosion/cymem for the current version
 """
 
 cdef class Pool:

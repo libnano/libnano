@@ -14,6 +14,11 @@ build
 libnano/cymem/*.c
 libnano/datastructures/*.c
 libnano/helpers/*.c
+libnano/search/*.c
+libnano/metric/*.c
+libnano/*.c
+
+libnano/helpers/c_util.pxd
 
 libnano/core/seqrecord/*.c
 libnano/core/seqsearch/*.c
@@ -22,8 +27,12 @@ libnano/core/*.c
 libnano/datastructures/seqrecord/*.c
 libnano/dev/*.c
 
+.pytest_cache/
+
 dist/
 libnano.egg-info/
 
 node_modules/
 scratch_nocommit/
+
+scratch/

@@ -2,7 +2,6 @@
 language: python
 python:
   # We don't actually use the Travis Python, but this keeps it organized.
-  - "2.7"
   - "3.6"
 install:
   - sudo apt-get update
@@ -10,11 +9,7 @@ install:
   # conda line below will keep everything up-to-date.  We do this
   # conditionally because it saves us some downloading if the version is
   # the same.
-  - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
-      wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh;
-    else
-      wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh;
-    fi
+  - wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh;
   - bash miniconda.sh -b -p $HOME/miniconda
   - export PATH="$HOME/miniconda/bin:$PATH"
   - hash -r
@@ -23,10 +18,10 @@ install:
   # Useful for debugging any issues with conda
   - conda info -a
 
-  - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION numpy cython setuptools six jinja2
+  - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION pip cython numpy setuptools six jinja2 click PyYAML requests pytest
   - source activate test-environment
+  - pip install primer3-py
   - python setup.py build_ext --inplace
-  # - python setup.py build_ext --inplace --dev
 
 script:
-  nosetests -v
+  - pytest

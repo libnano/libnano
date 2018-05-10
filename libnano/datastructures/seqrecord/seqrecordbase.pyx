@@ -1,34 +1,47 @@
-from libnano.fileio import gb_reader, gb_writer
-from libnano.fileio import fasta
-from libnano.datastructures.seqrecord.feature import (Feature, DummyFeature, 
-                                                      locationStr2Feature)
-from libnano.datastructures.seqrecord.featuretypes import FeatureTypes
-from cpython.ref cimport PyObject, Py_XINCREF, Py_INCREF
-from cpython.slice cimport PySlice_GetIndicesEx, PySlice_Check
-
-from libnano.datastructures.list_bisect cimport (bisect_left, bisect_right, insort_left)
-from cpython.list cimport PyList_New, PyList_SET_ITEM, PyList_Size
+# -*- coding: utf-8 -*-
 import json
 import io
 import os.path
-from copy import copy, deepcopy
+from copy import (
+    copy,
+    deepcopy
+)
+from typing import (
+    List,
+    Union
+)
 
-def fromFasta(fasta_fn, alphabet='DNA', not_allowed=None):
-    recs = fasta.parseFasta(fasta_fn, alphabet, not_allowed)
-    out = []
-    for rec in recs:
-        sr = SeqRecord()
-        sr.name = rec[0]
-        sr.seq = rec[1]
-        out.append(sr)
-    return out
-# end def
+from cpython.list cimport (
+    PyList_New,
+    PyList_SET_ITEM,
+    PyList_Size
+)
+from cpython.ref cimport (
+    PyObject,
+    Py_XINCREF,
+    Py_INCREF
+)
+from cpython.slice cimport (
+    PySlice_GetIndicesEx,
+    PySlice_Check
+)
 
-def fromGenbankLike(fn_string, feature_types=None):
-    sr = SeqRecord(feature_types=feature_types)
-    sr.fromGenbankLike(fn_string)
-    return sr
-# end def
+from libnano.fileio import (
+    gb_reader,
+    gb_writer
+)
+from libnano.fileio import fasta
+from libnano.datastructures.seqrecord.feature import (
+    Feature,
+    DummyFeature,
+    locationStr2Feature
+)
+from libnano.datastructures.seqrecord.featuretypes import FeatureTypes
+from libnano.datastructures.list_bisect cimport (
+    bisect_left,
+    bisect_right,
+    insort_left
+)
 
 cdef class SeqRecord:
     """
@@ -42,7 +55,7 @@ cdef class SeqRecord:
     cdef dict feature_instance_dict
     cdef list feature_instance_list
 
-    def __init__(self, feature_types=None):
+    def __init__(self, feature_types: FeatureTypes = None):
         cdef object obj
         self.feature_instance_dict = {}
         self.feature_instance_list = []
@@ -87,14 +100,12 @@ cdef class SeqRecord:
             self.sequence = value
 
     def __contains__(self, feature_type):
-        """ allow for
-            feature_type in SeqRecord()
-        construction
+        """allow for ``feature_type in SeqRecord()`` construction
         """
         return feature_type in self.feature_instance_dict
 
     def __getitem__(self, in_slice):
-        """ slicing a SeqRecord.  Does not support step in slice
+        """slicing a SeqRecord.  Does not support step in slice
         but does support negative indexing
 
         information is dropped
@@ -106,7 +117,7 @@ cdef class SeqRecord:
         if PySlice_Check(in_slice):
             PySlice_GetIndicesEx(in_slice, seq_length, &start, &stop, &step, &slicelength)
         else:
-            start = in_slice 
+            start = in_slice
             if seq_length < start:
                 raise IndexError("Index {} out of bounds".format(in_slice))
             else:
@@ -155,14 +166,14 @@ cdef class SeqRecord:
         cdef Py_ssize_t len_features = PyList_Size(feature_list)
         for i in range(len_features):
             fobj = feature_list[i]
-            f = locationStr2Feature(fobj['type'], 
-                                    fobj['location'], 
+            f = locationStr2Feature(fobj['type'],
+                                    fobj['location'],
                                     fobj['qualifiers'])
             self.addFeature(f)
         # end for
     # end def
 
-    def fromGenbankLike(self, fn_string):
+    def fromGenbankLike(self, fn_string: str):
         extension = os.path.splitext(fn_string)[1]
         if extension == '.json':
             with io.open(fn_string, 'r', encoding='utf-8') as fd_json:
@@ -176,7 +187,7 @@ cdef class SeqRecord:
         self.info = obj['info']
     # end def
 
-    cdef serializeFeatures(self, clone):
+    cdef list serializeFeatures(self, bint clone):
         cdef object item
         cdef Py_ssize_t i
         cdef list feature_instance_list = self.feature_instance_list
@@ -191,9 +202,18 @@ cdef class SeqRecord:
         return out
     # end def
 
-    def dump(self, clone=True, to_json=False, to_json_file=None):
-        """
-        Create a dictionary of the SeqRecord
+    def dump(self,  clone: bool = True,
+                    to_json: bool = False,
+                    to_json_file: str = None) -> Union[str, dict]:
+        """Create a dictionary or string of the :class:`SeqRecord`
+
+        Args:
+            clone: whether to clone the features or not
+            to_json: True returns a string.  False returns a dictionary
+            to_json_file: whether to write to a file
+
+        Returns:
+            dictionary or a string
         """
         d = { 'seq': self.sequence,
                 'features': self.serializeFeatures(clone),
@@ -204,21 +224,19 @@ cdef class SeqRecord:
         elif to_json_file is not None:
             with io.open(to_json_file, 'w', encoding='utf-8') as fd:
                 fd.write(json.dumps(d, indent=4))
-            return None
-        else:
-            return d 
+        return d
     # end def
 
-    def toGenBank(self, fn_string, order_qualifiers=False):
-        return gb_writer.write(fn_string, 
+    def toGenBank(self, fn_string: str, order_qualifiers: bool = False):
+        return gb_writer.write(fn_string,
                                 self.dump(clone=False),
                                 order_qualifiers=order_qualifiers)
 
-    def toFasta(self, fn_string):
+    def toFasta(self, fn_string: str):
         description = self.info['name']
         return fasta.write(fn_string, [(description, self.sequence)])
 
-    cpdef addFeature(self, feature, description=None):
+    cpdef addFeature(self, feature: Feature, description: str = None):
         location = feature.location
         feature_name = feature.name()
         feature_types = self.feature_types
@@ -232,14 +250,14 @@ cdef class SeqRecord:
             ft_id = feature_types.getFTID(feature_name)
 
         insort_left(self.feature_instance_list, feature, 0, -1)
-        
+
         if feature_name in self.feature_instance_dict:
             insort_left(feature_instance_dict[feature_name], feature, 0, -1)
         else:
             feature_instance_dict[feature_name] = [feature]
     # end def
 
-    cpdef removeFeature(self, feature):
+    cpdef removeFeature(self, feature: Feature):
         cdef Py_ssize_t idx
         feature_name = feature.name()
 
@@ -252,7 +270,7 @@ cdef class SeqRecord:
             raise ValueError("removeFeature: feature not in SeqRecord")
         feature_instance_list.pop(idx)
 
-        
+
         ilist = feature_instance_dict[feature_name]
         ilist.remove(feature)
         if len(ilist) == 0:
@@ -270,9 +288,28 @@ cdef class SeqRecord:
     # end def
 
     def iterFeatures(self):
-        """ iterator and not the list itself since we must not
+        """iterator and not the list itself since we must not
         expose the feature_instance_list object itself
         """
         return iter(self.feature_instance_list)
 # end class
 
+def fromFasta(  fasta_fn: str,
+                alphabet: str = 'DNA',
+                not_allowed: str = None) -> List[SeqRecord]:
+    recs = fasta.parseFasta(fasta_fn, alphabet, not_allowed)
+    out = []
+    for rec in recs:
+        sr = SeqRecord()
+        sr.name = rec[0]
+        sr.seq = rec[1]
+        out.append(sr)
+    return out
+# end def
+
+def fromGenbankLike(fn_string: str,
+                    feature_types: FeatureTypes = None) -> SeqRecord:
+    sr = SeqRecord(feature_types=feature_types)
+    sr.fromGenbankLike(fn_string)
+    return sr
+# end def

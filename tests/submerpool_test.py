@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from __future__ import print_function
 import sys
 
@@ -5,16 +6,21 @@ import random
 import unittest
 import re
 import time
-from os.path import join, abspath, dirname
+from os.path import (
+    join,
+    abspath,
+    dirname
+)
 
-# For package imports
-# sys.path.insert(0, abspath(join(dirname(__file__), '..')))
-
-# from libnano.core.seqsearch import submerpool, seedfinder
-from libnano.fileio import fasta
 import _setup
 
-LOCAL_DIR = abspath(dirname(__file__))
+from libnano.search import (
+    submerpool,
+    seedfinder
+)
+from libnano.fileio import fasta
+
+LOCAL_DIR: str = abspath(dirname(__file__))
 
 """ TODO Fix this file for the submer module
 
@@ -58,13 +64,13 @@ class TestSubmer(unittest.TestCase):
             m = random.randint(5, 20)
             k = random.randint(1,3)
             sd_list = seedfinder.findSeed(m, k)
-            tbl = submer.SubmerPoolSearch([self.mg1655], m, mismatches=k)
+            tbl = submerpool.SubmerPoolSearch([self.mg1655], m, mismatches=k)
             self.assertNotEqual(tbl, None)
         # test no mismatchs
-        tbl = submer.SubmerPoolSearch([self.mg1655], m, mismatches=0)
+        tbl = submerpool.SubmerPoolSearch([self.mg1655], m, mismatches=0)
         self.assertNotEqual(tbl, None)
         # test no mismatchs
-        tbl = submer.SubmerPoolSearch([self.mg1655], m, force_hamming=True)
+        tbl = submerpool.SubmerPoolSearch([self.mg1655], m, force_hamming=True)
         self.assertEqual(tbl.getMatchers(), None)
     # end def
 
@@ -75,7 +81,7 @@ class TestSubmer(unittest.TestCase):
         for i in range(2):
             print("* Round %d: %d, %d" % (i, m, k))
             target = ''.join([random.choice('ATGC') for j in range(m)])
-            tbl = submer.SubmerPoolSearch([self.mg1655], m, mismatches=k)
+            tbl = submerpool.SubmerPoolSearch([self.mg1655], m, mismatches=k)
             mt_start = time.time()
             mt = tbl.find(target)
             if len(mt) == 0:

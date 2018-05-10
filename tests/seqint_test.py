@@ -1,25 +1,13 @@
-import sys
-
+# -*- coding: utf-8 -*-
 import random
 import unittest
-from os.path import join, abspath, dirname
 
-# For package imports
-sys.path.insert(0, abspath(join(dirname(__file__), '..')))
-
-from libnano.core import seqint
 import _setup
+from libnano import seqint
 
 # ~~~~~ Python implementations of sequence manipulations for comparison ~~~~~ #
 
-_PY3 = sys.version_info[0] == 3
-
-if _PY3:
-    maketrans = str.maketrans
-else:
-    from string import maketrans
-
-_DNAcomp = maketrans('ACGTacgt','TGCATGCA')
+_DNAcomp = str.maketrans('ACGTacgt','TGCATGCA')
 
 def reverseComplement(seq):
     return seq.translate(_DNAcomp)[::-1]

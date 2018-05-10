@@ -1,18 +1,23 @@
-"""
-    libnano
+# -*- coding: utf-8 -*-
+"""libnano
     ~~~~~~
 
     DNA folding and thermodynamics toolkit
 
 """
+__author__: str = "Nick Conway, Ben Pruitt"
+__copyright__ = 'Copyright 2018, Nick Conway; Wyss Institute Harvard University'
+__license__ = 'GPL2'
+__version__: str = '0.1.2.0'
+
 import os
-LOCAL_DIR = os.path.dirname(os.path.realpath(__file__))
+from typing import List
 
-def includes():
-    return [LOCAL_DIR]
+PACKAGE_DIR: str = os.path.dirname(os.path.realpath(__file__))
+DATASET_DIR: str = os.path.join(PACKAGE_DIR, 'datasets')
 
-from libnano.core import seqstr
 
-__author__ = "Nick Conway, Ben Pruitt"
-__all__ = ['seqstr', 'seqint', 'seqscreen']
-__version__ = '0.1.1.3'
+def includes() -> List[str]:
+    return [PACKAGE_DIR]
+
+

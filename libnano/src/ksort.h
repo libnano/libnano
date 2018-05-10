@@ -275,12 +275,13 @@ typedef struct {
     }                                                                   \
     void ks_sample_##name(size_t n, size_t r, type_t a[]) /* FIXME: NOT TESTED!!! */ \
     { /* reference: http://code.activestate.com/recipes/272884/ */ \
-        int i, k, pop = n; \
+        int i, k; \
+        int pop = (int) n; \
         for (i = (int)r, k = 0; i >= 0; --i) { \
             double z = 1., x = drand48(); \
             type_t tmp; \
             while (x < z) z -= z * i / (pop--); \
-            if (k != n - pop - 1) tmp = a[k], a[k] = a[n-pop-1], a[n-pop-1] = tmp; \
+            if (k != (int) (n - pop - 1)) tmp = a[k], a[k] = a[n-pop-1], a[n-pop-1] = tmp; \
             ++k; \
         } \
     }

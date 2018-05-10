@@ -1,18 +1,13 @@
+# -*- coding: utf-8 -*-
 from __future__ import print_function
-
-# For package imports
-import sys
-from os.path import join, abspath, dirname
-sys.path.insert(0, abspath(join(dirname(__file__), '..')))
-
-from libnano.core.seqsearch.seedmatch import SeedMatcher
-from libnano.core.seqsearch import seedfinder
-
 import random
 import unittest
-import _setup
 
-DEBUG = False
+import _setup
+from libnano.search.seedmatch import SeedMatcher
+from libnano.search import seedfinder
+
+DEBUG: bool = False
 
 class TestSeedMatch(unittest.TestCase):
 

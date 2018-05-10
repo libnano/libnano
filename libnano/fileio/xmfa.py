@@ -1,42 +1,49 @@
+# -*- coding: utf-8 -*-
 '''
 xmfa | xmfa.py
 ~~~~~~~~~~~~~~
 
-Lightweight XMFA parser. No dependencies. Files are parsed into simple 
+Lightweight XMFA parser. No dependencies. Files are parsed into simple
 namedtuples as documented below.
 
 '''
 from __future__ import print_function
-
 import re
 from collections import namedtuple
 import io
+from typing import List
 
-_sub_alignment_group = r'(?P<alignments>^>[^=]+)=(?P<notes>.*)$'
-_sub_alignment_group_re = re.compile(_sub_alignment_group, flags=re.M)
+_sub_alignment_group: str = r'(?P<alignments>^>[^=]+)=(?P<notes>.*)$'
+_sub_alignment_group_re: '_sre.SRE_Pattern' = re.compile(_sub_alignment_group, flags=re.M)
 
-_sub_alignment = r'^>\s*(?P<seq_num>\d+):(?P<start_idx>\d+)-'\
-                r'(?P<end_idx>\d+)\s*(?P<strand>[+|-])\s*'\
-                r'(?P<notes>[ \S]+)\s*?$(?P<seq>(?:[^=>]+)+)'
+_sub_alignment: str= (  r'^>\s*(?P<seq_num>\d+):(?P<start_idx>\d+)-'
+                        r'(?P<end_idx>\d+)\s*(?P<strand>[+|-])\s*'
+                        r'(?P<notes>[ \S]+)\s*?$(?P<seq>(?:[^=>]+)+)')
 
-_sub_alignment_re = re.compile(_sub_alignment, flags=re.M)
+_sub_alignment_re: '_sre.SRE_Pattern' = re.compile(_sub_alignment, flags=re.M)
 
-_ws_split = re.compile('\s+')
+_ws_split: '_sre.SRE_Pattern' = re.compile('\s+')
 
-SubAlignmentGroup = namedtuple('SubAlignmentGroup', ['alignments', 'notes'])
+SubAlignmentGroup: namedtuple = namedtuple( 'SubAlignmentGroup',
+                                            ['alignments', 'notes'])
 
-SubAlignment = namedtuple('SubAlignment',['seq_num', 'start_idx', 
-                                          'end_idx', 'strand', 'notes', 'seq'])
+SubAlignment: namedtuple = namedtuple('SubAlignment',
+                                        [   'seq_num',
+                                            'start_idx',
+                                            'end_idx',
+                                            'strand',
+                                            'notes',
+                                            'seq'])
 
 
-def removeWhitespace(raw_string):
-    ''' Remove all whitespace (including newlines/carriage returns) from 
+def removeWhitespace(raw_string: str) -> str:
+    ''' Remove all whitespace (including newlines/carriage returns) from
     a string.
     '''
 
     return ''.join(re.split(_ws_split, raw_string))
 
-def parseXMFA(xmfa_fp):
+def parseXMFA(xmfa_fp: str) -> List[SubAlignmentGroup]:
     """
     """
 
@@ -51,7 +58,7 @@ def parseXMFA(xmfa_fp):
 
     for sub_alignment_group in sub_alignment_groups:
 
-        sub_alignments = re.finditer(sub_alignment_comp, 
+        sub_alignments = re.finditer(sub_alignment_comp,
                                      sub_alignment_group.group('alignments'))
         sub_alignment_list = []
 

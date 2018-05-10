@@ -1,20 +1,31 @@
-import re
-import io
-from collections import OrderedDict
-
-try:
-    import six
-except ImportError:
-    from libnano.helpers import six
+# -*- coding: utf-8 -*-
 """
 http://www.ncbi.nlm.nih.gov/Sitemap/samplerecord.html
 http://www.insdc.org/documents/feature_table.html
 
 All keys are native strings, as are values, except the origin which is always
-a python2/3 byte string (not unicode)
+a python 3 byte string (not unicode)
 """
 
-def parse(filepath, is_ordered=False):
+import re
+import io
+import sys
+from collections import OrderedDict
+from typing import (
+    List,
+    Any
+)
+
+try:
+    import six
+except ImportError:
+    from libnano.helpers import six
+
+
+NEWLINE_STR: str = '\r\n' if sys.platform == 'win32' else '\n'
+NEWLINE_BYT: bytes = b'\r\n' if sys.platform == 'win32' else b'\n'
+
+def parse(filepath: str, is_ordered: bool = False) -> dict:
     """
     is_ordered == True will retain the order of the qualifiers
     """
@@ -25,7 +36,7 @@ def parse(filepath, is_ordered=False):
     with io.open(filepath, 'rb') as fd:
         raw = fd.read()
     start, _, origin = raw.partition(b"ORIGIN")
-    start, _, features = start.partition(b"FEATURES             Location/Qualifiers\n")
+    start, _, features = start.partition(b"FEATURES             Location/Qualifiers%s" % (NEWLINE_BYT))
 
     parseLocus(start, d_info)
     parseDefinition(start, d_info)
@@ -44,14 +55,14 @@ def parse(filepath, is_ordered=False):
     return d
 # end def
 
-def parseComment(d, comment):
+def parseComment(d: dict, comment: bytes):
     if comment != b'':
         # get rid of ApE empty comment
-        if comment.startswith(b"\nCOMMENT     "):
+        if comment.startswith(b"%sCOMMENT     " % (NEWLINE_BYT)):
             comment = comment[13:]
         idx_genome_asm_data = -1
         genome_asm_data_newline_count = 0
-        lines = comment.split(b'\n')
+        lines = comment.split(NEWLINE_BYT)
         lines = [line.strip() for line in lines]
         # print(lines)
         # handle ##Genome-Assembly-Data-START## edge case
@@ -67,66 +78,75 @@ def parseComment(d, comment):
         if idx_genome_asm_data < 0:
             d[b'comment'] = b" ".join(lines)
         else:
-            d[b'comment'] = [b" ".join(lines[:idx_genome_asm_data-2]),
-                    lines[idx_genome_asm_data:-1]]
+            d[b'comment'] = [
+                b" ".join(lines[:idx_genome_asm_data-2]),
+                lines[idx_genome_asm_data:-1]
+            ]
 # end def
 
-re_locus = [
-                "^LOCUS",                                   # field
-                " +(?P<name>[\w|.]+)",                      # name
-                " +(?P<length>[0-9]+) bp",                  # sequence length
-                "(?: +(?P<stranded>[a-z]{2})-)?",           # opt: ss, ds, ms
-                " *(?P<molecule_type>[a-z|A-Z|-|]{2,6})",     # molecule type
-                " +(?P<form>[\w]{6,8})?",               # linear or circular
-                " +(?P<gb_division>[a-z|A-Z]{3})?",          # Genbank division
-                " +(?P<mod_date>[0-9]+-[A-Z]+-[0-9]+)",     # modification date
-                ".*\n"                                      # match line end
-            ]
-re_locus = six.b("".join(re_locus))
+re_locus: List[str] = [
+    "^LOCUS",                                   # field
+    " +(?P<name>[\w|.]+)",                      # name
+    " +(?P<length>[0-9]+) bp",                  # sequence length
+    "(?: +(?P<stranded>[a-z]{2})-)?",           # opt: ss, ds, ms
+    " *(?P<molecule_type>[a-z|A-Z|-|]{2,6})",   # molecule type
+    " +(?P<form>[\w]{6,8})?",                   # linear or circular
+    " +(?P<gb_division>[a-z|A-Z]{3})?",         # Genbank division
+    " +(?P<mod_date>[0-9]+-[A-Z]+-[0-9]+)",     # modification date
+    ".*%s" % (NEWLINE_STR)                      # match line end
+]
+RE_LOCUS: bytes = six.b("".join(re_locus))
 
-re_definition = [   "^DEFINITION",                         # field
-                    " +(?P<definition>(?:.*\n)(?: .*\n)*)"  # look ahead assertion for multiline
-                ]
-re_definition = six.b("".join(re_definition))
+re_definition: List[str] = [
+    "^DEFINITION",                         # field
+    " +(?P<definition>(?:.*%s)(?: .*%s)*)" % (NEWLINE_STR, NEWLINE_STR) # look ahead assertion for multiline
+]
+RE_DEFINITION: bytes = six.b("".join(re_definition))
 
-re_accession = [   "^ACCESSION",                           # field
-                    " +(?P<accession>[\w|.]*)"   # look ahead assertion for multiline
-                    ".*\n"                                  # match line end
-                ]
-re_accession = six.b("".join(re_accession))
+re_accession: List[str] = [
+    "^ACCESSION",                 # field
+    " +(?P<accession>[\w|.]*)"   # look ahead assertion for multiline
+    ".*",                        # match line end
+    NEWLINE_STR
+]
+RE_ACCESSION: bytes = six.b("".join(re_accession))
 
-re_version = [   "^VERSION",                     # field
+re_version: List[str] = [   "^VERSION",                     # field
                     " +(?P<version>[\w|.]+)",    # version
                     " +GI:(?P<GI>[\w|.]+)"       # gi field
-                    ".*\n"                       # match line end
+                    ".*",                        # match line end
+                    NEWLINE_STR
                 ]
-re_version= six.b("".join(re_version))
+RE_VERSION: bytes= six.b("".join(re_version))
 
-re_dblink = b"^DBLINK +(?P<dblink>[\w|:| |.]+)\n"
-# re_dblink = "^DBLINK +(?P<dblink>[\w|\:| |.]+).*\n"
+RE_DBLINK: bytes = b"^DBLINK +(?P<dblink>[\w|:| |.]+)" + NEWLINE_BYT
 
-re_keywords = ["^KEYWORDS",
-                " +(?P<keywords>[\w|.]*)"
-                ".*\n"
-            ]
-re_keywords= six.b("".join(re_keywords))
-
-re_source = ["^SOURCE",
-            " +(?P<source>.*)",
-            "\n"
+re_keywords: List[str] = [
+    "^KEYWORDS",
+    " +(?P<keywords>[\w|.]*)"
+    ".*",
+    NEWLINE_STR
 ]
-re_source = six.b("".join(re_source))
+RE_KEYWORDS: bytes= six.b("".join(re_keywords))
 
-re_organism =  [   "^  ORGANISM",                          # field
-                    "(?: +(?P<organism0>(?:.*\n))?",
-                    "(?: +(?P<organism1>(?:.*\n)(?: .*\n)*))?)"  # multiline
-                ]
-re_organism = six.b("".join(re_organism))
+re_source: List[str] = [
+    "^SOURCE",
+    " +(?P<source>.*)",
+    NEWLINE_STR
+]
+RE_SOURCE: bytes = six.b("".join(re_source))
+
+re_organism: List[str] =  [
+    "^  ORGANISM",                          # field
+    "(?: +(?P<organism0>(?:.*%s))?" % NEWLINE_STR,
+    "(?: +(?P<organism1>(?:.*%s)(?: .*%s)*))?)" % (NEWLINE_STR, NEWLINE_STR) # multiline
+]
+RE_ORGANISM: bytes = six.b("".join(re_organism))
 
 
-re_comp_locus = re.compile(re_locus, flags=re.M)
-def parseLocus(raw, d_out):
-    m = re.match(re_comp_locus, raw)
+RE_COMP_LOCUS: '_sre.SRE_Pattern' = re.compile(RE_LOCUS, flags=re.M)
+def parseLocus(raw: bytes, d_out: dict):
+    m = re.match(RE_COMP_LOCUS, raw)
     d = m.groupdict()
     d['length'] = int(d['length'])
     _b = six.b
@@ -134,24 +154,24 @@ def parseLocus(raw, d_out):
         d_out[_b(k)] = v
 #end def
 
-re_comp_definition = re.compile(re_definition, flags=re.M)
-def parseDefinition(raw, d_out):
-    m = re.search(re_comp_definition, raw)
+RE_COMP_DEFINITION: '_sre.SRE_Pattern' = re.compile(RE_DEFINITION, flags=re.M)
+def parseDefinition(raw: bytes, d_out: dict):
+    m = re.search(RE_COMP_DEFINITION, raw)
     if m is None:
         d_out[b'definition'] = None
     else:
         d = m.groupdict()
         if d['definition'] is not None:
-            temp_l = d['definition'].split(b'\n')
+            temp_l = d['definition'].split(NEWLINE_BYT)
             temp_l = [x.strip() for x in temp_l]
             d_out[b'definition'] = b" ".join(temp_l)[:-1]
         else:
             d_out[b'definition'] = None
 #end def
 
-re_comp_accession = re.compile(re_accession, flags=re.M)
-def parseAccession(raw, d_out):
-    m = re.search(re_comp_accession, raw)
+RE_COMP_ACCESSION: '_sre.SRE_Pattern' = re.compile(RE_ACCESSION, flags=re.M)
+def parseAccession(raw: bytes, d_out: dict):
+    m = re.search(RE_COMP_ACCESSION, raw)
     if m is None:
         d_out[b'accession'] = None
     else:
@@ -159,9 +179,9 @@ def parseAccession(raw, d_out):
         d_out[b'accession'] = d['accession']
 # end def
 
-re_comp_version = re.compile(re_version, flags=re.M)
-def parseVersion(raw, d_out):
-    m = re.search(re_comp_version, raw)
+RE_COMP_VERSION: '_sre.SRE_Pattern' = re.compile(RE_VERSION, flags=re.M)
+def parseVersion(raw: bytes, d_out: dict):
+    m = re.search(RE_COMP_VERSION, raw)
     if m is None:
         d_out[b'version'] = None
     else:
@@ -170,9 +190,9 @@ def parseVersion(raw, d_out):
         d_out[b'GI'] = d['GI']
 # end def
 
-re_comp_dblink = re.compile(re_dblink, flags=re.M)
-def parseDBLink(raw, d_out):
-    m = re.search(re_comp_dblink, raw)
+RE_COMP_DBLINK: '_sre.SRE_Pattern' = re.compile(RE_DBLINK, flags=re.M)
+def parseDBLink(raw: bytes, d_out: dict):
+    m = re.search(RE_COMP_DBLINK, raw)
     if m is None:
         d_out[b'dblink'] = None
     else:
@@ -180,9 +200,9 @@ def parseDBLink(raw, d_out):
         d_out[b'dblink'] = d['dblink']
 # end def
 
-re_comp_keywords = re.compile(re_keywords, flags=re.M)
-def parseKeywords(raw, d_out):
-    m = re.search(re_comp_keywords, raw)
+RE_COMP_KEYWORDS: '_sre.SRE_Pattern' = re.compile(RE_KEYWORDS, flags=re.M)
+def parseKeywords(raw: bytes, d_out: dict):
+    m = re.search(RE_COMP_KEYWORDS, raw)
     if m is None:
         d_out[b'keywords'] = None
     else:
@@ -190,9 +210,9 @@ def parseKeywords(raw, d_out):
         d_out[b'keywords'] = d['keywords']
 # end def
 
-re_comp_source = re.compile(re_source, flags=re.M)
-def parseSource(raw, d_out):
-    m = re.search(re_comp_source, raw)
+RE_COMP_SOURCE: '_sre.SRE_Pattern' = re.compile(RE_SOURCE, flags=re.M)
+def parseSource(raw: bytes, d_out: dict):
+    m = re.search(RE_COMP_SOURCE, raw)
     if m is None:
         d_out[b'source'] = None
     else:
@@ -200,21 +220,21 @@ def parseSource(raw, d_out):
         d_out[b'source'] = d['source']
 # end def
 
-re_comp_organism = re.compile(re_organism, flags=re.M)
-def parseOrganism(raw, d_out):
-    m = re.search(re_comp_organism, raw)
+RE_COMP_ORGANISM: '_sre.SRE_Pattern' = re.compile(RE_ORGANISM, flags=re.M)
+def parseOrganism(raw: bytes, d_out: dict):
+    m = re.search(RE_COMP_ORGANISM, raw)
     if m is None:
         d_out[b'organism'] = [None, None]
     else:
         d = m.groupdict()
 
-        temp_l = d['organism0'].split(b'\n')
+        temp_l = d['organism0'].split(NEWLINE_BYT)
         temp_l = [x.strip() for x in temp_l]
         org0 = b" ".join(temp_l)[:-1]
 
         org1 = None
         if d['organism1'] is not None:
-            temp_l = d['organism1'].split(b'\n')
+            temp_l = d['organism1'].split(NEWLINE_BYT)
             temp_l = [x.strip() for x in temp_l]
             org1 = b" ".join(temp_l)[:-1]
 
@@ -229,32 +249,35 @@ REFERENCE   1  (bases 1 to 5028)
   JOURNAL   Yeast 10 (11), 1503-1509 (1994)
   PUBMED    7871890
 """
-re_reference = [    "^REFERENCE",
-                    " +(?P<r_index>[0-9]+)(?: +\(bases (?P<start_idx>[0-9]+) to (?P<end_idx>[0-9]+)\)){0,1}",
-                    ".*\n",
-                    "^  AUTHORS",
-                    " +(?P<authors>.+)\n",
-                    "^  TITLE",                             # field
-                    " +(?P<title>(?:.*\n)(?: .*\n)*)",      # multiline
-                    "^  JOURNAL",
-                    " +(?P<journal_info>.+\n(?: {12}.+\n)*)",
-                    "(?:^  PUBMED +(?P<pubmed>[0-9]+)\n){0,1}"
+re_reference: List[str] = [
+    "^REFERENCE",
+    " +(?P<r_index>[0-9]+)(?: +\(bases (?P<start_idx>[0-9]+) to (?P<end_idx>[0-9]+)\)){0,1}",
+    ".*",
+    NEWLINE_STR,
+    "^  AUTHORS",
+    " +(?P<authors>.+)",
+    NEWLINE_STR,
+    "^  TITLE",                                                     # field
+    " +(?P<title>(?:.*%s)(?: .*%s)*)" % (NEWLINE_STR, NEWLINE_STR), # multiline
+    "^  JOURNAL",
+    " +(?P<journal_info>.+%s(?: {12}.+%s)*)" % (NEWLINE_STR, NEWLINE_STR),
+    "(?:^  PUBMED +(?P<pubmed>[0-9]+)%s){0,1}" % (NEWLINE_STR)
 ]
-re_reference = six.b("".join(re_reference))
-re_comp_ref = re.compile(re_reference, flags=re.M)
+RE_REFERENCE = six.b("".join(re_reference))
+RE_COMP_REF: '_sre.SRE_Pattern' = re.compile(RE_REFERENCE, flags=re.M)
 
 
-def parseReference(raw):
+def parseReference(raw: bytes) -> List[dict]:
     ref_list = []
 
-    for m in re.finditer(re_comp_ref, raw):
+    for m in re.finditer(RE_COMP_REF, raw):
         d_temp = {}
         d = m.groupdict()
-        temp_l = d['title'].split(b'\n')
+        temp_l = d['title'].split(NEWLINE_BYT)
         temp_l = [x.strip() for x in temp_l]
         d_temp[b'title'] = b" ".join(temp_l)[:-1]
 
-        temp_l = d['journal_info'].split(b'\n')
+        temp_l = d['journal_info'].split(NEWLINE_BYT)
         temp_l = [x.strip() for x in temp_l]
         d_temp[b'journal_info'] = b" ".join(temp_l)[:-1]
 
@@ -274,7 +297,7 @@ def parseReference(raw):
     return ref_list
 #end def
 
-def addMultivalue(d, key, val):
+def addMultivalue(d: dict, key: str, val: Any):
     if key in d:
         old_val = d[key]
         if isinstance(old_val, list):
@@ -288,22 +311,24 @@ def addMultivalue(d, key, val):
 """
 see section 3.4 Location
 """
-re_feature = [  "^ {5}(?P<feature_key>[\w]+)",
-                " +(?P<location>.+)\n",
-                "(?P<qualifiers>(?:^ {21}.*\n)*)"
+re_feature: List[str] = [
+    "^ {5}(?P<feature_key>[\w]+)",
+    " +(?P<location>.+)",
+    NEWLINE_STR,
+    "(?P<qualifiers>(?:^ {21}.*%s)*)" % (NEWLINE_STR)
 ]
-re_feature = six.b("".join(re_feature))
-re_comp_feature = re.compile(re_feature, flags=re.M)
+RE_FEATURE: bytes = six.b("".join(re_feature))
+RE_COMP_FEATURE: '_sre.SRE_Pattern' = re.compile(RE_FEATURE, flags=re.M)
 
 
 # Qualifers can have tags with /'s in the value so it's tough to escape them
 # for now we need to split on "                     /"
 
-QUOTE_BYTE = b'\"'[0]
-def parseFeatures(raw, is_ordered=False):
+QUOTE_BYTE: int = b'\"'[0]
+def parseFeatures(raw: bytes, is_ordered: bool = False) -> List[dict]:
     features_list = []
 
-    for feature_match in re.finditer(re_comp_feature, raw):
+    for feature_match in re.finditer(RE_COMP_FEATURE, raw):
         feature = feature_match.groupdict()
         if 'qualifiers' not in feature:
             print(feature)
@@ -327,7 +352,7 @@ def parseFeatures(raw, is_ordered=False):
             key = q_list[0]
             yes_val = True
             try:
-                q_list = q_list[1].split(b'\n')
+                q_list = q_list[1].split(NEWLINE_BYT)
                 if q_list[-1] == b'':
                     q_list.pop() # remove ending '' item
             except:
@@ -354,10 +379,10 @@ def parseFeatures(raw, is_ordered=False):
     return features_list
 #end def
 
-def parseOrigin(raw):
+def parseOrigin(raw: bytes) -> bytes:
     out_list = []
 
-    all_lines = raw.split(b'\n')
+    all_lines = raw.split(NEWLINE_BYT)
     start = 1 if all_lines[0].strip() == b'' else 0
     for line in all_lines[start:-1]:
         temp = line.split()

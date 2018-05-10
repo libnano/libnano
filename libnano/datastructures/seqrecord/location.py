@@ -1,4 +1,8 @@
 from collections import namedtuple
+from typing import (
+    List,
+    Tuple
+)
 
 """
 compound_location = (operator, (remote, idx5p, idx3p, flags))
@@ -12,7 +16,7 @@ IS_PARTIAL_5 = 4
 Location = namedtuple('Location', ['remote', 'idx5p', 'idx3p', 'flags'])
 Operator = namedtuple('Operator', ['op', 'arg'])
 
-def createLocationStr(location):
+def createLocationStr(location: Location) -> str:
     if location[0] == 'join':
         return 'join(' + createLocationStr(location[1]) + ')'
     elif location[0] == 'order':
@@ -28,7 +32,7 @@ def createLocationStr(location):
         return createLocationStrBases(location)
 # end def
 
-def createLocationStrBases(loc):
+def createLocationStrBases(loc: Location) -> str:
     """
     location = (operator, (remote, idx5p, idx3p, flags))
     flags = <IS_PARTIAL_5 | IS_PARTIAL_3 | IS_INTERNAL]
@@ -50,7 +54,7 @@ def createLocationStrBases(loc):
     return ''.join(out_list)
 # end def
 
-def parseLocation(loc_str):
+def parseLocation(loc_str: str) -> Tuple:
     """
     assumes last character is a matching parenthesis
     """
@@ -64,7 +68,7 @@ def parseLocation(loc_str):
         return parseLocationBases(loc_str)
 #end def
 
-def parseJoinOrder(loc_str):
+def parseJoinOrder(loc_str: str) -> List[Tuple]:
     # find outer most commas
     comma_idx_list = []
     ignore_flag = 0
@@ -79,12 +83,12 @@ def parseJoinOrder(loc_str):
     out_list = []
     for i in comma_idx_list:
         out_list.append(parseLocation(loc_str[j:i]))
-        j = i+1
+        j = i + 1
     out_list.append(parseLocation(loc_str[j:]))
     return out_list
 #end def
 
-def parseLocationBases(bases_str):
+def parseLocationBases(bases_str: str) -> Location:
     # find remote if it exists
     if ':' in bases_str:
         bases_list = split(':')

@@ -1,19 +1,19 @@
+# -*- coding: utf-8 -*-
 import unittest
-import sys
 import os
-from os.path import join, abspath, dirname
+from os.path import (
+    join,
+    abspath,
+    dirname
+)
 import json
 from tempfile import NamedTemporaryFile
 import filecmp
 
-LOCAL_DIR = abspath(dirname(__file__))
-# For package imports
-sys.path.insert(0, abspath(join(dirname(__file__), '..')))
-
-from libnano.fileio import gb_reader, gb_writer
 import _setup
+from libnano.fileio import gb_reader, gb_writer
 
-IS_PY_3 = int(sys.version_info[0] > 2)
+LOCAL_DIR: str = abspath(dirname(__file__))
 
 class TestGBWriter(unittest.TestCase):
 
@@ -33,10 +33,8 @@ class TestGBWriter(unittest.TestCase):
         fn_gb = join(LOCAL_DIR, 'test_data', fn)
         d_gb = gb_reader.parse(fn_gb, is_ordered=True)
 
-        if IS_PY_3:
-            f_temp = NamedTemporaryFile(mode='w', delete=False, encoding='utf-8')
-        else:
-            f_temp = NamedTemporaryFile(mode='w', delete=False)
+        f_temp = NamedTemporaryFile(mode='w', delete=False, encoding='utf-8')
+
         gb_writer.write(f_temp, d_gb)
         f_temp.close()
         if should_be_true:

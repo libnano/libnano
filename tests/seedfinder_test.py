@@ -1,19 +1,12 @@
+# -*- coding: utf-8 -*-
 from __future__ import print_function
-import sys
-
 import random
 import unittest
 import re
 import time
-from os.path import join, abspath, dirname
 
-# For package imports
-sys.path.insert(0, abspath(join(dirname(__file__), '..')))
-
-from libnano.core.seqsearch import seedfinder
 import _setup
-
-LOCAL_DIR = abspath(dirname(__file__))
+from libnano.search import seedfinder
 
 """ TODO Fix this file for the submer module
 This also tests

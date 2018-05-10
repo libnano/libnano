@@ -1,14 +1,17 @@
+# -*- coding: utf-8 -*-
 import unittest
-import sys
-from os.path import join, abspath, dirname
 import json
 import io
-LOCAL_DIR = abspath(dirname(__file__))
-# For package imports
-sys.path.insert(0, abspath(join(dirname(__file__), '..')))
+from os.path import (
+    join,
+    abspath,
+    dirname
+)
 
-from libnano.fileio import gb_reader
 import _setup
+from libnano.fileio import gb_reader
+
+LOCAL_DIR: str = abspath(dirname(__file__))
 
 
 class TestGBReader(unittest.TestCase):

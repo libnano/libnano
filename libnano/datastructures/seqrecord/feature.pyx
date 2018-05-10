@@ -1,10 +1,19 @@
-from copy import copy, deepcopy
+from copy import (
+    copy,
+    deepcopy
+)
 
-from libnano.datastructures.seqrecord.location import (Location, parseLocation,
-                                                       createLocationStr)
+from libnano.datastructures.seqrecord.location import (
+    Location,
+    parseLocation,
+    createLocationStr
+)
 
-from cpython.object cimport Py_LT, Py_EQ, Py_NE
-
+from cpython.object cimport (
+    Py_LT,
+    Py_EQ,
+    Py_NE
+)
 
 cdef class DummyFeature:
     cdef public int start
@@ -32,7 +41,7 @@ def locationStr2Feature(feature_type, location_str, qualifiers=None):
     cdef object out_location
 
     location = parseLocation(location_str)
- 
+
     if len(location) == 2:
         if location[0] == "complement" and isinstance(location[1], Location):
             out_location = location[1]
@@ -70,7 +79,7 @@ cdef class Feature:
         return self.feature_type
 
     def __copy__(self):
-        return type(self)(copy(self.feature_type), 
+        return type(self)(copy(self.feature_type),
                             copy(self.location),
                             self.is_fwd,
                             deepcopy(self.qualifiers))
@@ -79,9 +88,9 @@ cdef class Feature:
     def copyForSlice(self, int offset):
         remote, idx5p, idx3p, flags = self.location
         loc = Location(remote, idx5p + offset, idx3p + offset, flags)
-        return type(self)(copy(self.feature_type), 
+        return type(self)(copy(self.feature_type),
                             loc,
-                            self.is_fwd, 
+                            self.is_fwd,
                             deepcopy(self.qualifiers))
 
     def __richcmp__(self, other, int op):
@@ -121,7 +130,7 @@ cdef class Feature:
                     'location': loc,
                     'qualifiers': self.qualifiers
             }
-    # end def 
+    # end def
 
 
     def addQualifier(self, qualifier, value):

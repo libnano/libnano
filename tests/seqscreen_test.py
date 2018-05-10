@@ -1,14 +1,9 @@
-import sys
-
+# -*- coding: utf-8 -*-
 import random
 import unittest
-from os.path import join, abspath, dirname
 
-# For package imports
-sys.path.insert(0, abspath(join(dirname(__file__), '..')))
-
-from libnano.core.seqmetric import seqscreen
 import _setup
+from libnano.metric import seqscreen
 
 class TestSeqFilter(unittest.TestCase):
 

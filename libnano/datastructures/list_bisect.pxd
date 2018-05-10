@@ -1,7 +1,17 @@
 from cpython.ref cimport PyObject
-from cpython.list cimport PyList_CheckExact, PyList_Insert, PyList_GET_ITEM
-from cpython.list cimport PyList_GetItem, PyList_Size
-from cpython.object cimport PyObject_RichCompareBool, Py_LT
+from cpython.list cimport (
+    PyList_CheckExact,
+    PyList_Insert,
+    PyList_GET_ITEM
+)
+from cpython.list cimport (
+    PyList_GetItem,
+    PyList_Size
+)
+from cpython.object cimport (
+    PyObject_RichCompareBool,
+    Py_LT
+)
 
 cdef extern from "Python.h":
     PyObject* PyExc_ValueError
@@ -14,8 +24,8 @@ PySequence_GetItem returns a new reference
 PyList_GetItem returns a borrowed reference
 PyList_GET_ITEM has no error checking
 """
-cdef inline Py_ssize_t bisect_right(object inlist, 
-                                    object item, 
+cdef inline Py_ssize_t bisect_right(object inlist,
+                                    object item,
                                     Py_ssize_t lo, Py_ssize_t hi) except -1:
     cdef object litem_cy
     cdef Py_ssize_t mid, res
@@ -46,7 +56,7 @@ cdef inline Py_ssize_t bisect_right(object inlist,
     return lo
 # end def
 
-cdef inline Py_ssize_t insort_right(object inlist, 
+cdef inline Py_ssize_t insort_right(object inlist,
                                     object item,
                                     Py_ssize_t lo, Py_ssize_t hi) except -1:
     cdef Py_ssize_t index
@@ -110,7 +120,7 @@ cdef inline Py_ssize_t insort_left(object inlist,
     else:
         PyErr_SetString(PyExc_ValueError, "inlist must be a list")
         return -1
-    
+
     return 0
 # end def
 

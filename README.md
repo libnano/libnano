@@ -23,4 +23,4 @@ The goal is to be fast so most everthing is written in Cython or C.
 ## Building libnano:
 
 * Run `python setup.py build_ext --inplace` to build in the package dir
-* Optional flag "--rmbuilt" removes old *.c and *.so files from previous builds
+* Optional flag `--rmbuilt` removes old `*.c` and `*.so` files from previous builds

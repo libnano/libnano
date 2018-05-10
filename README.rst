@@ -17,19 +17,26 @@ nucleic acid toolkit
 
 | Low level Python modules for working with DNA sequences
 | It was developed to be used as a cog in application specific libraries while avoiding bloat.<br/>
-| The goal is to be fast so most everthing is written in Cython or C.
+| The goal is to be fast so most many things are written in Cython or C.
+| This project is under active development, and hopefully documentation will by done soon
+| Python 3.6+ only now as the code base is typed for Cython and type-hinted for Python code
 
 Features
 ========
 
-- **fileio**: genbank and fasta reader/writers, xmfa
-- **seqrecord**: less featured replacement for Biopython SeqRecord
 - **seqstr**: Reverse Complement and Hamming Distance finders
 - **seqgraph**: find cliques of compatible sequences
 - **seqint**: convert sequences less than 32 bases to binary
 - **seqscreen**: filter sequences based on things like GC content
+- **ensemblrest**: Use the Ensembl REST API to look up gene and transcript
+  information
+- **prostr**: work with converting DNA to RNA to AA and back again
+- **barcode_tools**: generate DNA barcode sets with length and Hamming distance
+  restrictions
 - **seqsearch**: search sequences for features like restriction sites or
   "submers" (kmers with 0 or more mismatches to a subsequence in the target)
+- **fileio**: genbank and fasta reader/writers, xmfa
+- **seqrecord**: less featured replacement for Biopython SeqRecord
 
 Installation
 ============

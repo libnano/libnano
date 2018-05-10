@@ -29,8 +29,7 @@ Features
 - **seqint**: convert sequences less than 32 bases to binary
 - **seqscreen**: filter sequences based on things like GC content
 - **seqsearch**: search sequences for features like restriction sites or
-               "submers" (kmers with 0 or more mismatches to a subsequence
-               in the target)
+  "submers" (kmers with 0 or more mismatches to a subsequence in the target)
 
 Installation
 ============

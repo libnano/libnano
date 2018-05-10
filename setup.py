@@ -11,17 +11,16 @@ python setup.py sdist --formats=gztar
 
 
 """
+
 DESCRIPTION = ("Low-level nucleic acid sequence manipulation tools")
-LONG_DESCRIPTION = """
-**libnano** is a Python package
-License is GPLv2
-"""
+with open('README.rst') as fd:
+    LONG_DESCRIPTION = fd.read()
 
 DISTNAME = 'libnano'
 LICENSE = 'GPLv2'
 AUTHORS = "Nick Conway, Ben Pruitt"
 EMAIL = "nick.conway@wyss.harvard.edu"
-URL = ""
+URL = "https://github.com/libnano/libnano"
 DOWNLOAD_URL = ''
 CLASSIFIERS = [
     'Development Status :: 4 - Beta',

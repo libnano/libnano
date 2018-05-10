@@ -7,6 +7,7 @@ from libc.string cimport memcpy
 """
 modified to be more like standard lib malloc, calloc, and realloc
 
+branched from https://github.com/syllog1sm/cymem but
 see: https://github.com/explosion/cymem for the current version
 """
 

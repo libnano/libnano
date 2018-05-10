@@ -2,7 +2,7 @@
 libnano: Low-level nucleic acid sequence manipulation tools
 ===========================================================
 
-**libnano** %s beta
+**libnano** is beta
 
 .. image:: https://secure.travis-ci.org/libnano/libnano.png
   :target: https://travis-ci.org/libnano/libnano
@@ -15,9 +15,9 @@ libnano: Low-level nucleic acid sequence manipulation tools
 
 nucleic acid toolkit
 
-Low level Python modules for working with DNA sequences.<br/>
-It was developed to be used as a cog in application specific libraries while avoiding bloat.<br/>
-The goal is to be fast so most everthing is written in Cython or C.
+|Low level Python modules for working with DNA sequences
+|It was developed to be used as a cog in application specific libraries while avoiding bloat.<br/>
+|The goal is to be fast so most everthing is written in Cython or C.
 
 Features
 ========

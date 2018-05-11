@@ -270,7 +270,6 @@ cython_ext_list = cythonize(cython_extensions, include_path=common_include)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ rock and roll ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 install_requires = ['six',
                     'cython',
-                    'jinja2',
                     'numpy',
                     'PyYAML',
                     'requests',

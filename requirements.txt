@@ -1,0 +1,7 @@
+click>=6.7
+Cython>=0.28.2
+numpy>=1.14.3
+primer3-py>=0.5.5
+PyYAML>=3.12
+requests>=2.18.4
+six>=1.11.0

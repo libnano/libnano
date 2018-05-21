@@ -289,7 +289,7 @@ cdef class SeqRecord:
         else:
             ft_id = feature_types.getFTID(feature_name)
 
-        insort_left(self.fi_list, feature, 0, -1)
+        insort_left(fi_list, feature, 0, -1)
 
         if feature_name in fi_dict:
             insort_left(fi_dict[feature_name], feature, 0, -1)

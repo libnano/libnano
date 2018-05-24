@@ -274,8 +274,12 @@ install_requires = ['six>=1.11.0',
                     'PyYAML>=3.12',
                     'requests>=2.18.4',
                     'primer3-py>=0.5.5',
-                    'click>=6.7'
+                    'click>=6.7',
+                    'ssw-py>=0.2.3',
+                    'pygments'
                     ]
+if sys.platform == 'win32':
+    install_requires.append('colorama')
 
 setup(
     name=DISTNAME,

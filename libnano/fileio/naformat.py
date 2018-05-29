@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import sys
 from typing import (
     List,
@@ -22,8 +23,7 @@ from ssw import (
     force_align
 )
 
-LIBNANO_PATH = 'C:\\Users\\Nick\\Documents\\GitHub\\libnano'
-sys.path = [LIBNANO_PATH] + sys.path
+import __init__
 from libnano.seqstr import (
     reverseComplement,
     complement,
@@ -54,7 +54,7 @@ class MisMatchStyle(Style):
 def align_complement(fwd: str, rev: str):
     rc_rev: str = reverseComplement(rev)
     alignment: Alignment = force_align(rc_rev, fwd)
-    reverse_rev = reverse(rev)
+    reverse_rev: str = reverse(rev)
 
     fwd_idx0: int = alignment.reference_start
     fwd_idx1: int = alignment.reference_end

@@ -3,7 +3,6 @@
 fasta.py
 Read in FASTA files
 '''
-
 import re
 import io
 from typing import (

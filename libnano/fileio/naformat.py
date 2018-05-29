@@ -2,7 +2,8 @@
 import sys
 from typing import (
     List,
-    Dict
+    Dict,
+    Tuple
 )
 
 if sys.platform == 'win32':
@@ -51,9 +52,19 @@ class MisMatchStyle(Style):
     }
 # end class
 
-def align_complement(fwd: str, rev: str):
+def align_complement(fwd: str, rev: str) -> Tuple[Alignment, str]:
     rc_rev: str = reverseComplement(rev)
     alignment: Alignment = force_align(rc_rev, fwd)
+    return alignment, rc_rev
+
+def string_align_complement(
+        fwd: str,
+        rev: str,
+        do_print: bool = False,
+        do_highlight: bool = False) -> Tuple[str, str]:
+    rc_rev: str
+    alignment: Alignment
+    alignment, rc_rev = align_complement(fwd, rev)
     reverse_rev: str = reverse(rev)
 
     fwd_idx0: int = alignment.reference_start
@@ -77,36 +88,44 @@ def align_complement(fwd: str, rev: str):
     else:
         lo_delta = rev_idx0
         buffer_rev = ' '*(fwd_idx0 - rev_idx0)
-    fwd_lo_idx: int = fwd_idx0 - lo_delta
-    rev_lo_idx: int = rev_idx0 - lo_delta
-    total_delta: int = lo_delta + lim_hi
 
-    highlight_rev_list: List[str] = []
+    if do_highlight:
+        highlight_rev_list: List[str] = []
+        fwd_lo_idx: int = fwd_idx0 - lo_delta
+        rev_lo_idx: int = rev_idx0 - lo_delta
+        total_delta: int = lo_delta + lim_hi
 
-    for i in range(total_delta):
-        reverse_rev_base = reverse_rev[rev_lo_idx + i]
-        if rc_rev[rev_lo_idx + i] != fwd[fwd_lo_idx + i]:
-            highlight_rev_list.append(reverse_rev_base.lower())
-        else:
-            highlight_rev_list.append(reverse_rev_base)
+        for i in range(total_delta):
+            reverse_rev_base = reverse_rev[rev_lo_idx + i]
+            if rc_rev[rev_lo_idx + i] != fwd[fwd_lo_idx + i]:
+                highlight_rev_list.append(reverse_rev_base.lower())
+            else:
+                highlight_rev_list.append(reverse_rev_base)
 
-    highlight_unformat_rev: str = (
-        buffer_rev +
-        reverse_rev[:rev_lo_idx] +
-        ''.join(highlight_rev_list) +
-        reverse_rev[rev_lo_idx+total_delta:]
-    )
-    out: str = highlight(   highlight_unformat_rev,
-                            DNALex(),
-                            TermFormatter(style=MisMatchStyle))
-    print(buffer_fwd + fwd)
-    print(out.strip().translate(TRANTAB))
+
+            highlight_unformat_rev: str = (
+                buffer_rev +
+                reverse_rev[:rev_lo_idx] +
+                ''.join(highlight_rev_list) +
+                reverse_rev[rev_lo_idx+total_delta:]
+            )
+            out_rev: str = highlight(   highlight_unformat_rev,
+                                    DNALex(),
+                                    TermFormatter(style=MisMatchStyle))
+            out_rev = out_rev.strip().translate(TRANTAB)
+    else:
+        out_rev: str = buffer_rev + reverse_rev
+    out_fwd: str = buffer_fwd + fwd
+    if do_print:
+        print(out_fwd)
+        print(out_rev)
+    return out_fwd, out_rev
 # end def
 
 if __name__ == '__main__':
     def printer(x: int, fwd: str, rev:str) -> int:
         print("%d. " % x)
-        align_complement(fwd, rev)
+        string_align_complement(fwd, rev, do_print=True, do_highlight=True)
         return x + 1
     i = 0
     i = printer(i, "GGATCCAAA", "TTTGGATC")
@@ -118,3 +137,4 @@ if __name__ == '__main__':
     i = printer(i, "GGATCCAAA", "GGGGGATTGGATC")
     i = printer(i, "G"*10 +"GGATCCAAA", "TTTGGATC")
     i = printer(i, "G"*10 +"GGATCCAAA", "ATTTGCATC")
+    string_align_complement("G"*10 +"GGATCCAAA", "ATTTGCATC", do_print=True)

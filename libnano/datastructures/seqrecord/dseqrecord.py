@@ -1,9 +1,13 @@
 # -*- coding: utf-8 -*-
 import sys
+from typing import Tuple
 from os.path import abspath, dirname
-LIBNANO_PATH = abspath(dirname(dirname(dirname(dirname(__file__)))))
-print(LIBNANO_PATH)
-sys.path = [LIBNANO_PATH] + sys.path
+
+try:
+    import libnano
+except:
+    LIBNANO_PATH = dirname(dirname(dirname(dirname(__file__))))
+    sys.path = [LIBNANO_PATH] + sys.path
 
 from seqrecordbase import (
     SeqRecord,
@@ -134,7 +138,7 @@ class DSeq(object):
             raise ValueError("{} object not a DSeq".format(b))
     # end def
 
-    def five_prime_end(self) -> str:
+    def five_prime_end(self) -> Tuple[str, str]:
         '''Return what kind of end is overhanging the 5' end of the
         forward strand
         '''
@@ -142,7 +146,7 @@ class DSeq(object):
         return PRIME_ENUM_MAP.get(res), val
     # end def
 
-    def three_prime_end(self) -> str:
+    def three_prime_end(self) -> Tuple[str, str]:
         '''Return what kind of end is overhanging the 3' end of the forward
         strand
         '''

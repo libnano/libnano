@@ -5,6 +5,7 @@ from typing import (
     Dict,
     Tuple
 )
+from enum import IntEnum
 
 if sys.platform == 'win32':
     '''On Windows, calling init() will filter ANSI escape sequences out of any
@@ -13,8 +14,10 @@ if sys.platform == 'win32':
     from colorama import init as colorama_init
     colorama_init()
     from pygments.formatters import TerminalFormatter as TermFormatter
+    NEWLINE_STR: str = '\r\n'
 else:
     from pygments.formatters import TerminalTrueColorFormatter as TermFormatter
+    NEWLINE_STR: str = '\n'
 from pygments.style import Style
 from pygments.token import Text as pygText
 from pygments import highlight
@@ -30,6 +33,17 @@ from libnano.seqstr import (
     complement,
     reverse
 )
+
+class PrimeEnum(IntEnum):
+    FIVE = 0
+    THREE = 2
+    BLUNT = 4
+
+PRIME_ENUM_MAP = {
+    PrimeEnum.FIVE : 'five',
+    PrimeEnum.THREE : 'three',
+    PrimeEnum.BLUNT : 'blunt'
+}
 
 TRANTAB: Dict[int, int] = str.maketrans('acgt', 'ACGT')
 
@@ -56,15 +70,46 @@ def align_complement(fwd: str, rev: str) -> Tuple[Alignment, str]:
     rc_rev: str = reverseComplement(rev)
     alignment: Alignment = force_align(rc_rev, fwd)
     return alignment, rc_rev
+# end def
+
+def five_prime_type(alignment: Alignment, fwd: str, rev: str):
+    fwd_idx0: int = alignment.reference_start
+    rev_idx0: int = alignment.read_start
+    if fwd_idx0 > rev_idx0:
+        return PrimeEnum.FIVE, fwd[:fwd_idx0]
+    elif fwd_idx0 < rev_idx0:
+        return PrimeEnum.THREE, reverse(reverse(rev)[:rev_idx0])
+    else:
+        return PrimeEnum.BLUNT, ''
+
+def three_prime_type(alignment: Alignment, fwd: str, rev: str):
+    # fwd_idx0: int = alignment.reference_start
+    # rev_idx0: int = alignment.read_start
+    fwd_idx1: int = alignment.reference_end
+    rev_idx1: int = alignment.read_end
+    max_idx_fwd: int = len(fwd) - 1
+    max_idx_rev: int = len(rev) - 1
+
+    if fwd_idx1 < max_idx_fwd:
+        return PrimeEnum.THREE, fwd[fwd_idx1+1:]
+    elif rev_idx1 < max_idx_rev:
+        # print('$$$', rev_idx1, max_idx_rev)
+        return PrimeEnum.FIVE, reverse(reverse(rev)[rev_idx1+1:])
+    else:
+        return PrimeEnum.BLUNT, ''
+# end def
 
 def string_align_complement(
         fwd: str,
         rev: str,
+        alignment: Alignment = None,
+        rc_rev: str = None,
         do_print: bool = False,
         do_highlight: bool = False) -> Tuple[str, str]:
-    rc_rev: str
-    alignment: Alignment
-    alignment, rc_rev = align_complement(fwd, rev)
+    if alignment is None:
+        alignment, rc_rev = align_complement(fwd, rev)
+    if rc_rev is None:
+        rc_rev = reverseComplement(rev)
     reverse_rev: str = reverse(rev)
 
     fwd_idx0: int = alignment.reference_start

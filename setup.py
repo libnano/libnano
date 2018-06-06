@@ -269,7 +269,7 @@ cython_ext_list = cythonize(cython_extensions, include_path=common_include)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ rock and roll ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 install_requires = ['six>=1.11.0',
-                    'cython>=0.28.2',
+                    'cython>=0.28.3',
                     'numpy>=1.14.3',
                     'PyYAML>=3.12',
                     'requests>=2.18.4',

@@ -2,6 +2,7 @@
 import sys
 from typing import Tuple
 from os.path import abspath, dirname
+import math
 
 try:
     import libnano
@@ -27,7 +28,7 @@ from libnano.fileio.naformat import (
     three_prime_type,
     PRIME_ENUM_MAP
 )
-import math
+
 DSEQ_STR: str = '%s\r\n%s' if sys.platform == 'win32' else '%s\n%s'
 
 class DSeq(object):

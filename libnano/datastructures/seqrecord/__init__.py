@@ -1,4 +1,11 @@
 # -*- coding: utf-8 -*-
-# from seqrecordbase import SeqRecord, fromGenbankLike, fromFasta
-# from feature import Feature, locationStr2Feature
-# from location import Location
+from libnano.datastructures.seqrecord.seqrecordbase import (
+    SeqRecord,
+    fromGenbankLike,
+    fromFasta
+)
+from libnano.datastructures.seqrecord.feature import (
+    Feature,
+    locationStr2Feature
+)
+from libnano.datastructures.seqrecord.location import Location

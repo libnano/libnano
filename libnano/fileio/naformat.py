@@ -7,7 +7,9 @@ from typing import (
 )
 from enum import IntEnum
 
-if sys.platform == 'win32':
+IS_WINDOWS: bool = sys.platform == 'win32'
+
+if IS_WINDOWS:
     '''On Windows, calling init() will filter ANSI escape sequences out of any
     text sent to stdout or stderr, and replace them with equivalent Win32
     calls. Otherwise no color!!!!'''
@@ -19,7 +21,7 @@ else:
     from pygments.formatters import TerminalTrueColorFormatter as TermFormatter
     NEWLINE_STR: str = '\n'
 from pygments.style import Style
-from pygments.token import Text as pygText
+from pygments.token import Text as PygText
 from pygments import highlight
 from pygments.lexer import RegexLexer
 from ssw import (
@@ -47,22 +49,32 @@ PRIME_ENUM_MAP = {
 
 TRANTAB: Dict[int, int] = str.maketrans('acgt', 'ACGT')
 
+# NOTE: For some reason windows higlighting needs to invert the
+# case of the REGEX
+WIN_TOKENS: dict = {
+    'root': [
+        (r'[ACGT]', PygText)
+    ]
+}
+
+POSIX_TOKENS: dict = {
+    'root': [
+        (r'[acgt]', PygText)
+    ]
+}
+
 class DNALex(RegexLexer):
     name: str = 'DNALex'
     aliases: List[str] = ['dna']
     filenames: List[str] = ['*.dna']
 
-    tokens: dict = {
-        'root': [
-            (r'[acgt]', pygText)
-        ]
-    }
+    tokens: dict = WIN_TOKENS if IS_WINDOWS else POSIX_TOKENS
 # end class
 
 class MisMatchStyle(Style):
     default_style: str = ""
     styles: dict = {
-        pygText: 'bold nounderline #ff0000',
+        PygText: 'bold nounderline #ff0000',
     }
 # end class
 

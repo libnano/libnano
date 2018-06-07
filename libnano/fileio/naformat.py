@@ -142,9 +142,7 @@ def string_align_complement(
 
         for i in range(total_delta):
             reverse_rev_base = reverse_rev[rev_lo_idx + i]
-            print(reverse_rev_base, fwd[fwd_lo_idx + i])
             if rc_rev[rev_lo_idx + i] != fwd[fwd_lo_idx + i]:
-                print('mismant', reverse_rev_base)
                 highlight_rev_list.append(reverse_rev_base.lower())
             else:
                 highlight_rev_list.append(reverse_rev_base)

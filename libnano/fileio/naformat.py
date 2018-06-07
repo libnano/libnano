@@ -54,7 +54,7 @@ class DNALex(RegexLexer):
 
     tokens: dict = {
         'root': [
-            (r'[ACGT]', pygText)
+            (r'[acgt]', pygText)
         ]
     }
 # end class
@@ -142,22 +142,24 @@ def string_align_complement(
 
         for i in range(total_delta):
             reverse_rev_base = reverse_rev[rev_lo_idx + i]
+            print(reverse_rev_base, fwd[fwd_lo_idx + i])
             if rc_rev[rev_lo_idx + i] != fwd[fwd_lo_idx + i]:
+                print('mismant', reverse_rev_base)
                 highlight_rev_list.append(reverse_rev_base.lower())
             else:
                 highlight_rev_list.append(reverse_rev_base)
 
 
-            highlight_unformat_rev: str = (
-                buffer_rev +
-                reverse_rev[:rev_lo_idx] +
-                ''.join(highlight_rev_list) +
-                reverse_rev[rev_lo_idx+total_delta:]
-            )
-            out_rev: str = highlight(   highlight_unformat_rev,
+            highlight_unformat_rev: str = ''.join(highlight_rev_list)
+            highlight_rev: str = highlight(   highlight_unformat_rev,
                                     DNALex(),
                                     TermFormatter(style=MisMatchStyle))
-            out_rev = out_rev.strip().translate(TRANTAB)
+            out_rev: str = (
+                buffer_rev +
+                reverse_rev[:rev_lo_idx] +
+                highlight_rev.strip().translate(TRANTAB) +
+                reverse_rev[rev_lo_idx+total_delta:]
+            )
     else:
         out_rev: str = buffer_rev + reverse_rev
     out_fwd: str = buffer_fwd + fwd

@@ -18,9 +18,10 @@ install:
   # Useful for debugging any issues with conda
   - conda info -a
 
-  - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION pip cython numpy setuptools six click PyYAML requests pytest
+  - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION pip cython numpy setuptools six click PyYAML requests pygments pytest
   - source activate test-environment
   - pip install primer3-py
+  - pip install ssw-py
   - python setup.py build_ext --inplace
 
 script:

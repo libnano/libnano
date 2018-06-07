@@ -63,7 +63,7 @@ class DSeq(object):
             self.rev = rev
 
         max_idx_fwd: int = len(fwd) - 1
-        max_idx_rev: int = len(rev) - 1
+        max_idx_rev: int = len(self.rev) - 1
         if overhang is None:
             alignment, rc_rev = align_complement(fwd, self.rev)
             self.alignment: Alignment = alignment

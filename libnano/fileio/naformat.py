@@ -27,7 +27,7 @@ from ssw import (
     force_align
 )
 
-import __init__
+# import __init__
 from libnano.seqstr import (
     reverseComplement,
     complement,

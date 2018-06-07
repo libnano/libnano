@@ -275,7 +275,7 @@ install_requires = ['six>=1.11.0',
                     'requests>=2.18.4',
                     'primer3-py>=0.5.5',
                     'click>=6.7',
-                    'ssw-py>=0.2.3',
+                    'ssw-py>=0.2.5',
                     'pygments'
                     ]
 if sys.platform == 'win32':

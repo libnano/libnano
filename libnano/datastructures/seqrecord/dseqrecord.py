@@ -58,16 +58,17 @@ class DSeq(object):
             if overhang is not None:
                 raise ValueError("overhang can't be defined for without a reverse strand")
             else:
-                self.rev = reverseComplement(fwd)
+                self.rev: str = reverseComplement(fwd)
         else:
-            self.rev = rev
+            self.rev: str = rev
 
         max_idx_fwd: int = len(fwd) - 1
         max_idx_rev: int = len(self.rev) - 1
+        self.alignment: Alignment
+        self.rc_rev: str
+
         if overhang is None:
-            alignment, rc_rev = align_complement(fwd, self.rev)
-            self.alignment: Alignment = alignment
-            self.rc_rev: str = rc_rev
+            self.alignment, self.rc_rev = align_complement(fwd, self.rev)
 
             if max_idx_fwd > alignment.reference_end:
                 self.overhang = max_idx_fwd - alignment.reference_end

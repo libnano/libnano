@@ -5,12 +5,30 @@ import sys
 from typing import (
     Union,
     List,
-    Tuple
+    Tuple,
+    Iterable,
+    NamedTuple
 )
+from enum import IntEnum
 
-from libnano.datasets import dataset_container
+from libnano.datasets import (
+    dataset_container,
+    DatasetContainer
+)
+from libnano.seqstr import complement
 
 STR_T = Union[str, bytes]
+
+class StrandEnum(IntEnum):
+    Forward = 1
+    Reverse = -1
+
+RestrictionMatch = NamedTuple('RestrictionMatch', [
+        ('strand', int),
+        ('start_idx', int),
+        ('end_idx', int)
+        ]
+)
 
 # ~~~~~~~~~~~~~~~ Restriction site search functions / classes ~~~~~~~~~~~~~~~ #
 
@@ -20,31 +38,32 @@ cdef class RestrictionSearcher:
     count or indicies of the respective cutsites in the provided sequence.
     '''
 
-    cdef object _num_enzymes
+    cdef int _num_enzymes
     cdef object _str_type
-    cdef object _enzyme_names
-    cdef object _core_regexs
-    cdef object _full_regexs
+    cdef tuple _enzyme_names
+    cdef list _core_regexs
+    cdef list _full_regexs
 
     def __cinit__(self, *enzyme_names):
-        self._enzyme_names = enzyme_names
+        self._enzyme_names: Tuple[STR_T, ...] = enzyme_names
         self._num_enzymes = len(enzyme_names)
         self._str_type = type(enzyme_names[0])
-        cdef object core_regexs = []
-        cdef object full_regexs = []
+        cdef list core_regexs = []  # type: List[STR_T]
+        cdef list full_regexs = []  # type: List[STR_T]
         if isinstance(enzyme_names[0], str):
             coerce_type = lambda s: s
-            enzyme_dataset = dataset_container.ENZYME_DATASET_U
+            enzyme_dataset: dict = dataset_container.ENZYME_DATASET_U
         else:
             coerce_type = lambda s: s.encode('utf-8')
-            enzyme_dataset = dataset_container.ENZYME_DATASET
+            enzyme_dataset: dict = dataset_container.ENZYME_DATASET
 
-        key_cutsites = coerce_type('cutsites')
-        key_core_regex = coerce_type('core_regex')
-        key_full_regex = coerce_type('full_regex')
+        key_cutsites: STR_T = coerce_type('cutsites')
+        key_core_regex: STR_T = coerce_type('core_regex')
+        key_full_regex: STR_T = coerce_type('full_regex')
+
         for en in enzyme_names:
             try:
-                cutsites = enzyme_dataset[en][key_cutsites]
+                cutsites: List[dict] = enzyme_dataset[en][key_cutsites]
                 core_regexs += itertools.chain.from_iterable(
                     [cs[key_core_regex] for cs in cutsites])
                 full_regexs += itertools.chain.from_iterable(
@@ -53,8 +72,8 @@ cdef class RestrictionSearcher:
                 raise ValueError('%s is not a valid enzyme or is not present '
                                  'in the NEB Rebase database v.%d' % (en,
                                  dataset_container.REBASE_VERSION))
-        self._core_regexs = core_regexs
-        self._full_regexs = full_regexs
+        self._core_regexs: List[STR_T] = core_regexs
+        self._full_regexs: List[STR_T] = full_regexs
 
     property enzyme_list:
         '''Public-facing enzyme list '''
@@ -67,18 +86,16 @@ cdef class RestrictionSearcher:
             return self._str_type
 
     property _enzyme_names:
-        '''List of enzyme names provided at instantiation '''
-        def __set__(RestrictionSearcher self, object name_list):
-            self._enzyme_names = name_list
+        '''Tuple of enzyme names provided at instantiation '''
+        def __set__(RestrictionSearcher self, name_iterable: Iterable):
+            self._num_enzymes = len(name_iterable)
+            self._enzyme_names = tuple(name_iterable)
 
         def __get__(RestrictionSearcher self):
             return self._enzyme_names
 
     property _num_enzymes:
-        '''List of enzyme names provided at instantiation '''
-        def __set__(RestrictionSearcher self, object num_enzymes):
-            self._num_enzymes = num_enzymes
-
+        '''Number of enzyme names provided at instantiation '''
         def __get__(RestrictionSearcher self):
             return self._num_enzymes
 
@@ -98,13 +115,13 @@ cdef class RestrictionSearcher:
         def __get__(RestrictionSearcher self):
             return self._full_regexs
 
-    def sitesPresent(RestrictionSearcher self,
-                    seq: STR_T,
-                    full_sites: bool = True) -> bool:
+    def sitesPresent(   RestrictionSearcher self,
+                        seq: STR_T,
+                        full_sites: bool = True) -> bool:
         '''Return a boolean ``True`` or ``False`` if any of the restriction sites
         are present within `seq` or its reverse complement.
         '''
-        regexs = self._full_regexs if full_sites else self._core_regexs
+        regexs: List[STR_T] = self._full_regexs if full_sites else self._core_regexs
         try:
             for regex in regexs:
                 if re.search(regex, seq):
@@ -116,15 +133,15 @@ cdef class RestrictionSearcher:
                             ' with {} type enzyme names'.format(type(seq),
                             self._str_type))
 
-    def countSites(RestrictionSearcher self,
+    def countSites( RestrictionSearcher self,
                     seq: STR_T,
-                    full_sites: bool = True) -> int:
+                    full_sites: bool = True) -> List[int]:
         '''Return a list of counts indexed by enzyme (order as provided at
         instantiation). Palindromic sites will be counted twice (once per
         strand)
         '''
-        regexs = self._full_regexs if full_sites else self._core_regexs
-        counts = [0] * self._num_enzymes
+        regexs: List[STR_T] = self._full_regexs if full_sites else self._core_regexs
+        counts: List[int] = [0] * self._num_enzymes
         try:
             for idx, regex in enumerate(regexs):
                 counts[idx//2] += len(re.findall(regex, seq))
@@ -135,9 +152,9 @@ cdef class RestrictionSearcher:
                             ' with {} type enzyme names'.format(type(seq),
                             self._str_type))
 
-    def findSites(RestrictionSearcher self,
+    def findSites(  RestrictionSearcher self,
                     seq: STR_T,
-                    full_sites: bool = True) -> List[List[Tuple[int, int, int]]]:
+                    full_sites: bool = True) -> List[List[RestrictionMatch]]:
         '''Return a list of lists, with the outer list indexed by enzyme
         (order as provided at instantiation) and will inner lists comprised
         of tuples indicating the (<strand>, <start index>, <end index>) of
@@ -148,13 +165,17 @@ cdef class RestrictionSearcher:
 
         Indexing is from the 5' end of the forward strand.
         '''
-        seq_len = len(seq)
-        regexs = self._full_regexs if full_sites else self._core_regexs
-        idx_list = [[] for _ in range(self._num_enzymes)]
+        seq_len: int = len(seq)
+        regexs: List[STR_T] = self._full_regexs if full_sites else self._core_regexs
+        idx_list: List[List[RestrictionMatch]] = [[] for _ in range(self._num_enzymes)]
         try:
             for idx, regex in enumerate(regexs):
-                idx_list[idx//2] += [(idx%2 * -2 + 1, m.start(), m.end())
-                                     for m in re.finditer(regex, seq)]
+                idx_list[idx//2] += [   RestrictionMatch(
+                                            (idx % 2) * -2 + 1,
+                                            m.start(),
+                                            m.end()
+                                        ) for m in re.finditer(regex, seq)
+                                    ]
             return idx_list
         except TypeError:
             raise TypeError('Cannot perform search on a `seq` of type {}'
@@ -169,14 +190,33 @@ cdef class RestrictionSearcher:
     def __str__(RestrictionSearcher self):
         return self.__repr__()
 
+    def displaySites(self,  seq: STR_T,
+                            sites: List[List[RestrictionMatch]]):
+        print(seq)
+        complement_seq: str = complement(seq)
+        print(complement_seq)
+        for en, en_sites in zip(self._enzyme_names, sites):
+            print(en)
+            print(en_sites)
+            for rs_match in en_sites:
+                if rs_match.strand > 0:
+                    print("forward")
+                    print(seq[rs_match.start_idx:rs_match.end_idx+1])
+                else:
+                    print("reverse")
+                    print(complement_seq[rs_match.start_idx:rs_match.end_idx+1])
+            print('')
+    # end def
+# end class
 
-def getEnzymeRegexs(enzyme_names: STR_T, full_sites: bool = True) -> STR_T:
+def getEnzymeRegexs(enzyme_names: STR_T,
+                    full_sites: bool = True) -> List[STR_T]:
     '''Get the enzyme regexs for the provided enzyme names. If `full_sites` is
     True, the regexs will be for the full restriction sites, otherwise the
     regexs will be for the core restriction sites.
     '''
-    cdef object regexs = []
-    cdef object lookup = 'full_regex' if full_sites else 'core_regex'
+    cdef list regexs = []
+    cdef str lookup = 'full_regex' if full_sites else 'core_regex'
     if isinstance(enzyme_names[0], str):
         enzyme_dataset = dataset_container.ENZYME_DATASET_U
     else:
@@ -192,9 +232,9 @@ def getEnzymeRegexs(enzyme_names: STR_T, full_sites: bool = True) -> STR_T:
     return regexs
 
 
-def sitesPresent(seq: STR_T,
-                enzyme_names: List[STR_T],
-                full_sites: bool = True) -> bool:
+def sitesPresent(   seq: STR_T,
+                    enzyme_names: List[STR_T],
+                    full_sites: bool = True) -> bool:
     '''Return a boolean True or False if any of the restriction sites
     are present within `seq` or its reverse complement.
     '''
@@ -211,15 +251,15 @@ def sitesPresent(seq: STR_T,
 
 
 
-def countSites(seq: STR_T,
+def countSites( seq: STR_T,
                 enzyme_names: List[STR_T],
-                full_sites: bool = True) -> int:
+                full_sites: bool = True) -> List[int]:
     '''Return a list of counts indexed by enzyme (order as provided at
     instantiation). Palindromic sites will be counted twice (once per
     strand)
     '''
-    regexs = getEnzymeRegexs(enzyme_names, full_sites=full_sites)
-    counts = [0] * len(enzyme_names)
+    regexs: List[STR_T] = getEnzymeRegexs(enzyme_names, full_sites=full_sites)
+    counts: List[int] = [0] * len(enzyme_names)
     try:
         for idx, regex in enumerate(regexs):
             counts[idx//2] += len(re.findall(regex, seq))
@@ -230,9 +270,9 @@ def countSites(seq: STR_T,
                         type(enzyme_names[0])))
 
 
-def findSites(seq: STR_T,
+def findSites(  seq: STR_T,
                 enzyme_names: List[STR_T],
-                full_sites: bool = True) -> List[List[Tuple[int, int, int]]]:
+                full_sites: bool = True) -> List[List[RestrictionMatch]]:
     '''Return a list of lists, with the outer list indexed by enzyme
     (order as provided at instantiation) and will inner lists comprised
     of tuples indicating the (<strand>, <start index>, <end index>) of
@@ -243,13 +283,16 @@ def findSites(seq: STR_T,
 
     Indexing is from the 5' end of the forward strand.
     '''
-    seq_len = len(seq)
-    regexs = getEnzymeRegexs(enzyme_names, full_sites=full_sites)
-    idx_list = [[] for _ in range(len(enzyme_names))]
+    seq_len: int = len(seq)
+    regexs: List[STR_T] = getEnzymeRegexs(enzyme_names, full_sites=full_sites)
+    idx_list: List[List[RestrictionMatch]] = [[] for _ in range(len(enzyme_names))]
     try:
         for idx, regex in enumerate(regexs):
-            idx_list[idx//2] += [(idx%2 * -2 + 1, m.start(), m.end()) for m in
-                                 re.finditer(regex, seq)]
+            idx_list[idx//2] += [   RestrictionMatch(
+                                        (idx % 2) * -2 + 1,
+                                        m.start(),
+                                        m.end()
+                                    ) for m in re.finditer(regex, seq)]
         return idx_list
     except TypeError:
         raise TypeError('Cannot perform search on a `seq` of type {}'

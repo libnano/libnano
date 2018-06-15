@@ -10,7 +10,7 @@ from typing import (
     NamedTuple
 )
 from enum import IntEnum
-import pprint
+# import pprint
 
 from libnano.datasets import (
     dataset_container,
@@ -67,10 +67,7 @@ cdef class RestrictionSearcher:
         key_full_regex: STR_T = coerce_type('full_regex')
         key_cutsite_idxs: STR_T = coerce_type('cutsite_idxs')
 
-
-
         for en in enzyme_names:
-            # pprint.pprint(enzyme_dataset[en][key_cutsites])
             try:
                 cutsites: List[dict] = enzyme_dataset[en][key_cutsites]
                 core_regexs += itertools.chain.from_iterable(

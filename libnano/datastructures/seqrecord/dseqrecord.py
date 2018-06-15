@@ -1,7 +1,13 @@
 # -*- coding: utf-8 -*-
 import sys
-from typing import Tuple
-from os.path import abspath, dirname
+from typing import (
+    Tuple,
+    List
+)
+from os.path import (
+    abspath,
+    dirname
+)
 import math
 
 try:
@@ -157,12 +163,12 @@ class DSeq(object):
         return PRIME_ENUM_MAP.get(res), val
     # end def
 
-    def cut(self,
-            enzyme: str,
-            restriction_searcher: RestrictionSearcher = None) -> List['DSeq']:
-        if restriction_searcher is None:
-            restriction_searcher = RestrictionSearcher(enzyme)
-
+    # def cut(self,
+    #         enzyme: str,
+    #         restriction_searcher: RestrictionSearcher = None) -> List['DSeq']:
+    #     if restriction_searcher is None:
+    #         restriction_searcher = RestrictionSearcher(enzyme)
+    #     restriction_searcher.findSite
 
 
 # end class

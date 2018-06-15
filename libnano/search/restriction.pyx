@@ -43,6 +43,7 @@ cdef class RestrictionSearcher:
     cdef tuple _enzyme_names
     cdef list _core_regexs
     cdef list _full_regexs
+    cdef list _cutsite_idxs
 
     def __cinit__(self, *enzyme_names):
         self._enzyme_names: Tuple[STR_T, ...] = enzyme_names
@@ -50,6 +51,7 @@ cdef class RestrictionSearcher:
         self._str_type = type(enzyme_names[0])
         cdef list core_regexs = []  # type: List[STR_T]
         cdef list full_regexs = []  # type: List[STR_T]
+        cdef list cutsite_idxs = [] # type: List[List[List[int]]
         if isinstance(enzyme_names[0], str):
             coerce_type = lambda s: s
             enzyme_dataset: dict = dataset_container.ENZYME_DATASET_U
@@ -60,6 +62,7 @@ cdef class RestrictionSearcher:
         key_cutsites: STR_T = coerce_type('cutsites')
         key_core_regex: STR_T = coerce_type('core_regex')
         key_full_regex: STR_T = coerce_type('full_regex')
+        key_cutsite_idxs: STR_T = coerce_type('cutsite_idxs')
 
         for en in enzyme_names:
             try:
@@ -68,12 +71,15 @@ cdef class RestrictionSearcher:
                     [cs[key_core_regex] for cs in cutsites])
                 full_regexs += itertools.chain.from_iterable(
                     [cs[key_full_regex] for cs in cutsites])
+                cutsite_idxs += itertools.chain.from_iterable(
+                    [cs[key_cutsite_idxs] for cs in cutsites])
             except KeyError:
                 raise ValueError('%s is not a valid enzyme or is not present '
                                  'in the NEB Rebase database v.%d' % (en,
                                  dataset_container.REBASE_VERSION))
         self._core_regexs: List[STR_T] = core_regexs
         self._full_regexs: List[STR_T] = full_regexs
+        self._cutsite_idxs: List[List[List[int]] = cutsite_idxs
 
     property enzyme_list:
         '''Public-facing enzyme list '''

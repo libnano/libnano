@@ -197,7 +197,8 @@ cdef class RestrictionSearcher:
         print(complement_seq)
         for en, en_sites in zip(self._enzyme_names, sites):
             print(en)
-            print(en_sites)
+            print("Found %d sites" % (len(en_sites)))
+            # print(en_sites)
             for rs_match in en_sites:
                 if rs_match.strand > 0:
                     print("forward")

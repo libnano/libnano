@@ -75,12 +75,13 @@ class DSeq(object):
         self.rc_rev: str
 
         if overhang is None:
-            self.alignment, self.rc_rev = align_complement(fwd, self.rev)
+            alignment, self.rc_rev = align_complement(fwd, self.rev)
 
             if max_idx_fwd > alignment.reference_end:
                 self.overhang = max_idx_fwd - alignment.reference_end
             elif max_idx_rev > alignment.read_end:
                 self.overhang = alignment.read_end - max_idx_fwd
+            self.alignment = alignment
         else:
             self.overhang = overhang
             if overhang < 0:

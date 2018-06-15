@@ -313,12 +313,13 @@ def findSites(  seq: STR_T,
     idx_list: List[List[RestrictionMatch]] = [[] for _ in range(len(enzyme_names))]
     try:
         for idx, regex in enumerate(regexs):
-            idx_list[idx//2] += [   RestrictionMatch(
+            idx_mod_2 = idx // 2    # there are two regexes per cutsite
+            idx_list[idx_mod_2] += [   RestrictionMatch(
                                         (idx % 2) * -2 + 1,
                                         m.start(),
                                         m.end(),
-                                        enzyme_names[idx//2],
-                                        idx
+                                        enzyme_names[idx_mod_2],
+                                        idx_mod_2
                                     ) for m in re.finditer(regex, seq)]
         return idx_list
     except TypeError:

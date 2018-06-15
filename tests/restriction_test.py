@@ -83,11 +83,11 @@ class TestRestriction(unittest.TestCase):
         self.assertTrue(len(sites[0]) == 2 and len(sites[1]) == 1 and
                         len(sites[2]) == 0)
         # EcoRI on fwd strand
-        self.assertTrue(sites[0][0] == (1, 6, 12))
+        self.assertTrue(sites[0][0] == (1, 6, 12, 'EcoRI', 0))
         # EcoRI on rev strand (indexed from 5' of fwd strand)
-        self.assertTrue(sites[0][1] == (-1, 6, 12))
+        self.assertTrue(sites[0][1] == (-1, 6, 12, 'EcoRI', 0))
         # BsaI on fwd strand
-        self.assertTrue(sites[1][0] == (1, 0, 11))
+        self.assertTrue(sites[1][0] == (1, 0, 11, 'BsaI', 1))
         # Compare instance method to function
         self.assertEqual(
             rs.findSites(ecori_bsai_seq),

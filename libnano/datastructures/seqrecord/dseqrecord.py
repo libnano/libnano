@@ -28,6 +28,7 @@ from libnano.fileio.naformat import (
     three_prime_type,
     PRIME_ENUM_MAP
 )
+from libnano.search.restriction import RestrictionSearcher
 
 DSEQ_STR: str = '%s\r\n%s' if sys.platform == 'win32' else '%s\n%s'
 
@@ -155,6 +156,14 @@ class DSeq(object):
         res, val  = three_prime_type(self.alignment, self.fwd, self.rev)
         return PRIME_ENUM_MAP.get(res), val
     # end def
+
+    def cut(self,
+            enzyme: str,
+            restriction_searcher: RestrictionSearcher = None) -> List['DSeq']:
+        if restriction_searcher is None:
+            restriction_searcher = RestrictionSearcher(enzyme)
+
+
 
 # end class
 

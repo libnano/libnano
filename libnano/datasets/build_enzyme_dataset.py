@@ -66,9 +66,22 @@ from typing import (
     List,
     Tuple
 )
+import pprint
 
-from libnano import seqstr
-from libnano.helpers.jsonbytes import base_decode_dict
+try:
+    from libnano.helpers.jsonbytes import base_decode_dict
+    from libnano.seqstr import reverseComplement
+except:
+    from os.path import (
+        abspath,
+        dirname
+    )
+    from os.path import join as pjoin
+    LIBNANO_PATH = pjoin(dirname(abspath(__file__)), '..', '..')
+    print(LIBNANO_PATH)
+    sys.path = [LIBNANO_PATH] + sys.path
+    from libnano.helpers.jsonbytes import base_decode_dict
+    from libnano.seqstr import reverseComplement
 
 LOCAL_DIR: str = os.path.dirname(os.path.realpath(__file__))
 
@@ -101,7 +114,7 @@ NEB_P_SHORTHAND_RE: '_sre.SRE_Pattern'  = re.compile(
      '(?P<seq>[' + NEB_ALPHABET + ']+)'
     r'(?:\((?P<endidx>[\d|-]+)/(?P<endrevidx>[\d|-]+)\))?$')
 
-rc = seqstr.reverseComplement
+rc = reverseComplement
 condInt = lambda i: int(i) if i is not None else None
 
 def seqToRegex(seq: str) -> str:
@@ -262,8 +275,7 @@ def processNebShorthand(neb_shorthand: str) -> dict:
     # Build regular expressions
     if core_seq is not None:
         core_regex = [seqToRegex(core_seq[0]), seqToRegex(core_seq[1])]
-        full_regex = [seqToRegex(full_seq[0]),
-                          seqToRegex(full_seq[1])]
+        full_regex = [seqToRegex(full_seq[0]), seqToRegex(full_seq[1])]
     output_dict = {
         'core_seq': core_seq,
         'full_seq': full_seq,
@@ -308,6 +320,7 @@ def processEnzymeRecord(record_tuple: tuple) -> dict:
               }]
             }
     '''
+    name = record_tuple[0]
     neb_shorthand = record_tuple[4].strip()
     cutsites = []
     # Check for multiple sequences
@@ -318,7 +331,7 @@ def processEnzymeRecord(record_tuple: tuple) -> dict:
     else:
         cutsites.append(processNebShorthand(neb_shorthand))
     enzyme_rec = {
-        'name': record_tuple[0],
+        'name': name,
         'cutsites': cutsites,
         'availability:': record_tuple[6]
     }
@@ -413,6 +426,7 @@ def updateEnzymeDataset():
             current_version = current_dataset['rebase_version']
             if latest_version == current_version:
                 needs_update = False
+                needs_update = True
     except (IOError, OSError):
         pass
     if needs_update:

@@ -66,6 +66,7 @@ class DSeq(object):
         self.fwd: str = fwd
         self.overhang: int = 0
 
+
         if rev is None:
             if overhang is not None:
                 raise ValueError("overhang can't be defined for without a reverse strand")
@@ -74,8 +75,11 @@ class DSeq(object):
         else:
             self.rev: str = rev
 
+
         max_idx_fwd: int = len(fwd) - 1
         max_idx_rev: int = len(self.rev) - 1
+        the_length: int = max(max_idx_fwd, max_idx_rev) + 1 # default
+
         self.alignment: Alignment
         self.rc_rev: str
         if overhang is None:

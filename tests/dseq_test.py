@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import unittest
 import _setup
-from libnano.datastructures.seqrecord.dseqrecord import DSeq
+from libnano.datastructures.dseq import DSeq
 
 class TestDSeq(unittest.TestCase):
 

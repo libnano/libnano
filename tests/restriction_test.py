@@ -98,9 +98,9 @@ class TestRestriction(unittest.TestCase):
         )
         # BsaI on fwd strand
         self.assertTrue(sites[1][0] == (    1, 0, 11,
-                                            'BsaI',
-                                            1, ((0, 7), (0, 11),
-                                            '[ATGC]{5}GAGACC')
+                                            'BsaI', 1,
+                                            ((0, 7), (0, 11)),
+                                            '[ATGC]{5}GAGACC'
                                         )
         )
         # Compare instance method to function

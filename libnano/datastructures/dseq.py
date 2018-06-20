@@ -11,6 +11,7 @@ from os.path import (
 )
 import math
 import re
+import copy
 
 try:
     import libnano
@@ -194,6 +195,24 @@ class DSeq(object):
                     alphabet=self.alphabet)
     # end def
 
+    def __eq__(self, other: 'DSeq'):
+        elements = ('the_length', 'fwd', 'rev', 'overhang')
+        for x in elements:
+            if getattr(other, x) != getattr(self, x):
+                return False
+        return True
+    # end def
+
+
+    def __iter__(self):
+        '''NOTE: This is required to be defined such the __getitem__ is not
+        called as a fall back for iteration
+        '''
+        for i in range(self.the_length):
+            yield self.__getitem__(i)
+        return
+    # end def
+
     def getReverseIdx(self, fwd_idx: int) -> int:
         '''Does not check for a valid index
 
@@ -261,64 +280,67 @@ class DSeq(object):
         rev: str = self.rev
         reverse_rev: str = reverse(rev)
         fwd_match_list: List[RestrictionMatch] = rs.findSites(fwd)[0]
-        # print(fwd_match_list)
         out: List[DSeq] = []
         if len(fwd_match_list) == 0:
             return out
         else:
             out = []
             for fwd_match in fwd_match_list:
-                # if fwd_match.strand_dir == StrandDirEnum.Forward:
-                #     print("A forward match!")
-                # else:
-                #     print("A reverse match!")
                 rev_regex = fwd_match.pair_regex
                 rev_match_list: List[Tuple[int, int]] = [(m.start(), m.end())for m in re.finditer(rev_regex, rev)]
                 if len(rev_match_list) == 0:
-                    return out
+                    continue
                 else:
                     # print("rev strand has it!")
                     # print(fwd_match)
                     # print(rev_match_list)
                     rev_match_idxs = rev_match_list[0]
                     potential_5p_idx  = self.getForwardIdxFrom5PrimeIdx(rev_match_idxs[1])
-                    assert potential_5p_idx == fwd_match.start_idx
-                    overhang: int = self.overhang
-                    rev_offset: int = overhang if overhang > 0 else 0
+                    assert(potential_5p_idx == fwd_match.start_idx)
 
                     fwd_cuts: Tuple[Tuple[int, int]] = fwd_match.cut_idxs
 
                     # NOTE: THIS IS SETUP TO HANDLE ONLY SINGLE CUT SITE AT THE MOMENT
-                    cut_delta: int =  fwd_cuts[0][1] - fwd_cuts[1][1]
 
-                    fwd_slice_1 = slice(0,
-                                        fwd_match.start_idx+fwd_cuts[0][1],
-                                        1)
-                    fwd_slice_2 = slice(fwd_match.start_idx+fwd_cuts[0][1],
-                                        None,
-                                        1)
-                    fwd_out1, fwd_out2 = fwd[fwd_slice_1], fwd[fwd_slice_2]
-                    # print(fwd_out1, fwd_out2)
+                    # traverse through the cutsites in reverse
+                    fwd: str = copy.copy(self.fwd)
+                    reverse_rev: str = reverse(self.rev)
+                    self_overhang: int = self.overhang
+                    for fwd_cut, rev_cut in zip(fwd_cuts[0][::-1], fwd_cuts[1][::-1]):
 
-                    rev_cut_end_idx: int = fwd_match.start_idx + fwd_cuts[1][1] + overhang
-                    rev_slice_1 = slice(0,
-                                        rev_cut_end_idx,
-                                        1)
-                    rev_slice_2 = slice(rev_cut_end_idx,
-                                        None,
-                                        1)
-                    rev_rev_out1, rev_rev_out2 = reverse_rev[rev_slice_1], reverse_rev[rev_slice_2]
-                    # print(rev_rev_out1, rev_rev_out2)
+                        cut_overhang: int =  fwd_cut - rev_cut
 
-                    out.append((DSeq(   fwd_out1,
-                                        reverse(rev_rev_out1)
-                                ),
-                                DSeq(   fwd_out2,
-                                        reverse(rev_rev_out2),
-                                        overhang=cut_delta
-                                ) )
-                    )
-        return out
+                        fwd_cut_end_idx: int = fwd_match.start_idx + fwd_cut
+                        fwd_slice_5p = slice(   0,
+                                                fwd_cut_end_idx,
+                                                1)
+                        fwd_slice_3p = slice(   fwd_cut_end_idx,
+                                                None,
+                                                1)
+
+                        rev_cut_end_idx: int = fwd_match.start_idx + rev_cut + self_overhang
+                        rev_slice_3p = slice(   0,
+                                                rev_cut_end_idx,
+                                                )
+                        rev_slice_5p = slice(   rev_cut_end_idx,
+                                                None,
+                                                1)
+
+                        out.append(DSeq(fwd[fwd_slice_3p],
+                                        reverse(reverse_rev[rev_slice_5p]),
+                                        overhang=cut_overhang) )
+
+                        # print("monkey", fwd, reverse_rev)
+                        fwd = fwd[fwd_slice_5p]
+                        reverse_rev = reverse_rev[rev_slice_3p]
+                        # print("cat", fwd, reverse_rev)
+                    # end for
+                    out.append(DSeq(fwd,
+                                    reverse(reverse_rev),
+                                    self.overhang) )
+                break
+            # end for
+        return out[::-1]
     # end def
 # end class
 
@@ -354,27 +376,41 @@ if __name__ == '__main__':
     # i = tester(i, "AAAGCCC", "TTT", overhang=-2)
     # i = tester(i, "TTT", "AAAGCCC", overhang=4)
 
-    'EcoRI'
     fwd = 'GGTCTCGAATTCAAA'
     rev = 'GAATTCGAGACCAAA'
-    a = DSeq(fwd, rev)
-    print(a, len(a))
-    b = a.cut('BsaI')
-    print(a)
+    BsaI_ds = DSeq(fwd, rev)
+    print(BsaI_ds, len(BsaI_ds))
+    b = BsaI_ds.cut('BsaI')
+    print(BsaI_ds)
     print("The cut")
-    for x in b[0]:
+    print(b)
+    for x in b:
         print(x)
 
-    b = a.cut('EcoRI')
-    print(a)
-    print("The cut")
-    for x in b[0]:
-        print(x)
+    # b = a.cut('EcoRI')
+    # print(a)
+    # print("The cut")
+    # for x in b[0]:
+    #     print(x)
     # print("SLICE")
     # print(a[5:])
 
+    from libnano.datasets.build_enzyme_dataset import REGEX_BASE_LUT
+    BUF = 'CCCCCC'
+    fwd = BUF + 'A'*10 + 'AC' + 'A'*4 + 'GTAYC' + 'A'*12 + BUF
+    rev_rev = BUF + 'T'*15 + 'TG' + 'T'*4 + 'CATRG' + 'T'*7 + BUF
 
+    fwd = fwd.replace('Y', 'C')
+    rev_rev = rev_rev.replace('R', 'G')
+    rev = reverse(rev_rev)
 
+    # baei_ds = DSeq(fwd, rev, overhang=5)
+    # print('BaeI')
+    # print(baei_ds)
+    # b = baei_ds.cut('BaeI')
+    # print("The cut")
+    # for x in b:
+    #     print(x)
     # print("$$$$$")
     # pyb = Dseq(fwd, rev)
     # print(len(pyb))

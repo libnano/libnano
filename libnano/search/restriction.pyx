@@ -84,10 +84,6 @@ cdef class RestrictionSearcher:
         for en in enzyme_names:
             try:
                 cutsites: List[dict] = enzyme_dataset[en][key_cutsites]
-                # core_regexs += itertools.chain.from_iterable(
-                #     [cs[key_core_regex] for cs in cutsites])
-                # full_regexs += itertools.chain.from_iterable(
-                #     [cs[key_full_regex] for cs in cutsites])
                 for cs in cutsites:
                     # convert lists to tuples
                     str_temp = tuple(x for x in cs[key_core_regex])

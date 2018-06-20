@@ -12,12 +12,16 @@ class TestDSeq(unittest.TestCase):
 
     def test_add(self):
         dseq: DSeq = DSeq("GGATCCAAA")
-        print(dseq + dseq)
+        check1 = dseq + dseq
+        dseq: DSeq = DSeq("GGATCCAAAG", 'TTTGGATCCC', overhang=1)
+        print(dseq)
+        check2 = dseq + dseq
 
     def test_cut(self):
         # Test single cutter BsaI
         fwd: str = 'GGTCTCGAATTCAAA'
         rev: str = 'GAATTCGAGACCAAA'
+
         bsai_cut_fwd_5prime: str = 'GGTCTCG'
         bsai_cut_fwd_3prime: str = 'AATTCAAA'
 
@@ -35,8 +39,8 @@ class TestDSeq(unittest.TestCase):
         ds_bsai: DSeq = DSeq(fwd, rev)
         bsai_cuts: List[DSeq] = ds_bsai.cut('BsaI')
         for ds, ds_check in zip(bsai_cuts, bsai_cuts_check):
-            print(ds)
-            print(ds_check)
+            # print(ds)
+            # print(ds_check)
             self.assertEqual(ds, ds_check)
 
         # Test double cutter BaeI
@@ -58,6 +62,21 @@ class TestDSeq(unittest.TestCase):
         self.assertEqual(baei_cuts[0], end_cut)
         self.assertEqual(baei_cuts[1], center_cut)
         self.assertEqual(baei_cuts[2], end_cut)
+
+        # BsaI mutliple cuts
+        '''       GGTCTCG
+            TTTAAACCAGAGCTTAA
+            AATTCAAATTTGGTCTCG
+                GTTTAAACCAGAGCTTAA
+            AATTCAAATTT
+                G
+        '''
+        fwd: str = 'GGTCTCGAATTCAAATTT'
+        rev: str = 'GAATTCGAGACCAAATTT'
+        bsai_ds2 = DSeq(fwd, rev)
+        bsai_ds2_double = bsai_ds2 + bsai_ds2
+        bsai_double_cuts = bsai_ds2_double.cut('BsaI')
+        self.assertEqual(len(bsai_double_cuts), 3)
     # end def
 
 

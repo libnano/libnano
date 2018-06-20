@@ -35,7 +35,8 @@ from libnano.fileio.naformat import (
     Alignment,
     five_prime_type,
     three_prime_type,
-    PRIME_ENUM_MAP
+    PRIME_ENUM_MAP,
+    PrimeEnum
 )
 from libnano.search.restriction import (
     RestrictionSearcher,
@@ -155,12 +156,19 @@ class DSeq(object):
             a :class:`DSeq` object
 
         Raises:
-            ValueError
+            ValueError, TypeErro
         '''
         if isinstance(b, DSeq):
-            fwd = self.fwd + b.fwd
-            rev = self.rev + b.rev
-            return DSeq(fwd, rev)
+            type3, seq3 = self.three_prime_end()
+            type5, seq5 = b.five_prime_end()
+            if type3 == type5 and  len(seq3) == len(seq5):
+                if seq3 != reverseComplement(seq5):
+                    raise TypeError("Ends not complimentary")
+                fwd = self.fwd + b.fwd
+                rev = self.rev + b.rev
+                return DSeq(fwd, rev, self.overhang)
+            else:
+                raise TypeError("Ends not compatible")
         else:
             raise ValueError("{} object not a DSeq".format(b))
     # end def
@@ -252,60 +260,51 @@ class DSeq(object):
     # end def
 
 
-    def five_prime_end(self) -> Tuple[str, str]:
+    def five_prime_end(self) -> Tuple[int, str]:
         '''Return what kind of end is overhanging the 5' end of the
         forward strand
         '''
         res, val  = five_prime_type(self.alignment, self.fwd, self.rev)
-        return PRIME_ENUM_MAP.get(res), val
+        return res, val
     # end def
 
-    def three_prime_end(self) -> Tuple[str, str]:
+    def three_prime_end(self) -> Tuple[int, str]:
         '''Return what kind of end is overhanging the 3' end of the forward
         strand
         '''
         res, val  = three_prime_type(self.alignment, self.fwd, self.rev)
-        return PRIME_ENUM_MAP.get(res), val
+        return res, val
     # end def
 
-    # for m in regex_fwd_comp.finditer(seq)
-
-    def cut(self,
-            enzyme: str,
-            restriction_searcher: RestrictionSearcher = None) -> List['DSeq']:
-        if restriction_searcher is None:
-            restriction_searcher = RestrictionSearcher(enzyme)
-        rs: RestrictionSearcher = restriction_searcher
-        fwd: str = self.fwd
-        rev: str = self.rev
+    @staticmethod
+    def _cut(dseq: 'DSeq',
+            rs: RestrictionSearcher) -> List['DSeq']:
+        '''Helper for :method:`cut`
+        '''
+        out: List['DSeq'] = []
+        fwd: str = dseq.fwd
+        rev: str = dseq.rev
         reverse_rev: str = reverse(rev)
         fwd_match_list: List[RestrictionMatch] = rs.findSites(fwd)[0]
-        out: List[DSeq] = []
         if len(fwd_match_list) == 0:
-            return out
+            return [dseq]
         else:
-            out = []
             for fwd_match in fwd_match_list:
                 rev_regex = fwd_match.pair_regex
                 rev_match_list: List[Tuple[int, int]] = [(m.start(), m.end())for m in re.finditer(rev_regex, rev)]
                 if len(rev_match_list) == 0:
                     continue
                 else:
-                    # print("rev strand has it!")
-                    # print(fwd_match)
-                    # print(rev_match_list)
-                    rev_match_idxs = rev_match_list[0]
-                    potential_5p_idx  = self.getForwardIdxFrom5PrimeIdx(rev_match_idxs[1])
+                    rev_match_idxs = rev_match_list[-1]
+                    potential_5p_idx  = dseq.getForwardIdxFrom5PrimeIdx(rev_match_idxs[1])
                     assert(potential_5p_idx == fwd_match.start_idx)
 
                     fwd_cuts: Tuple[Tuple[int, int]] = fwd_match.cut_idxs
 
-                    # NOTE: THIS IS SETUP TO HANDLE ONLY SINGLE CUT SITE AT THE MOMENT
-
                     # traverse through the cutsites in reverse
-                    fwd: str = copy.copy(self.fwd)
-                    reverse_rev: str = reverse(self.rev)
-                    self_overhang: int = self.overhang
+                    fwd: str = copy.copy(dseq.fwd)
+                    reverse_rev: str = reverse(dseq.rev)
+                    self_overhang: int = dseq.overhang
                     for fwd_cut, rev_cut in zip(fwd_cuts[0][::-1], fwd_cuts[1][::-1]):
 
                         cut_overhang: int =  fwd_cut - rev_cut
@@ -330,20 +329,44 @@ class DSeq(object):
                                         reverse(reverse_rev[rev_slice_5p]),
                                         overhang=cut_overhang) )
 
-                        # print("monkey", fwd, reverse_rev)
                         fwd = fwd[fwd_slice_5p]
                         reverse_rev = reverse_rev[rev_slice_3p]
-                        # print("cat", fwd, reverse_rev)
                     # end for
                     out.append(DSeq(fwd,
                                     reverse(reverse_rev),
-                                    self.overhang) )
+                                    dseq.overhang) )
+                '''NOTE: break out and then check the new DSeq's for additional
+                cutsites'''
                 break
             # end for
-        return out[::-1]
+        # recurse at the 3prime end of the forward strand
+        len_out: int = len(out)
+        if len_out > 1:
+            return out[len_out-1:0:-1] + dseq._cut(out[0], rs)
+        else:
+            return out
+    # end def
+
+    def cut(self,
+            enzyme: str,
+            restriction_searcher: RestrictionSearcher = None) -> List['DSeq']:
+        '''Return a list of the cut :class:`DSeq` objects created from cutting
+        a Dseq with the ``enzyme`` argument.  If the enzyme finds more than one
+        cutsite the list will be longer.  Cuts in the 5' to the 3' direction
+        of the forward strand
+
+        Args:
+            enzyme: enzyme to check to cut
+            restriction_searcher: default is None.  Creates one if needed
+
+        Returns:
+            List of :class:`DSeq`cut from this :class:`DSeq` object
+        '''
+        if restriction_searcher is None:
+            restriction_searcher = RestrictionSearcher(enzyme)
+        return self._cut(self, restriction_searcher)
     # end def
 # end class
-
 
 
 if __name__ == '__main__':

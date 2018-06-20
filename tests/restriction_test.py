@@ -85,21 +85,21 @@ class TestRestriction(unittest.TestCase):
         # EcoRI on fwd strand
         self.assertTrue(sites[0][0] == (    1, 6, 12,
                                             'EcoRI', 0,
-                                            ((1, None), (5, None)),
+                                            ((1,), (5,)),
                                             'GAATTC'
                                         )
         )
         # EcoRI on rev strand (indexed from 5' of fwd strand)
         self.assertTrue(sites[0][1] == (    -1, 6, 12,
                                             'EcoRI', 0,
-                                            ((1, None), (5, None)),
+                                            ((1,), (5,)),
                                             'GAATTC'
                                         )
         )
         # BsaI on fwd strand
         self.assertTrue(sites[1][0] == (    1, 0, 11,
                                             'BsaI', 1,
-                                            ((0, 7), (0, 11)),
+                                            ((7,), (11,)),
                                             '[ATGC]{5}GAGACC'
                                         )
         )

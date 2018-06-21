@@ -8,13 +8,13 @@ class TestDSeq(unittest.TestCase):
 
     def test_single(self):
         dseq: DSeq = DSeq("GGATCCAAA")
-        print(dseq)
+        # print(dseq)
 
     def test_add(self):
         dseq: DSeq = DSeq("GGATCCAAA")
         check1 = dseq + dseq
         dseq: DSeq = DSeq("GGATCCAAAG", 'TTTGGATCCC', overhang=1)
-        print(dseq)
+        # print(dseq)
         check2 = dseq + dseq
 
     def test_cut(self):
@@ -77,10 +77,23 @@ class TestDSeq(unittest.TestCase):
         bsai_ds2_double = bsai_ds2 + bsai_ds2
         bsai_double_cuts = bsai_ds2_double.cut('BsaI')
         self.assertEqual(len(bsai_double_cuts), 3)
+        bsai_ds2_checks = ( DSeq(   'GGTCTCG',
+                                    reverse('TTTAAACCAGAGCTTAA'),
+                                    overhang=6),
+                            DSeq('AATTCAAATTTGGTCTCG',
+                                reverse('GTTTAAACCAGAGCTTAA'),
+                                overhang=-4),
+                            DSeq('AATTCAAATTT',
+                                'G',
+                                overhang=-4)
+        )
+        for x, y in zip(bsai_double_cuts, bsai_ds2_checks):
+            self.assertEqual(x, y)
     # end def
 
 
 if __name__ == '__main__':
     x = TestDSeq()
-    x.test_DSeqSingle()
-    x.test_DSeqAdd()
+    x.test_single()
+    x.test_add()
+    x.test_cut()

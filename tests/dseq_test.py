@@ -64,27 +64,20 @@ class TestDSeq(unittest.TestCase):
         self.assertEqual(baei_cuts[2], end_cut)
 
         # BsaI mutliple cuts
-        '''       GGTCTCG
-            TTTAAACCAGAGCTTAA
-            AATTCAAATTTGGTCTCG
-                GTTTAAACCAGAGCTTAA
-            AATTCAAATTT
-                G
-        '''
         fwd: str = 'GGTCTCGAATTCAAATTT'
         rev: str = 'GAATTCGAGACCAAATTT'
         bsai_ds2 = DSeq(fwd, rev)
         bsai_ds2_double = bsai_ds2 + bsai_ds2
         bsai_double_cuts = bsai_ds2_double.cut('BsaI')
         self.assertEqual(len(bsai_double_cuts), 3)
-        bsai_ds2_checks = ( DSeq(   'GGTCTCG',
-                                    reverse('TTTAAACCAGAGCTTAA'),
+        bsai_ds2_checks = ( DSeq(              'GGTCTCG',
+                                 reverse('TTTAAACCAGAGCTTAA'),
                                     overhang=6),
-                            DSeq('AATTCAAATTTGGTCTCG',
+                            DSeq(   'AATTCAAATTTGGTCTCG',
                                 reverse('GTTTAAACCAGAGCTTAA'),
                                 overhang=-4),
                             DSeq('AATTCAAATTT',
-                                'G',
+                                     'G',
                                 overhang=-4)
         )
         for x, y in zip(bsai_double_cuts, bsai_ds2_checks):

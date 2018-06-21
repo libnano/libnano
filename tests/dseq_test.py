@@ -8,13 +8,11 @@ class TestDSeq(unittest.TestCase):
 
     def test_single(self):
         dseq: DSeq = DSeq("GGATCCAAA")
-        # print(dseq)
 
     def test_add(self):
         dseq: DSeq = DSeq("GGATCCAAA")
         check1 = dseq + dseq
         dseq: DSeq = DSeq("GGATCCAAAG", 'TTTGGATCCC', overhang=1)
-        # print(dseq)
         check2 = dseq + dseq
 
     def test_cut(self):
@@ -39,8 +37,6 @@ class TestDSeq(unittest.TestCase):
         ds_bsai: DSeq = DSeq(fwd, rev)
         bsai_cuts: List[DSeq] = ds_bsai.cut('BsaI')
         for ds, ds_check in zip(bsai_cuts, bsai_cuts_check):
-            # print(ds)
-            # print(ds_check)
             self.assertEqual(ds, ds_check)
 
         # Test double cutter BaeI

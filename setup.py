@@ -80,7 +80,7 @@ MODULE_PATH = pjoin(PACKAGE_PATH, 'libnano')
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ include dirs ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 common_include = ['libnano/src', 'libnano/helpers']
-
+numpy_include = [numpy.get_include()]
 # Non-python files to include in the installation
 libnano_files = []
 
@@ -107,7 +107,7 @@ addExtension(
     sources=['libnano/src/si_seqint.c',
              'libnano/src/sr_seqrepeat.c',
              'libnano/metric/seqrepeat.pyx'],
-    include_dirs=common_include + [numpy.get_include()],
+    include_dirs=common_include + numpy_include,
     extra_compile_args=extra_compile_args
 )
 
@@ -155,7 +155,7 @@ addExtension(
     depends=[],
     sources=['libnano/seqstr.pyx',
              'libnano/src/ss_seqstr.c'],
-    include_dirs=common_include + [numpy.get_include()],
+    include_dirs=common_include + numpy_include,
     extra_compile_args=extra_compile_args
 )
 libnano_files.append('libnano/seqstr.pxd')
@@ -165,7 +165,7 @@ addExtension(
     depends=[],
     sources=['libnano/seqgraph.pyx',
              'libnano/src/ss_seqstr.c'],
-    include_dirs=common_include + [numpy.get_include()],
+    include_dirs=common_include + numpy_include,
     extra_compile_args=extra_compile_args
 )
 
@@ -224,6 +224,15 @@ addExtension(
     extra_compile_args=extra_compile_args,
 )
 
+addExtension(
+    'libnano.datastructures.dseq2',
+    depends=[],
+    sources=[   'libnano/datastructures/dseq2.pyx'],
+                # 'libnano/src/ss_seqstr.c'],
+    include_dirs=common_include + numpy_include,
+    extra_compile_args=extra_compile_args,
+)
+
 # add header files or extra c files
 for path in common_include:
     libnano_files += [rpath(pjoin(path, f)) for f in
@@ -251,7 +260,7 @@ def removeBuiltFiles():
     ''' Remove any existing *.c or *.so files from a previous build process
     '''
     print('Removing previously built files...')
-    avoid_dirs = ['src', '\.git', 'build', 'klib', 'scratch']
+    avoid_dirs = ['src', '.git', 'build', 'klib', 'scratch']
     ads = '|'.join(['(?:%s)' % d for d in avoid_dirs])
     for root, dirs, files in os.walk(MODULE_PATH):
         if not re.search(ads, root):

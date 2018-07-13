@@ -23,6 +23,9 @@ class Strand:
         self.strand3p: Strand = None
         self.oligo: Oligo = None
 
+    def __len__(self) -> int:
+        return len(self.seq)
+
     def gen3p(self) -> Generator['Strand', None, None]:
         '''Iterate from self to the final `strand3p` of the :class:`Oligo` this
         :class:`Strand` is part of
@@ -46,6 +49,11 @@ class Strand:
             if node0 == node:
                 break
     # end def
+# end def
+
+def unknownStrand(length: int) -> Strand:
+    seq: str = 'N'*length
+    return Strand(seq)
 
 class Oligo:
     def __init__(self, strand5p: Strand = None):
@@ -62,6 +70,9 @@ class Oligo:
         strand5p.strand3p = strand
     # end def
 
+    def __len__(self) -> int:
+        return sum(len(x) for x in self.strand5p.gen3p())
+
     def prepend5p(self, strand: Strand):
         '''Append a :class:`Strand` to the 3 prime end of the oligo
         '''
@@ -75,7 +86,18 @@ class Oligo:
     def seq(self) -> str:
         '''Return the sequence string from 5' to 3'
         '''
-        return ''.join(strand.seq for strand in strand5p.gen3p())
+        return ''.join(x.seq for x in strand5p.gen3p())
+
+    def setSeq(self, seq: str):
+        if len(seq) != len(self):
+            raise ValueError("sequence length does not match oligo length")
+        len_x: int
+        for x in self.strand5p().gen3p():
+            len_x = len(x)
+            x.seq = seq[:len_x]
+            seq = seq[len_x:]
+    # end def
+
 # end class
 
 class OligoAssembly:

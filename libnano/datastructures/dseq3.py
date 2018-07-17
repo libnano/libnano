@@ -167,7 +167,7 @@ class OligoAssembly:
     # end def
 # end class
 
-class Helix:
+class VirtualHelix:
     def __init__(self,
         fwd_strands: List[str],
         fwd_idx_offsets: List[int]
@@ -176,20 +176,45 @@ class Helix:
         alphabet: int = AlphaEnum.DNA):
 
         self.fwd_strands = fwd_strands
-        fwd_str: str = ''.join(' '*x + y for x, y in zip(fwd_strands, fwd_idx_offsets))
-        self.rev_strands = rev_strands
-        rev_str: str = ''.join(' '*x + y for x, y in zip(rev_strands, rev_idx_offsets))
 
+        strand_seq_list: list = []
+        idx_last: int = 0
+        for seq, idx in zip(fwd_strands, fwd_idx_offsets):
+            strand_seq_list.append(' '*(idx - idx_last))
+            strand_seq_list.append(seq)
+            idx_last = idx + len(seq)
+        fwd_str: str = ''.join(strand_seq_list)
+
+        strand_seq_list: list = []
+        idx_last: int = 0
+        for seq, idx in zip(rev_strands, rev_idx_offsets):
+            strand_seq_list.append(' '*(idx - idx_last))
+            strand_seq_list.append(seq)
+            idx_last = idx + len(seq)
+        rev_str: str = ''.join(strand_seq_list)
+        self.rev_strands = rev_strands
         self.alphabet: int = alphabet
+
+        fwd_gaps: list = [] # track the free space in the VirtualHelix
+        fwd_endpoints: list = []
+        rev_gaps: list = [] # track the free space in the VirtualHelix
+        rev_endpoints: list = []
     # end def
+
+    def addForwardStrand(self, strand: Strand, offset: int):
+        pass
+    # end def
+
+    def addSequence(self, seq: str) -> Oligo:
+        pass
 # end class
 
-def HelixHelper(fwd: str, rev: str, overhang: int) -> Helix:
+def HelixHelper(fwd: str, rev: str, overhang: int) -> VirtualHelix:
     if overhang > 0:
         fwd_idx_offsets = [overhang]
         rev_idx_offsets = []
     else:
         fwd_idx_offsets = []
         rev_idx_offsets = [overhang]
-    return Helix([fwd], fwd_idx_offsets, [rev], rev_idx_offsets)
+    return VirtualHelix([fwd], fwd_idx_offsets, [rev], rev_idx_offsets)
 # end def

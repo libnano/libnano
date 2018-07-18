@@ -25,6 +25,9 @@ class Strand:
         self.strand3p: Strand = None
         self.oligo: Oligo = None
 
+    def __len__(self) -> int:
+        return len(self.seq)
+
     def gen3p(self) -> Generator['Strand', None, None]:
         '''Iterate from self to the final `strand3p` of the :class:`Oligo` this
         :class:`Strand` is part of
@@ -48,6 +51,11 @@ class Strand:
             if node0 == node:
                 break
     # end def
+# end def
+
+def unknownStrand(length: int) -> Strand:
+    seq: str = 'N'*length
+    return Strand(seq)
 
     cdef char* cseq(self):
         cdef char* offset = self.offset
@@ -119,6 +127,9 @@ cdef class Oligo:
         strand5p.strand3p = strand
     # end def
 
+    def __len__(self) -> int:
+        return sum(len(x) for x in self.strand5p.gen3p())
+
     def prepend5p(self, strand: Strand):
         '''Append a :class:`Strand` to the 3 prime end of the oligo
         '''
@@ -147,6 +158,21 @@ cdef class OligoAssembly:
         self.highest_id_num_used: int = -1
         self.recycle_bin: List[int] = []
         self.reserved_ids: set = set()
+    # end def
+
+    def seq(self) -> str:
+        '''Return the sequence string from 5' to 3'
+        '''
+        return ''.join(x.seq for x in strand5p.gen3p())
+
+    def setSeq(self, seq: str):
+        if len(seq) != len(self):
+            raise ValueError("sequence length does not match oligo length")
+        len_x: int
+        for x in self.strand5p().gen3p():
+            len_x = len(x)
+            x.seq = seq[:len_x]
+            seq = seq[len_x:]
     # end def
 
     def getNewIdNum(self): -> int:
@@ -202,7 +228,7 @@ cdef class OligoAssembly:
     # end def
 # end class
 
-class Helix:
+class VirtualHelix:
     def __init__(self,
         fwd_strands: List[str],
         fwd_idx_offsets: List[int]
@@ -211,20 +237,45 @@ class Helix:
         alphabet: int = AlphaEnum.DNA):
 
         self.fwd_strands = fwd_strands
-        fwd_str: str = ''.join(' '*x + y for x, y in zip(fwd_strands, fwd_idx_offsets))
-        self.rev_strands = rev_strands
-        rev_str: str = ''.join(' '*x + y for x, y in zip(rev_strands, rev_idx_offsets))
 
+        strand_seq_list: list = []
+        idx_last: int = 0
+        for seq, idx in zip(fwd_strands, fwd_idx_offsets):
+            strand_seq_list.append(' '*(idx - idx_last))
+            strand_seq_list.append(seq)
+            idx_last = idx + len(seq)
+        fwd_str: str = ''.join(strand_seq_list)
+
+        strand_seq_list: list = []
+        idx_last: int = 0
+        for seq, idx in zip(rev_strands, rev_idx_offsets):
+            strand_seq_list.append(' '*(idx - idx_last))
+            strand_seq_list.append(seq)
+            idx_last = idx + len(seq)
+        rev_str: str = ''.join(strand_seq_list)
+        self.rev_strands = rev_strands
         self.alphabet: int = alphabet
+
+        fwd_gaps: list = [] # track the free space in the VirtualHelix
+        fwd_endpoints: list = []
+        rev_gaps: list = [] # track the free space in the VirtualHelix
+        rev_endpoints: list = []
     # end def
+
+    def addForwardStrand(self, strand: Strand, offset: int):
+        pass
+    # end def
+
+    def addSequence(self, seq: str) -> Oligo:
+        pass
 # end class
 
-def HelixHelper(fwd: str, rev: str, overhang: int) -> Helix:
+def HelixHelper(fwd: str, rev: str, overhang: int) -> VirtualHelix:
     if overhang > 0:
         fwd_idx_offsets = [overhang]
         rev_idx_offsets = []
     else:
         fwd_idx_offsets = []
         rev_idx_offsets = [overhang]
-    return Helix([fwd], fwd_idx_offsets, [rev], rev_idx_offsets)
+    return VirtualHelix([fwd], fwd_idx_offsets, [rev], rev_idx_offsets)
 # end def

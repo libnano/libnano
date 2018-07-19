@@ -3,6 +3,9 @@ language: python
 python:
   # We don't actually use the Travis Python, but this keeps it organized.
   - "3.6"
+env:
+  - IS_TRAVIS=true
+
 install:
   - sudo apt-get update
   # You may want to periodically update this, although the conda update

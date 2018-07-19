@@ -12,6 +12,8 @@ from heapq import (
 )
 import numpy as np
 import pandas as pd
+from libnano.cymem.cymem cimport Pool
+
 
 DEFAULT_SIZE: int = 256
 
@@ -55,11 +57,66 @@ def unknownStrand(length: int) -> Strand:
     seq: str = 'N'*length
     return Strand(seq)
 
-class Oligo:
-    def __init__(self, strand5p: Strand = None):
-        self.strand5p: Strand = strand5p
+    cdef char* cseq(self):
+        cdef char* offset = self.offset
+        return self.oligo.seq[offset]
+# end class
 
-    def append3p(self, strand: Strand):
+cdef struct Strand_t:
+    int start   # start index in the Oligo
+    int length  # length of the Strand
+    int vh_id   # Virtual Helix ID Number
+
+cdef int OLIGO_DEFAULT_LEN = 4
+
+cdef class Oligo:
+    cdef:
+        Pool mem
+        char* cseq  # pointer to the c string reference in the _
+        int len_seq
+        Strand_t* strands
+        int len_strands
+
+    def __cinit__(Self, assembly, strand5p):
+        self.mem = None
+        self.strands = NULL
+        self.cseq = NULL
+        self._seq = None
+        self.len_seq = 0
+
+    def __init__(self, assembly, strand5p: Strand = None):
+        self.mem = mem = Pool()
+        self.assembly = assembly
+        cdef:
+            Strand_t* strands = <int*>mem.malloc(OLIGO_DEFAULT_LEN, sizeof(Strand_t)) # order 5' to 3'
+            self.strands = strands
+        if strand5p is not None:
+            strands[0].start = 0
+            strands[0].length = strand5p.length
+            strands[0].vh_id = strand5p.id_num
+            self.len_seq = strand5p.length
+    # end def
+
+    @property
+    def seq(self) -> str:
+        return self._seq = seq
+
+    @seq.setter
+    def seq(self, value: str):
+        self._seq = value
+        self.cseq =  c_util.obj_to_cstr_len(value, &self.len_seq)
+
+    @seq.deleter
+    def seq(self):
+        self.cseq = NULL
+        del self._seq = None
+        self.len_seq = 0
+
+    cdef char* cseq_index(self, int index):
+        cdef int offset = self.strands[index].start
+        return &self.cseq[offset]
+
+    cdef append3p(self, strand: Strand):
         '''Append a :class:`Strand` to the 3 prime end of the oligo
         '''
         strand5p: Strand = self.strand5p
@@ -83,6 +140,26 @@ class Oligo:
         strand.strand3p = old_strand5p
     # end def
 
+cdef class OligoAssembly:
+    cdef Pool mem   # Memory manager
+
+    def __cinit__(self):
+        self.mem = None
+
+    def __init__(self, default_size: int = DEFAULT_SIZE):
+        self.mem = Pool()
+        self.default_size: int = default_size
+        self.oligos: List[Oligo] = []
+        self.strands: List[str] = []
+        self.id_nums: np.ndarray = np.full((DEFAULT_SIZE,), -1, dtype=int)
+        self.fwd_strandsets: List[Strand] = [None] * default_size
+        self.rev_strandsets: List[Strand] = [None] * default_size
+
+        self.highest_id_num_used: int = -1
+        self.recycle_bin: List[int] = []
+        self.reserved_ids: set = set()
+    # end def
+
     def seq(self) -> str:
         '''Return the sequence string from 5' to 3'
         '''
@@ -96,22 +173,6 @@ class Oligo:
             len_x = len(x)
             x.seq = seq[:len_x]
             seq = seq[len_x:]
-    # end def
-
-# end class
-
-class OligoAssembly:
-    def __init__(self, default_size: int = DEFAULT_SIZE):
-        self.default_size: int = default_size
-        self.oligos: List[Oligo] = []
-        self.strands: List[str] = []
-        self.id_nums: np.ndarray = np.full((DEFAULT_SIZE,), -1, dtype=int)
-        self.fwd_strandsets: List[Strand] = [None] * default_size
-        self.rev_strandsets: List[Strand] = [None] * default_size
-
-        self.highest_id_num_used: int = -1
-        self.recycle_bin: List[int] = []
-        self.reserved_ids: set = set()
     # end def
 
     def getNewIdNum(self): -> int:

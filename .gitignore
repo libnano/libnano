@@ -36,3 +36,4 @@ node_modules/
 scratch_nocommit/
 
 scratch/
+.ipynb_checkpoints/

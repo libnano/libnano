@@ -10,14 +10,23 @@ __copyright__ = 'Copyright 2018, Nick Conway; Wyss Institute Harvard University'
 __license__ = 'GPL2'
 __version__: str = '0.2.2.2'
 
-import os
 from typing import List
 
-PACKAGE_DIR: str = os.path.dirname(os.path.realpath(__file__))
-DATASET_DIR: str = os.path.join(PACKAGE_DIR, 'datasets')
+from os.path import (
+    dirname,
+    realpath,
+    join
+)
+import sys
 
+PACKAGE_DIR: str = dirname(realpath(__file__))
+DATASET_DIR: str = join(PACKAGE_DIR, 'datasets')
+
+sys.path = [dirname(PACKAGE_DIR)] + sys.path
 
 def includes() -> List[str]:
     return [PACKAGE_DIR]
+
+
 
 

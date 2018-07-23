@@ -37,13 +37,13 @@ from libnano.fileio import (
 )
 from libnano.fileio import fasta
 
-from libnano.datastructures.seqrecord.feature import (
+from libnano.seqrecord.feature import (
     Feature,
     DummyFeature,
     locationStr2Feature
 )
-from libnano.datastructures.seqrecord.featuretypes import FeatureTypes
-from libnano.datastructures.list_bisect cimport (
+from libnano.seqrecord.featuretypes import FeatureTypes
+from libnano.list_bisect cimport (
     bisect_left,
     bisect_right,
     insort_left

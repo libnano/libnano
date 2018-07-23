@@ -19,7 +19,7 @@ except:
     LIBNANO_PATH = dirname(dirname(dirname(dirname(__file__))))
     sys.path = [LIBNANO_PATH] + sys.path
 
-from libnano.datastructures.seqrecord.seqrecordbase import (
+from libnano.seqrecord.seqrecordbase import (
     SeqRecord,
     AlphaEnum,
     ALPHABETS

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import unittest
 import _setup
-from libnano.datastructures.dseq import DSeq
+from libnano.dseq import DSeq
 from libnano.seqstr import reverse
 
 class TestDSeq(unittest.TestCase):

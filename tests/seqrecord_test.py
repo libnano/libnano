@@ -8,15 +8,13 @@ from os.path import (
 )
 
 import _setup
-from libnano.datastructures.seqrecord import (
+from libnano.seqrecord import (
     SeqRecord,
-    fromGenbankLike
-)
-from libnano.datastructures.seqrecord import (
+    fromGenbankLike,
     Feature,
-    locationStr2Feature
+    locationStr2Feature,
+    Location
 )
-from libnano.datastructures.seqrecord import Location
 
 LOCAL_DIR: str = abspath(dirname(__file__))
 

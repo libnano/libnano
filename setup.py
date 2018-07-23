@@ -148,7 +148,7 @@ addExtension(
     extra_compile_args=extra_compile_args
 )
 libnano_files.append('libnano/seqint.pxd')
-libnano_files.append('libnano/datastructures/list_bisect.pxd')
+libnano_files.append('libnano/list_bisect.pxd')
 
 addExtension(
     'libnano.seqstr',
@@ -201,17 +201,17 @@ libnano_files += [rpath(pjoin(root, f), MODULE_PATH) for root, _, files in
                   os.walk(res_data_fp) for f in files if ('.json' in f or '.yaml' in f)]
 
 addExtension(
-    'libnano.datastructures.seqrecord.feature',
+    'libnano.seqrecord.feature',
     depends=[],
-    sources=['libnano/datastructures/seqrecord/feature.pyx'],
+    sources=['libnano/seqrecord/feature.pyx'],
     include_dirs=common_include,
     extra_compile_args=extra_compile_args
 )
 
 addExtension(
-    'libnano.datastructures.seqrecord.seqrecordbase',
+    'libnano.seqrecord.seqrecordbase',
     depends=[],
-    sources=['libnano/datastructures/seqrecord/seqrecordbase.pyx'],
+    sources=['libnano/seqrecord/seqrecordbase.pyx'],
     include_dirs=common_include,
     extra_compile_args=extra_compile_args,
 )
@@ -225,9 +225,9 @@ addExtension(
 )
 
 addExtension(
-    'libnano.datastructures.dseq2',
+    'libnano.dseq2',
     depends=[],
-    sources=[   'libnano/datastructures/dseq2.pyx'],
+    sources=[   'libnano/dseq2.pyx'],
                 # 'libnano/src/ss_seqstr.c'],
     include_dirs=common_include + numpy_include,
     extra_compile_args=extra_compile_args,
@@ -249,7 +249,7 @@ libnano_files = list(set(libnano_files))
 
 packages = ['libnano', 'libnano.fileio',
             'libnano.helpers', 'libnano.cymem', 'libnano.search',
-            'libnano.datastructures', 'libnano.datastructures.seqrecord',
+            'libnano.seqrecord',
             'libnano.datasets', 'libnano.metric']
 
 # Commented out by NC 2018.01.05 since we are rolling towards PyPi

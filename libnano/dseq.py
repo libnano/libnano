@@ -40,8 +40,7 @@ from libnano.fileio.naformat import (
 )
 from libnano.search.restriction import (
     RestrictionSearcher,
-    RestrictionMatch,
-    StrandDirEnum
+    RestrictionMatch
 )
 
 DSEQ_STR: str = '%s\r\n%s' if sys.platform == 'win32' else '%s\n%s'
@@ -87,7 +86,7 @@ class DSeq(object):
         if overhang is None:
             alignment, self.rc_rev = align_complement(fwd, self.rev)
 
-            if max_idx_fwd > alignment.reference_end: # posiive overhang
+            if max_idx_fwd > alignment.reference_end: # positive overhang
                 self.overhang = max_idx_fwd - alignment.reference_end
                 the_length: int = max_idx_fwd + alignment.read_start + 1
 
@@ -291,7 +290,7 @@ class DSeq(object):
         else:
             for fwd_match in fwd_match_list:
                 rev_regex = fwd_match.pair_regex
-                rev_match_list: List[Tuple[int, int]] = [(m.start(), m.end())for m in re.finditer(rev_regex, rev)]
+                rev_match_list: List[Tuple[int, int]] = [(m.start(), m.end()) for m in re.finditer(rev_regex, rev)]
                 if len(rev_match_list) == 0:
                     continue
                 else:

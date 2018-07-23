@@ -97,18 +97,17 @@ cdef inline int copy_obj_to_cstr(   object      o1,
     cdef char* temp = NULL
     cdef size_t b_length
     cdef int obj_type = 0
+
     if PyBytes_Check(o1):
         obj_type = 1
         if PyBytes_AsStringAndSize(o1, &(c_str1), length) == -1:
-            #raise TypeError("copy_obj_to_cstr:")
             return -1
     else:
         obj_type = 0
         c_str1 = PyUnicode_AsUTF8AndSize(o1, length)
         if c_str1 == NULL:
-            #raise OSError("copy_obj_to_cstr:")
             return -1
-    b_length = length[0]+1
+    b_length = length[0] + 1 # add 1 byte for the 0 or NULL
     #temp = <char *> PyMem_Malloc(b_length*sizeof(char))
     temp = <char *> malloc(b_length*sizeof(char))
     if temp == NULL:

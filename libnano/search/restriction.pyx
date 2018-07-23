@@ -64,6 +64,10 @@ cdef class RestrictionSearcher:
         self._enzyme_names: Tuple[STR_T, ...] = enzyme_names
         self._num_enzymes = len(enzyme_names)
         self._str_type = type(enzyme_names[0])
+        '''
+        core_regexs == No ambiguous bases outside of core
+        full_regexs == Includes ambiguous bases outside of core.  Usually we want this!
+        '''
         cdef list core_regexs = []          # type: List[REGEX_PAIR_T]
         cdef list core_regexs_compiled = [] # type List[REGEX_PAIR_COMP_T]
         cdef list full_regexs = []          # type: List[REGEX_PAIR_T]

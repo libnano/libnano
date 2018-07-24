@@ -59,7 +59,8 @@ cdef inline object copy_obj_to_cstr_unsafe( object      o1,
             raise TypeError("copy_obj_to_cstr:")
         b_length = length[0]
         o2 = PyBytes_FromStringAndSize(c_str1, b_length)
-        #if o2 == NULL:
+        # NOTE: comment NULL compare out due to Cython warning on the object
+        # if o2 == NULL:
         #    raise OSError("copy_obj_to_cstr:")
         c_str2[0] = PyBytes_AsString(o2)
     else:
@@ -98,15 +99,14 @@ cdef inline int copy_obj_to_cstr(   object      o1,
     cdef size_t b_length
     cdef int obj_type = 0
 
-    if PyBytes_Check(o1):
-        obj_type = 1
-        if PyBytes_AsStringAndSize(o1, &(c_str1), length) == -1:
-            return -1
-    else:
-        obj_type = 0
+    if PyBytes_AsStringAndSize(o1, &(c_str1), length) == -1:
+        # if exception on bytes guess try unicode
         c_str1 = PyUnicode_AsUTF8AndSize(o1, length)
         if c_str1 == NULL:
             return -1
+        obj_type = 0    # it was a unicode object
+    else:
+        obj_type = 1    # It was a bytes objet
     b_length = length[0] + 1 # add 1 byte for the 0 or NULL
     #temp = <char *> PyMem_Malloc(b_length*sizeof(char))
     temp = <char *> malloc(b_length*sizeof(char))

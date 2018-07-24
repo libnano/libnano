@@ -75,7 +75,7 @@ class VirtualHelix:
         rev_endpoints: list = []
     # end def
 
-    def oligos(self) -> Tuple[List[Oligo]]:
+    def oligos(self) -> Tuple[List[Oligo], List[Oligo]]:
         strand_arrays: Tuple[StrandArray, ...] = self.strand_arrays
         strands_f: List[Strand] = strand_arrays[0].strands
         strands_r: List[Strand] = strand_arrays[0].strands

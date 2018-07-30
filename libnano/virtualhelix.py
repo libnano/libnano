@@ -21,6 +21,7 @@ from enum import IntEnum
 
 from strand import Strand
 from oligo import Oligo
+from dseq import DSeq
 
 NEWLINE_STR: str = '\r\n' if sys.platform == 'win32' else '\n'
 STR_OR_STRAND_T = Union[str, Strand]
@@ -62,6 +63,11 @@ class VirtualHelix:
         Args:
             fwd_strands: List of strands in the 5' to 3' direction
             rev_strands: List of strands in the 3' to 5' direction
+            fwd_idx_offsets: List of integer offsets from the 5' end of the
+                forward strand
+            rev_idx_offsets: List of integer offsets from the 5' end of the
+                forward strand
+            alphabet: DNA or RNA
         '''
         self.strand_arrays: Tuple[StrandArray, ...] = (
             StrandArray(fwd_strands, fwd_idx_offsets, ['']),
@@ -81,6 +87,23 @@ class VirtualHelix:
         strands_r: List[Strand] = strand_arrays[0].strands
         out = ([x.oligo for x in strands_f], [x.oligo for x in strands_r])
         return out
+
+    @staticmethod
+    def reverseStrandArray(
+            strands: List[Strand],
+            idx_offset: List[int]) -> StrandArray:
+        strands_out: List[Strand] = strands[::-1]
+        seq_len: int = sum(len(x) for x in strands)
+        x0: int = idx_offsets[0] + len(strands[0])
+        for x1, strand1 in zip(idx_offsets[1:], strands[1:]):
+            check = x1 + len(strand1)
+            assert(check >= x0)
+            x0 = check
+        total_length: int = x0
+        gener = zip(idx_offsets[::-1], strands_out)
+        idx_offsets_out: List[int] = [total_length - (y + len(z) - 1) for y, z in gener]
+        return StrandArray(strands_out, idx_offsets_out, [''])
+    # end def
 
     def get_seq(self,
             dir_idx: int,
@@ -145,7 +168,7 @@ class VirtualHelix:
         return self.len_strands(self.REV)
 
     def __str__(self) -> str:
-        return '%s%s%s' % (self.fwd_seq(), NEWLINE_STR, self.rev_seq())
+        return '%s%s%s' % (self.fwd_seq(), NEWLINE_STR, reverse(self.rev_seq()))
     # end def
 
     def addForwardStrand(self, strand: Strand, offset: int):
@@ -273,12 +296,14 @@ class VirtualHelix:
 # end class
 
 def DSeqVH( fwd: str,
-            rev: str,
-            overhang: int = 0,
+            rev: str = None,
+            overhang: int = None,
             alphabet: int = AlphaEnum.DNA) -> VirtualHelix:
     '''Helper function for creating :class:`VirtualHelix` in the style of
     the :class:`DSeq` with strings
     '''
+    dseq: DSeq = DSeq(fwd, rev, overhang, alphabet)
+    overhang: int = dseq.overhang
     if overhang > 0:
         fwd_idx_offsets = [overhang]
         rev_idx_offsets = [0]
@@ -303,10 +328,12 @@ if __name__ == '__main__':
 
     BsaI_vh = VirtualHelix( [oligo_fwd.strand5p], [0],
                             [oligo_rev.strand5p], [0])
-    print(BsaI_vh)
+    print("1.\n%s" % BsaI_vh)
     BsaI_vh = DSeqVH(fwd, rev, 0)
-    print(BsaI_vh)
+    print("2.\n%s" % BsaI_vh)
     print(BsaI_vh.fwd_strands)
+    BsaI_vh = DSeqVH(fwd)
+    print("3.\n%s" % BsaI_vh)
     print("Da Oligos", BsaI_vh.oligos())
     strand0 = BsaI_vh.fwd_strands[0]
     print(strand0.oligo)

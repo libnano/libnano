@@ -84,7 +84,7 @@ def reverse(seq: STR_T) -> STR_T:
         The reverse of the sequence (as a string)
     """
     cdef Py_ssize_t s_length
-    cdef char* rev_seq_cstr
+    cdef char* rev_seq_cstr = NULL
     cdef object rev_seq
     cdef int obj_type
 
@@ -122,7 +122,7 @@ def complement(seq: STR_T) -> STR_T:
     """
 
     cdef Py_ssize_t s_length
-    cdef char* comp_seq_cstr
+    cdef char* comp_seq_cstr = NULL
     cdef object comp_seq
     cdef int obj_type
     obj_type =  c_util.copy_obj_to_cstr(seq, &s_length, &comp_seq_cstr)
@@ -192,8 +192,8 @@ def hammingDistance(seq1: STR_T, seq2: STR_T) -> int:
     Returns:
         The hamming distance between the sequences as an integer
     """
-    cdef char* seq1_cstr
-    cdef char* seq2_cstr
+    cdef char* seq1_cstr = NULL
+    cdef char* seq2_cstr = NULL
     cdef Py_ssize_t len1
 
     seq2_cstr = c_util.obj_to_cstr_len(seq2, &len1)
@@ -233,8 +233,8 @@ def minHammingDistance(seq1: STR_T, seq_list: List[STR_T]) -> int:
     Raises:
         ValueError
     """
-    cdef char* seq1_cstr
-    cdef char* seq2_cstr
+    cdef char* seq1_cstr = NULL
+    cdef char* seq2_cstr = NULL
     cdef Py_ssize_t len1
     cdef Py_ssize_t len2
     cdef object seq2
@@ -277,8 +277,8 @@ def thresholdRollingHammingList(target: STR_T,
     Raises:
         ValueError
     """
-    cdef char* target_cstr
-    cdef char* ref_cstr
+    cdef char* target_cstr = NULL
+    cdef char* ref_cstr = NULL
     cdef Py_ssize_t target_len
     cdef Py_ssize_t ref_len
     cdef object ref
@@ -359,8 +359,8 @@ def rollingHammingDistance(seq1: STR_T, seq2: STR_T, int overlap=0) -> np.ndarra
         returned numpy array: [2, 3, ..., 6]
             length: len(seq2)-len(seq1) + 1
     """
-    cdef char* seq1_cstr
-    cdef char* seq2_cstr
+    cdef char* seq1_cstr = NULL
+    cdef char* seq2_cstr = NULL
     cdef Py_ssize_t len1, len2
 
     cdef cnp.ndarray[cnp.int32_t, ndim=1] hamming_distance_np_arr
@@ -409,8 +409,8 @@ def misprimeCheck(  putative_seq: STR_T,
     """
     cdef bint is_offtarget = False
     cdef int res
-    cdef char* seq1_cstr    # the shorter sequence
-    cdef char* seq2_cstr    # the longer sequence
+    cdef char* seq1_cstr = NULL   # the shorter sequence
+    cdef char* seq2_cstr = NULL   # the longer sequence
     cdef Py_ssize_t len1, len2
 
     seq1_cstr = c_util.obj_to_cstr_len(putative_seq, &len1)

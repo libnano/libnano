@@ -78,7 +78,7 @@ def useCache(is_on: bool):
 # end def
 
 def listExons(transcript_id: str):
-    res = lookUpID(transcript_id)
+    res: dict = lookUpID(transcript_id)
     msg = '%-10s%8d'
     exon = res.get('Exon')
     if exon is None:
@@ -104,25 +104,25 @@ def listTranscriptsIdxs(species: str,
         symbols:
     '''
     print("Listing transcript indices")
-    res = lookUpSymbolList(species, symbols)
-    msg = '%-12s%-20s%8s%8s%8s%8s%8s%8s'
+    res: dict = lookUpSymbolList(species, symbols)
+    msg: str = '%-12s%-20s%8s%8s%8s%8s%8s%8s'
     print(msg % ('Name', 'EID', 'start', 'end', 'delta', 'elength', 'canon', 'strand'))
-    msg = '%-12s%-20s%8d%8d%8d%8d%8s%8s'
+    msg: str = '%-12s%-20s%8d%8d%8d%8d%8s%8s'
     for symbol in symbols:
-        item = res[symbol]
-        transcripts = item['Transcript']
-        start_min = 1e20
-        end_canon = 0
+        item: dict = res[symbol]
+        transcripts: dict = item['Transcript']
+        # start_min: float = 1e20
+        end_canon: int = 0
         for transcript in transcripts:
             start, end  = transcript['start'], transcript['end']
             if transcript['is_canonical'] == 1:
                 end_canon = end
-                start_canon = start
+                start_canon: int = start
         if item['strand'] == 1:
             for transcript in transcripts:
                 start, end  = transcript['start'], transcript['end']
                 is_canonical = 'Yes' if transcript['is_canonical'] == 1 else 'No'
-                elength = 0
+                elength: int = 0
                 for exon in transcript['Exon']:
                     elength += abs(exon['end'] - exon['start'])
                 print(msg % (
@@ -137,8 +137,8 @@ def listTranscriptsIdxs(species: str,
         else:
             for transcript in transcripts:
                 start, end  = transcript['start'], transcript['end']
-                is_canonical = 'Yes' if transcript['is_canonical'] == 1 else 'No'
-                elength = 0
+                is_canonical: str = 'Yes' if transcript['is_canonical'] == 1 else 'No'
+                elength: int = 0
                 for exon in transcript['Exon']:
                     elength += abs(exon['end'] - exon['start'])
                 print(msg % (
@@ -172,23 +172,23 @@ def listDetails(species: str,
         filename: Default is ``None``. This is unused
     '''
     print("Listing Details")
-    res = lookUpSymbolList(species, symbols)
-    msg = '%-8s%6s%8s%8s%8s%8s'
+    res: dict = lookUpSymbolList(species, symbols)
+    msg: str = '%-8s%6s%8s%8s%8s%8s'
     print(msg % ('Name', '#PCTs', 'strand', 'length', 'elength', '#vars'))
-    msg = '%-8s%6d%8s%8d%8d%8d'
+    msg: str = '%-8s%6d%8s%8d%8d%8d'
     for symbol in symbols:
         try:
-            item = res[symbol]
+            item: dict = res[symbol]
         except:
             print(res)
             raise
         length = item['end'] - item['start']
 
-        elength = 0
-        variant_count = -1
+        elength: int = 0
+        variant_count: int = -1
         for transcript in item['Transcript']:
             if transcript['is_canonical'] == 1:
-                three_prime_utr_id = transcript['Exon'][-1]['id']
+                three_prime_utr_id: str = transcript['Exon'][-1]['id']
                 variant_count = len(overlap(three_prime_utr_id))
                 for exon in transcript['Exon']:
                     elength += exon['end'] - exon['start']
@@ -226,26 +226,26 @@ def designPadlocks( species: str,
     print("Designing Padlocks")
     out: dict = {symbol: [] for symbol in symbols}
 
-    p_params = DEFAULT_PADLOCK_CONFIG()
+    p_params: dict = DEFAULT_PADLOCK_CONFIG()
 
     if barcodes is None:
         barcodes = BARCODE_LIST
 
-    arm_length_2X = 2*arm_length
-    res = lookUpSymbolList(species, symbols)
-    barcode_idx = 0
+    arm_length_2X: int = 2*arm_length
+    res: dict = lookUpSymbolList(species, symbols)
+    barcode_idx: int = 0
     for symbol in symbols:
-        lookup = LookUp(res[symbol])
+        lookup: LookUp = LookUp(res[symbol])
         for prospective_transcript in lookup.transcripts:
             if prospective_transcript['is_canonical'] == 1:
                 canon_transcript = Transcript(prospective_transcript)
                 break
 
-        canon_transcript_id = canon_transcript.id
-        exon_id = canon_transcript.Exon[exon_index]['id']
+        canon_transcript_id: str = canon_transcript.id
+        exon_id: str = canon_transcript.Exon[exon_index]['id']
 
         p_seqs: List[List[Tuple[int, str]]] = permittedSequences(canon_transcript)
-        exon_segments: List[str] = p_seqs[exon_index]
+        exon_segments: List[Tuple[int, str]] = p_seqs[exon_index]
         max_idx: int = sum([len(x[1]) for x in exon_segments])
 
         strand_dir: str = 'fwd' if lookup.is_fwd else 'rev'
@@ -254,15 +254,15 @@ def designPadlocks( species: str,
             msg = '%8s%8s%8s%8s%10s'
             print(msg % ('start', 'maxidx', 'seglen', 'addlen', 'g_index'))
             msg = '%8d%8d%8d%8d%10d'
-        candidate_segments: List[str] = []
-        idx = 0
-        bound_idx = max_idx - three_prime_delta
+        candidate_segments: List[Tuple[int, str]] = []
+        idx: int = 0
+        bound_idx: int = max_idx - three_prime_delta
         for g_index, segment in exon_segments:
-            len_segment = len(segment)
+            len_segment: int = len(segment)
             if len_segment > arm_length_2X:
                 if idx + len_segment > bound_idx:
                     # Of the form:: len_segment - (idx + len_segment - bound_idx)
-                    adjust_bound = bound_idx - idx
+                    adjust_bound: int = bound_idx - idx
                     if adjust_bound < arm_length_2X:
                         continue
                     # print("Do adjust", adjust_bound,
@@ -271,19 +271,19 @@ def designPadlocks( species: str,
                     #                     idx + len_segment, idx)
                     if lookup.is_rev:
                         g_index = g_index - (len_segment - adjust_bound)
-                    add_segment = segment[:adjust_bound]
+                    add_segment: str = segment[:adjust_bound]
                 else:
-                    add_segment = segment
+                    add_segment: str = segment
                 if do_print:
                     print(msg %     (idx, max_idx, len_segment,
                                     len(add_segment), g_index) )
                 candidate_segments.append((g_index, add_segment))
             idx += len_segment
         # end for
-        barcode = barcodes[barcode_idx]
+        barcode: str = barcodes[barcode_idx]
         barcode_idx += 1
 
-        pads = out[symbol]
+        pads: list = out[symbol]
         for g_index, segment in candidate_segments:
             pads += generatePadlocks(segment,
                                     canon_transcript_id,
@@ -298,7 +298,7 @@ def designPadlocks( species: str,
         '''Retry for No hits with higher allowable GC max content'''
         if len(pads) == 0:
             print(">> bumping GC content for %s" % symbol)
-            bumped_params = DEFAULT_PADLOCK_CONFIG()
+            bumped_params: dict = DEFAULT_PADLOCK_CONFIG()
             bumped_params['arm_gc_max'] = 0.65
             for g_index, segment in candidate_segments:
                 pads += generatePadlocks(segment,

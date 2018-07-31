@@ -16,10 +16,8 @@ from typing import (
     Any
 )
 
-try:
-    import six
-except ImportError:
-    from libnano.helpers import six
+def _bytes(x):
+    return x.encode('utf8') if isinstance(x, str) else x
 
 
 NEWLINE_STR: str = '\r\n' if sys.platform == 'win32' else '\n'
@@ -29,7 +27,6 @@ def parse(filepath: str, is_ordered: bool = False) -> dict:
     """
     is_ordered == True will retain the order of the qualifiers
     """
-    _b = six.b
     d = {b'info': {}}
     d_info = d[b'info']
     # with io.open(filepath, 'r', encoding='utf-8') as fd:
@@ -95,13 +92,13 @@ re_locus: List[str] = [
     " +(?P<mod_date>[0-9]+-[A-Z]+-[0-9]+)",     # modification date
     ".*%s" % (NEWLINE_STR)                      # match line end
 ]
-RE_LOCUS: bytes = six.b("".join(re_locus))
+RE_LOCUS: bytes = _bytes("".join(re_locus))
 
 re_definition: List[str] = [
     "^DEFINITION",                         # field
     " +(?P<definition>(?:.*%s)(?: .*%s)*)" % (NEWLINE_STR, NEWLINE_STR) # look ahead assertion for multiline
 ]
-RE_DEFINITION: bytes = six.b("".join(re_definition))
+RE_DEFINITION: bytes = _bytes("".join(re_definition))
 
 re_accession: List[str] = [
     "^ACCESSION",                 # field
@@ -109,7 +106,7 @@ re_accession: List[str] = [
     ".*",                        # match line end
     NEWLINE_STR
 ]
-RE_ACCESSION: bytes = six.b("".join(re_accession))
+RE_ACCESSION: bytes = _bytes("".join(re_accession))
 
 re_version: List[str] = [   "^VERSION",                     # field
                     " +(?P<version>[\w|.]+)",    # version
@@ -117,7 +114,7 @@ re_version: List[str] = [   "^VERSION",                     # field
                     ".*",                        # match line end
                     NEWLINE_STR
                 ]
-RE_VERSION: bytes= six.b("".join(re_version))
+RE_VERSION: bytes = _bytes("".join(re_version))
 
 RE_DBLINK: bytes = b"^DBLINK +(?P<dblink>[\w|:| |.]+)" + NEWLINE_BYT
 
@@ -127,21 +124,21 @@ re_keywords: List[str] = [
     ".*",
     NEWLINE_STR
 ]
-RE_KEYWORDS: bytes= six.b("".join(re_keywords))
+RE_KEYWORDS: bytes = _bytes("".join(re_keywords))
 
 re_source: List[str] = [
     "^SOURCE",
     " +(?P<source>.*)",
     NEWLINE_STR
 ]
-RE_SOURCE: bytes = six.b("".join(re_source))
+RE_SOURCE: bytes = _bytes("".join(re_source))
 
 re_organism: List[str] =  [
     "^  ORGANISM",                          # field
     "(?: +(?P<organism0>(?:.*%s))?" % NEWLINE_STR,
     "(?: +(?P<organism1>(?:.*%s)(?: .*%s)*))?)" % (NEWLINE_STR, NEWLINE_STR) # multiline
 ]
-RE_ORGANISM: bytes = six.b("".join(re_organism))
+RE_ORGANISM: bytes = _bytes("".join(re_organism))
 
 
 RE_COMP_LOCUS: '_sre.SRE_Pattern' = re.compile(RE_LOCUS, flags=re.M)
@@ -149,9 +146,8 @@ def parseLocus(raw: bytes, d_out: dict):
     m = re.match(RE_COMP_LOCUS, raw)
     d = m.groupdict()
     d['length'] = int(d['length'])
-    _b = six.b
     for k, v in d.items():
-        d_out[_b(k)] = v
+        d_out[_bytes(k)] = v
 #end def
 
 RE_COMP_DEFINITION: '_sre.SRE_Pattern' = re.compile(RE_DEFINITION, flags=re.M)
@@ -263,7 +259,7 @@ re_reference: List[str] = [
     " +(?P<journal_info>.+%s(?: {12}.+%s)*)" % (NEWLINE_STR, NEWLINE_STR),
     "(?:^  PUBMED +(?P<pubmed>[0-9]+)%s){0,1}" % (NEWLINE_STR)
 ]
-RE_REFERENCE = six.b("".join(re_reference))
+RE_REFERENCE = _bytes("".join(re_reference))
 RE_COMP_REF: '_sre.SRE_Pattern' = re.compile(RE_REFERENCE, flags=re.M)
 
 
@@ -317,7 +313,7 @@ re_feature: List[str] = [
     NEWLINE_STR,
     "(?P<qualifiers>(?:^ {21}.*%s)*)" % (NEWLINE_STR)
 ]
-RE_FEATURE: bytes = six.b("".join(re_feature))
+RE_FEATURE: bytes = _bytes("".join(re_feature))
 RE_COMP_FEATURE: '_sre.SRE_Pattern' = re.compile(RE_FEATURE, flags=re.M)
 
 

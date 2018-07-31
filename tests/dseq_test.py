@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import unittest
-import _setup
+import conftest
+
 from libnano.dseq import DSeq
 from libnano.seqstr import reverse
 

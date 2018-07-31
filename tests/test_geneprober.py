@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import pytest
 import os
-import _setup
+import conftest
 from libnano.scripts import geneprober
 
 if os.environ.get('IS_TRAVIS') is None:

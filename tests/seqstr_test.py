@@ -3,7 +3,7 @@ import timeit
 import random
 import unittest
 
-import _setup
+import conftest
 from libnano import seqstr
 
 # ~~~~~ Python implementations of sequence manipulations for comparison ~~~~~ #

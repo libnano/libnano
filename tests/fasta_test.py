@@ -7,7 +7,7 @@ from os.path import (
     dirname
 )
 
-import _setup
+import conftest
 from libnano.fileio import fasta
 
 LOCAL_DIR: str = abspath(dirname(__file__))

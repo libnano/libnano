@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import unittest
 
-import _setup
+import conftest
 from libnano.search import restriction
 from libnano.datasets import (
     dataset_container,

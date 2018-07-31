@@ -7,7 +7,7 @@ from os.path import (
     dirname
 )
 
-import _setup
+import conftest
 from libnano.seqrecord import (
     SeqRecord,
     fromGenbankLike,

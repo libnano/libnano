@@ -2,7 +2,7 @@
 import random
 import unittest
 
-import _setup
+import conftest
 from libnano import seqint
 
 # ~~~~~ Python implementations of sequence manipulations for comparison ~~~~~ #

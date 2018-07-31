@@ -3,7 +3,7 @@ import random
 import unittest
 import time
 
-import _setup
+import conftest
 from libnano.metric import seqrepeat
 from libnano.fileio import fasta
 

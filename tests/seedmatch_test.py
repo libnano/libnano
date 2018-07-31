@@ -3,7 +3,7 @@ from __future__ import print_function
 import random
 import unittest
 
-import _setup
+import conftest
 from libnano.search.seedmatch import SeedMatcher
 from libnano.search import seedfinder
 

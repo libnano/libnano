@@ -10,7 +10,7 @@ import json
 from tempfile import NamedTemporaryFile
 import filecmp
 
-import _setup
+import conftest
 from libnano.fileio import gb_reader, gb_writer
 
 LOCAL_DIR: str = abspath(dirname(__file__))

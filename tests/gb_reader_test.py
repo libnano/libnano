@@ -8,7 +8,7 @@ from os.path import (
     dirname
 )
 
-import _setup
+import conftest
 from libnano.fileio import gb_reader
 
 LOCAL_DIR: str = abspath(dirname(__file__))

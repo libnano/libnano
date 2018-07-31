@@ -18,6 +18,7 @@ import pickle
 import requests
 
 USE_CACHE: bool = True
+DO_PRINT_CACHE: bool = False
 TIMEOUT_FAST: float = 2.0
 TIMEOUT_SLOW: float = 6.0
 TIMEOUT_REQU: float = TIMEOUT_SLOW
@@ -127,16 +128,22 @@ def makeCache(species_list: List[str] = SPECIES_LIST) -> dict:
     return d
 # end def
 
-if Path(CACHE_FILE).exists():
+def loadCache(filename: str) -> dict:
     try:
-        with io.open(CACHE_FILE, 'rb') as fd:
-            ensembl_cache = pickle.load(fd)
-            SPECIES_LIST = ensembl_cache['species_list']
-            _cache_dirty = False
-            print("LOADED cache for {}: {}".format(THE_FILE, CACHE_FILE))
+        with io.open(filename, 'rb') as fd:
+            the_cache: dict = pickle.load(fd)
     except:
-        print("Couldn't load cache for {}: {}".format(THE_FILE, CACHE_FILE))
-        ensembl_cache = makeCache()
+        if DO_PRINT_CACHE:
+            print("Couldn't load cache for {}: {}".format(THE_FILE, filename))
+        the_cache = makeCache()
+    if DO_PRINT_CACHE:
+        print("LOADED cache for {}: {}".format(THE_FILE, CACHE_FILE))
+    return the_cache
+
+if Path(CACHE_FILE).exists():
+    ensembl_cache = loadCache(CACHE_FILE)
+    SPECIES_LIST = ensembl_cache['species_list']
+    _cache_dirty = False
 else:
     ensembl_cache = makeCache()
 
@@ -149,6 +156,7 @@ def clearCache(species_list: List[str] = None):
 
 def addSpecies(species: str):
     global SPECIES_LIST
+    global _cache_dirty
     if species not in SPECIES_LIST:
         SPECIES_LIST.append(species)
         ensembl_cache[species] = {}
@@ -161,6 +169,7 @@ def _closeCache():
     if _cache_dirty:
         with io.open(CACHE_FILE, 'wb') as fd:
             pickle.dump(ensembl_cache, fd)
+        if DO_PRINT_CACHE:
             print("UPDATED {} cache".format(THE_FILE))
 atexit.register(_closeCache)
 

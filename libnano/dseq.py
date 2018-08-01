@@ -50,6 +50,7 @@ class DSeq(object):
         fwd: str,
         rev: str = None,
         overhang: int = None,
+        is_circular: bool = False,
         alphabet: int = AlphaEnum.DNA):
         '''
         Args:
@@ -129,6 +130,13 @@ class DSeq(object):
             )
             self.rc_rev = reverseComplement(rev)
         self.the_length: int = the_length
+        if is_circular:
+            type3, seq3 = self.three_prime_end()
+            type5, seq5 = self.five_prime_end()
+            if (    (type3 != PrimeEnum.BLUNT) and
+                    (type5 != PrimeEnum.BLUNT) ):
+                raise ValueError("DNA is_circular but ends can't mate")
+        self.is_circular = is_circular
     # end def
 
     def __str__(self) -> str:
@@ -260,16 +268,24 @@ class DSeq(object):
 
 
     def five_prime_end(self) -> Tuple[int, str]:
-        '''Return what kind of end is overhanging the 5' end of the
-        forward strand
+        '''
+        Returns:
+            what kind of end is overhanging the 5' end of the forward
+            strand of form::
+
+                PrimeEnum.<X>, <sequence string>
         '''
         res, val  = five_prime_type(self.alignment, self.fwd, self.rev)
         return res, val
     # end def
 
     def three_prime_end(self) -> Tuple[int, str]:
-        '''Return what kind of end is overhanging the 3' end of the forward
-        strand
+        '''
+        Returns:
+            what kind of end is overhanging the 3' end of the forward
+            strand of form::
+
+                PrimeEnum.<X>, <sequence string>
         '''
         res, val  = three_prime_type(self.alignment, self.fwd, self.rev)
         return res, val

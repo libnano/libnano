@@ -211,7 +211,7 @@ class DSeq(object):
     # end def
 
     def __eq__(self, other: 'DSeq'):
-        elements = ('the_length', 'fwd', 'rev', 'overhang')
+        elements = ('the_length', 'fwd', 'rev', 'overhang', 'is_circular')
         for x in elements:
             if getattr(other, x) != getattr(self, x):
                 return False
@@ -227,6 +227,34 @@ class DSeq(object):
             yield self.__getitem__(i)
         return
     # end def
+
+    def circularize(self) -> DSeq:
+        if self.is_circular:
+            return self.copy()
+        if self.is_circularizable():
+            return DSeq(self.fwd,
+                        self.rev[-self.overhang:] + self.rev[:-self.overhang],
+                        0,
+                        is_circular=True,
+                        alphabet=self.alphabet
+                        )
+        else:
+            raise ValueError("This object can't be circularized")
+    # end def
+
+    def is_circularizable(self) -> bool:
+        '''
+        Returns:
+            False if already circular or if ends don't match
+        '''
+        if self.is_circular:
+            return False
+        else:
+            type3, seq3 = self.three_prime_end()
+            type5, seq5 = self.five_prime_end()
+            return type3 == type5 and seq3 == rc(seq5)
+    # end def
+
 
     def getReverseIdx(self, fwd_idx: int) -> int:
         '''Does not check for a valid index

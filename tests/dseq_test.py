@@ -16,6 +16,12 @@ class TestDSeq(unittest.TestCase):
         dseq: DSeq = DSeq("GGATCCAAAG", 'TTTGGATCCC', overhang=1)
         check2 = dseq + dseq
 
+    def test_circularize(self):
+        dseq: DSeq = DSeq("GGATCCAAA")
+        self.assertTrue(dseq.isCircularizable())
+        dseq.circularize()
+        self.assertFalse(dseq.isCircularizable())
+
     def test_cut(self):
         # Test single cutter BsaI
         fwd: str = 'GGTCTCGAATTCAAA'

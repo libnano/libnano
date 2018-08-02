@@ -43,7 +43,10 @@ from libnano.search.restriction import (
     RestrictionMatch
 )
 
-DSEQ_STR: str = '%s\r\n%s' if sys.platform == 'win32' else '%s\n%s'
+NEWLINE_STR: str = '\r\n' if sys.platform == 'win32' else '\n'
+DSEQ_STR: str = (   '%s(%d) is_circular: %s' + NEWLINE_STR  +
+                    '%s' + NEWLINE_STR +
+                    '%s')
 
 class DSeq(object):
     def __init__(self,
@@ -149,12 +152,15 @@ class DSeq(object):
             self.alignment,
             self.rc_rev,
             do_highlight=do_highlight)
-        return DSEQ_STR % (x, y)
+        return DSEQ_STR % ( self.__class__.name,
+                            len(self),
+                            self.is_circular,
+                            x, y)
 
     def __add__(self, b: 'DSeq') -> 'DSeq':
         '''(1) Concatenates the forward strand with forward strand
         and the reverse strand with the reverse strand and preserves order
-        (2) Realligns the two :class:`DSeq` objects involved
+        (2) Realligns the two :class:`DSeq` objects involved.
 
         Args:
             b: a :class:`DSeq` object
@@ -163,9 +169,13 @@ class DSeq(object):
             a :class:`DSeq` object
 
         Raises:
-            ValueError, TypeErro
+            ValueError, TypeError
         '''
         if isinstance(b, DSeq):
+            if self.is_circular or b.is_circular:
+                err: str = "Can't concatenate circular DSeq: {} + {}"
+                raise TypeError(err.format(a, b))
+
             type3, seq3 = self.three_prime_end()
             type5, seq5 = b.five_prime_end()
             if type3 == type5 and  len(seq3) == len(seq5):
@@ -210,6 +220,16 @@ class DSeq(object):
                     alphabet=self.alphabet)
     # end def
 
+    def __copy__(self) -> 'DSeq':
+        '''no need to copy strings in python because they are immutable
+        '''
+        return type(self)(  self.fwd,
+                            self.rev,
+                            self.overhang,
+                            self.is_circular,
+                            self.alphabet)
+    # end def
+
     def __eq__(self, other: 'DSeq'):
         elements = ('the_length', 'fwd', 'rev', 'overhang', 'is_circular')
         for x in elements:
@@ -228,7 +248,7 @@ class DSeq(object):
         return
     # end def
 
-    def circularize(self) -> DSeq:
+    def circularize(self) -> 'DSeq':
         if self.is_circular:
             return self.copy()
         if self.is_circularizable():
@@ -239,10 +259,10 @@ class DSeq(object):
                         alphabet=self.alphabet
                         )
         else:
-            raise ValueError("This object can't be circularized")
+            raise TypeError("This object can't be circularized")
     # end def
 
-    def is_circularizable(self) -> bool:
+    def isCircularizable(self) -> bool:
         '''
         Returns:
             False if already circular or if ends don't match

@@ -19,11 +19,11 @@ class TestDSeq(unittest.TestCase):
     def test_circularize(self):
         dseq: DSeq = DSeq("GGATCCAAA")
         self.assertTrue(dseq.isCircularizable())
-        dseq.circularize()
-        self.assertFalse(dseq.isCircularizable())
+        dseq_circle = dseq.circularize()
+        self.assertFalse(dseq_circle.isCircularizable())
 
     def test_cut(self):
-        # Test single cutter BsaI
+        # 1. Test single cutter BsaI
         fwd: str = 'GGTCTCGAATTCAAA'
         rev: str = 'GAATTCGAGACCAAA'
 
@@ -46,7 +46,7 @@ class TestDSeq(unittest.TestCase):
         for ds, ds_check in zip(bsai_cuts, bsai_cuts_check):
             self.assertEqual(ds, ds_check)
 
-        # Test double cutter BaeI
+        # 2. Test double cutter BaeI
         seq_buf: str = 'CCCCCC'
         fwd = 'A'*10 + 'AC' + 'A'*4 + 'GTAYC' + 'A'*12
         rev_rev = 'T'*15 + 'TG' + 'T'*4 + 'CATRG' + 'T'*7
@@ -66,7 +66,7 @@ class TestDSeq(unittest.TestCase):
         self.assertEqual(baei_cuts[1], center_cut)
         self.assertEqual(baei_cuts[2], end_cut)
 
-        # BsaI mutliple cuts
+        # 3. BsaI mutliple cuts
         fwd: str = 'GGTCTCGAATTCAAATTT'
         rev: str = 'GAATTCGAGACCAAATTT'
         bsai_ds2 = DSeq(fwd, rev)
@@ -85,6 +85,27 @@ class TestDSeq(unittest.TestCase):
         )
         for x, y in zip(bsai_double_cuts, bsai_ds2_checks):
             self.assertEqual(x, y)
+
+        # 4. Test circular cutter BsaI
+
+        fwd: str = 'TTTGGTCTCGAATTCAAA'
+        rev: str = 'TTTGAATTCGAGACCAAA'
+
+        bsai_cut_fwd: str =     'AATTCAAATTTGGTCTCG'
+        bsai_cut_rev: str = reverse('GTTTAAACCAGAGCTTAA')
+
+        bsai_circ_cut_checks: DSeq = [
+            DSeq(
+                bsai_cut_fwd,
+                bsai_cut_rev,
+                overhang=-4
+            )
+        ]
+        ds_bsai: DSeq = DSeq(fwd, rev)
+        ds_bsai_circular = ds_bsai.circularize()
+        bsai_circ_cuts: List[DSeq] = ds_bsai_circular.cut('BsaI')
+        for ds, ds_check in zip(bsai_circ_cuts, bsai_circ_cut_checks):
+            self.assertEqual(ds, ds_check)
     # end def
 
 

@@ -152,7 +152,7 @@ class DSeq(object):
             self.alignment,
             self.rc_rev,
             do_highlight=do_highlight)
-        return DSEQ_STR % ( self.__class__.name,
+        return DSEQ_STR % ( type(self).__name__,
                             len(self),
                             self.is_circular,
                             x, y)
@@ -174,7 +174,7 @@ class DSeq(object):
         if isinstance(b, DSeq):
             if self.is_circular or b.is_circular:
                 err: str = "Can't concatenate circular DSeq: {} + {}"
-                raise TypeError(err.format(a, b))
+                raise TypeError(err.format(self, b))
 
             type3, seq3 = self.three_prime_end()
             type5, seq5 = b.five_prime_end()
@@ -248,10 +248,33 @@ class DSeq(object):
         return
     # end def
 
+    def repeat(self, count: int) -> 'DSeq':
+        '''
+        Args:
+            count: must be 2 or greater
+
+        Returns:
+            repeated concatenation :class:`DSeq`
+        '''
+        if not isinstance(count, int):
+            err = "Must repeat integral times not {}".format(type(count))
+            raise TypeError(err)
+        if count < 2:
+            raise ValueError("Count must be 2 or greater not %d" % (count))
+        x = self
+        for i in range(count - 1):
+            x += self
+        return x
+    # end def
+
     def circularize(self) -> 'DSeq':
+        '''
+        Returns:
+            new :class:`DSeq` either a copy if already circular or a new object
+        '''
         if self.is_circular:
-            return self.copy()
-        if self.is_circularizable():
+            return self.__copy__()
+        if self.isCircularizable():
             return DSeq(self.fwd,
                         self.rev[-self.overhang:] + self.rev[:-self.overhang],
                         0,
@@ -272,7 +295,17 @@ class DSeq(object):
         else:
             type3, seq3 = self.three_prime_end()
             type5, seq5 = self.five_prime_end()
-            return type3 == type5 and seq3 == rc(seq5)
+            return type3 == type5 and seq3 == reverseComplement(seq5)
+    # end def
+
+    def toLinear(self) -> 'DSeq':
+        '''
+        Returns:
+            new :class:`DSeq` either a copy if already linear or a new object
+        '''
+        x = self.__copy__()
+        x.is_circular = False
+        return x
     # end def
 
 
@@ -423,11 +456,35 @@ class DSeq(object):
             restriction_searcher: default is None.  Creates one if needed
 
         Returns:
-            List of :class:`DSeq`cut from this :class:`DSeq` object
+            List of :class:`DSeq` cuts from this :class:`DSeq` object. The list
+            will be empty if no cuts are found
         '''
         if restriction_searcher is None:
             restriction_searcher = RestrictionSearcher(enzyme)
-        return self._cut(self, restriction_searcher)
+        is_circular: bool = self.is_circular
+        dseq: DSeq
+        if is_circular:
+            dseq = self.toLinear()
+            dseq = dseq.repeat(3)
+        else:
+            dseq = self
+        out_list: List[DSeq] = self._cut(dseq, restriction_searcher)
+        if is_circular:
+            len_fwd: int = len(self.fwd)
+            len_total: int = 0
+            filtered_out_list: List[DSeq] = []
+            '''since the 3 repeat has an arbitrary cut we
+            need to go from 1 to the -1 entry in the list
+            of items
+            '''
+            for item in out_list[1:-1]:
+                filtered_out_list.append(item)
+                len_total += len(item.fwd)
+                if len_total >= len_fwd:
+                    break
+            return filtered_out_list
+        else:
+            return out_list
     # end def
 # end class
 

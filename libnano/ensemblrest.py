@@ -612,6 +612,11 @@ def slicedSequence( exon_id: str,
         return out
 # end def
 
+def getProbes(eid: str) -> List[dict]:
+    res: list = overlap(eid, feature='array_probe')
+    return res
+# end def
+
 def permittedSequences( transcript: Transcript,
                         exon_id: str = None) -> List[List[Tuple[int, str]]]:
     '''

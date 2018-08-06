@@ -299,7 +299,9 @@ class DSeq(object):
     # end def
 
     def toLinear(self) -> 'DSeq':
-        '''
+        '''NOTE: you are not able to spcify the break point.  Uses internal
+        string beginning and end
+
         Returns:
             new :class:`DSeq` either a copy if already linear or a new object
         '''

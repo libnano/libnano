@@ -9,11 +9,13 @@ from typing import (
     Tuple,
     Set,
     Any,
-    Union
+    Union,
+    NamedTuple
 )
 from pprint import pprint
 import json
 import pickle
+import copy
 
 import requests
 
@@ -21,7 +23,7 @@ USE_CACHE: bool = True
 DO_PRINT_CACHE: bool = False
 TIMEOUT_FAST: float = 2.0
 TIMEOUT_SLOW: float = 6.0
-TIMEOUT_REQU: float = TIMEOUT_SLOW
+TIMEOUT_REQU: float = 5*TIMEOUT_SLOW
 
 SERVER: str = "https://rest.ensembl.org"
 EXON_KEYS: List[str] = [
@@ -86,6 +88,21 @@ LOOKUP_KEYS: List[str] = [
     'strand',
     'version'
 ]
+
+Probe: NamedTuple = NamedTuple('Probe',
+    [
+        ('end', int),
+        ('feature_type', str),
+        ('microarray', str),
+        ('probe_length', int),
+        ('probe_name', str),
+        ('probe_set', str),
+        ('seq_region_name', str),
+        ('start', int),
+        ('strand', int)
+    ]
+)
+PROBE_KEYS: Tuple[str] = Probe._fields
 
 SPECIES_NAMES: dict = {'mouse': ['mus_musculus']}
 ASSEMBLY_NAMES: dict = {'mouse': ['GRCm38']}
@@ -447,8 +464,25 @@ def getSequence(eid: str, seq_type: str='cdna') -> str:
         seq_type: Enum(genomic,cds,cdna,protein), default is cdna
     '''
     global ensembl_cache
-    url = SERVER + "/sequence/id/%s?;type=%s" % (eid, seq_type)
-    return getCache(url, eid + 'sequence', ensembl_cache, content_type="text/plain")
+    query: str = "/sequence/id/%s?;type=%s" % (eid, seq_type)
+    url: str = SERVER + query
+    return getCache(url, query, ensembl_cache, content_type="text/plain")
+# end def
+
+def getRegionSequence(  species: str,
+                        chromosome: str,
+                        start_idx: int,
+                        end_idx: int,
+                        strand: int = None,
+                        is_rev: bool = None
+                        ) -> str:
+    global ensembl_cache
+    if strand is None:
+        strand = -1 if is_rev else 1
+    region: str = "%s:%d..%d:%d" % (chromosome, start_idx, end_idx, strand)
+    query: str = "/sequence/region/%s/%s" % (species, region)
+    url: str = SERVER + query
+    return getCache(url, query, ensembl_cache, content_type="text/plain")
 # end def
 
 def overlap(eid: str, feature: str = 'variation') -> dict:
@@ -614,8 +648,74 @@ def slicedSequence( exon_id: str,
 
 def getProbes(eid: str) -> List[dict]:
     res: list = overlap(eid, feature='array_probe')
-    return res
+    return _uniqueProbes(res)
 # end def
+
+def _probe_dict_2_str(probe: dict) -> str:
+    global PROBE_KEYS
+    return ''.join(str(probe[x]) for x in PROBE_KEYS)
+# end def
+
+def _uniqueProbes(probe_list: List[dict]) -> List[dict]:
+    probe_cache: Set[str] = set()
+    out: List[dict] = []
+    for probe in probe_list:
+        probe_hash: str = _probe_dict_2_str(probe)
+        if probe_hash not in probe_cache:
+            out.append(probe)
+            probe_cache.add(probe_hash)
+    return out
+# end def
+
+def probeListGroupByProbeName(probe_list: List[dict]) -> List[dict]:
+    '''
+    '''
+    probe_name_idx_dict: Dict[str, int] = {}
+    idx: int = 0
+    out: List[dict] = []
+    for probe in probe_list:
+        probe_name: str = probe['probe_name']
+        if probe_name not in probe_name_idx_dict:
+            probe_copy = copy.copy(probe)
+            probe_copy['microarrays'] = [ probe_copy['microarray'] ]
+            del probe_copy['microarray']
+            out.append(probe_copy)
+
+            # store the lookup
+            probe_name_idx_dict[probe_name] = idx
+            idx += 1
+        else:
+            j: int = probe_name_idx_dict[probe_name]
+            ref_probe: dict = out[j]
+            ref_probe['microarrays'].append(probe['microarray'])
+    # end for
+    return out
+# end def
+
+def getProbeFromList(probe_name: str, probe_list: List[dict]) -> dict:
+    '''
+    Args:
+        probe_name:
+        probe_list:
+
+    Returns:
+        dictionary of the probe
+
+    Raises:
+        ValueError
+    '''
+    for x in probe_list:
+        if x['probe_name'] == probe_name:
+            return x
+    raise ValueError("probe: %s not found in list" % (probe_name))
+# end def
+
+# def getProbeSeq(probe_name: str, probe_list, gene_eid: str) -> str:
+#     '''
+#     '''
+#     probe: dict = getProbeFromList(probe_name, probe_list)
+#     seq: str = getSequence(gene_eid)
+#     return seq[probe['start']: probe['end'] + 1]
 
 def permittedSequences( transcript: Transcript,
                         exon_id: str = None) -> List[List[Tuple[int, str]]]:

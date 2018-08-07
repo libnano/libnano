@@ -249,7 +249,7 @@ libnano_files = list(set(libnano_files))
 
 packages = ['libnano', 'libnano.fileio',
             'libnano.helpers', 'libnano.cymem', 'libnano.search',
-            'libnano.seqrecord',
+            'libnano.seqrecord', 'libnano.scripts',
             'libnano.datasets', 'libnano.metric']
 
 # Commented out by NC 2018.01.05 since we are rolling towards PyPi

@@ -460,7 +460,7 @@ def overlap(eid: str, feature: str = 'variation') -> dict:
             somatic_structural_variation, constrained, regulatory, motif,
             chipseq, array_probe)
     '''
-    url = SERVER + "/overlap/id/%s?;feature=%s" % (eid, feature)
+    url: str = SERVER + "/overlap/id/%s?;feature=%s" % (eid, feature)
     return getCache(url, eid+feature, ensembl_cache)
 # end def
 
@@ -625,7 +625,7 @@ def permittedSequences( transcript: Transcript,
             sequences of the exons
     '''
     slices: List[List[Tuple[int, int]]] = permittedRegions(transcript)
-    is_rev = transcript.strand == -1
+    is_rev: bool = transcript.strand == -1
     if exon_id is not None:
         regions = []
         for i, item in enumerate(transcript.Exon):
@@ -641,6 +641,7 @@ def permittedSequences( transcript: Transcript,
         out = []
         for item, regions in zip(transcript.Exon, slices):
             idx_l, idx_h = idxLo2Hi(item)
+            # print(idx_h - idx_l)
             out.append(slicedSequence(item['id'], idx_l, is_rev, regions))
         return out
 # end def

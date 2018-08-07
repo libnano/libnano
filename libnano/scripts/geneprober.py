@@ -26,7 +26,8 @@ from libnano.ensemblrest import (
     lookUpSymbolList,
     overlap,
     LookUp,
-    permittedSequences
+    permittedSequences,
+    Transcript
 )
 import libnano.ensemblrest as ger
 
@@ -246,6 +247,7 @@ def designPadlocks( species: str,
 
         p_seqs: List[List[Tuple[int, str]]] = permittedSequences(canon_transcript)
         exon_segments: List[Tuple[int, str]] = p_seqs[exon_index]
+        # print(exon_segments)
         max_idx: int = sum([len(x[1]) for x in exon_segments])
 
         strand_dir: str = 'fwd' if lookup.is_fwd else 'rev'
@@ -259,6 +261,7 @@ def designPadlocks( species: str,
         bound_idx: int = max_idx - three_prime_delta
         for g_index, segment in exon_segments:
             len_segment: int = len(segment)
+            # print(len_segment, arm_length_2X)
             if len_segment > arm_length_2X:
                 if idx + len_segment > bound_idx:
                     # Of the form:: len_segment - (idx + len_segment - bound_idx)
@@ -316,7 +319,12 @@ def designPadlocks( species: str,
         writePadlocksToCSV(out, filename)
 # end def
 
-output_help = '''Kind of function to run, d: listDetails, i: listTranscriptsIdxs'''
+output_help = '''Kind of function to run:
+    d: listDetails
+    e: listExons
+    i: listTranscriptsIdxs
+    p: designPadlocks
+'''
 barcode_help = '''if genes are mapped to specific barcodes, only used when genes
                 is specifically set. use the form:
 

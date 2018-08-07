@@ -1,5 +1,6 @@
 from typing import (
-    List
+    List,
+    Tuple
 )
 import pprint
 
@@ -15,51 +16,9 @@ THREE_P_EXON: str = 'ENSE00001244923'
 PROBE_NAME: str = 'ILMN_1767842'
 SPECIES: str = 'human'
 
-out_list: list = er.getProbes(THREE_P_EXON)
-# pprint.pprint(out_list)
-# grouped_out_list: list = er.probeListGroupByProbeName(out_list)
-# pprint.pprint(grouped_out_list)
-# out_max_idx: int = -1
-# max_len: int = 0
-# for i, item in enumerate(grouped_out_list):
-#     len_item: int = len(item['microarrays'])
-#     if len_item > max_len:
-#         max_len = len_item
-#         out_max_idx = i
-# print(max_len)
-# print(grouped_out_list[out_max_idx])
-
-columns = [
-'probe_name',
-'start',
-'end',
-'probe_length',
-'feature_type',
-'probe_set',
-'seq_region_name',
-'strand',
-'microarray'
-]
-df: pd.DataFrame = pd.DataFrame(out_list, columns=columns)
-DataFrameGroupBy_T = pd.core.groupby.groupby.DataFrameGroupBy
-grouped: DataFrameGroupBy_T = df.groupby('probe_name')
-count_of_probe_use: pd.Series = grouped.size()
-print(count_of_probe_use.max())
-largest = count_of_probe_use.nlargest(5)
-# probe: dict = er.getProbeFromList(PROBE_NAME, grouped_out_list)
 
 
-filtered_probes: pd.DataFrame = df[df['probe_name'].isin(largest.index.values)]
-columns_to_keep: List[str] = [
-    'probe_name',
-    'start',
-    'end',
-    'strand',
-    'probe_length',
-    'seq_region_name'
-]
-filtered_probes = filtered_probes.loc[:, columns_to_keep].drop_duplicates()
-print(filtered_probes)
+filtered_probes: pd.DataFrame = er.getProbesForID(THREE_P_EXON, keep_n=5)
 for i in range(len(filtered_probes)):
     probe = filtered_probes.iloc[i]
     print(probe)
@@ -71,28 +30,15 @@ for i in range(len(filtered_probes)):
                                     )
     print(seq)
 # end for
+GENES_AND_BARCODES: List[Tuple[str, str]] = [
+    ('SLC17A8', 'ACAGC', 'ENST00000323346', 'ENSE00001244923'),
+    ('GFAP',    'TACAT', 'ENST00000638281', 'ENSE00003806990'),
+    ('FOXO1',   'TTTGC', 'ENST00000379561', 'ENSE00001481591'),
+    ('PSEN2',   'CATTA', 'ENST00000366783', 'ENSE00001380688'),
+    ('DAXX',    'AACCG', 'ENST00000374542', 'ENSE00001815438'),
+    ('CDK5R1',  'CGAGA', 'ENST00000313401', 'ENSE00001271015')
+]
 
-# print(grouped.get_group(PROBE_NAME))
-# er.PROBE_KEYS
+GENE_LIST = [x[0] for x in GENES_AND_BARCODES]
+print(er.getThreePrimeUTRs(SPECIES, GENE_LIST))
 
-# pk = (
-# 'end',
-# 'feature_type',
-# 'microarray',
-# 'probe_length',
-# 'probe_name',
-# 'probe_set',
-# 'seq_region_name',
-# 'start',
-# 'strand'
-# )
-# # df['probe_name'].tolist()
-# indx = pd.MultiIndex.from_tuples(df['probe_name'].tolist(), names=['probe_name'])
-# cols = pk
-# df = pd.DataFrame(out_list, df['probe_name'].tolist(), cols)
-# print(df.head())
-# piv = df.pivot(index='probe_name', columns=['start', 'end', 'strand'])
-# print(piv)
-pndf = df['probe_name']
-# print(df.sort_values(by='probe_name')['probe_name'])
-# ATCCATGCAAGCCCCATAAAACAGTTCCTAGCATGCAGAAAATGCCCACG

@@ -18,6 +18,9 @@ import pickle
 import copy
 
 import requests
+import pandas as pd
+
+DataFrameGroupBy_T = pd.core.groupby.groupby.DataFrameGroupBy
 
 USE_CACHE: bool = True
 DO_PRINT_CACHE: bool = False
@@ -437,6 +440,35 @@ def lookUpSymbolList(   species: str,
     return res
 # end def
 
+TranscriptAndUTR = NamedTuple('TranscriptAndUTR', [('transcript_id', str), ('utr_id', str)])
+def getThreePrimeUTRs(  species: str,
+                        symbols: List[str]) -> List[TranscriptAndUTR]:
+    '''
+    Returns:
+        List of Tuples of the form::
+
+            <canonical transcript ID>, <three prime UTR ID>
+    '''
+
+    res: dict = lookUpSymbolList(species, symbols)
+    out: List[str] =  []
+    for symbol in symbols:
+        try:
+            item: dict = res[symbol]
+        except:
+            print(res)
+            raise
+        found_utr: bool = False
+        for transcript in item['Transcript']:
+            if transcript['is_canonical'] == 1:
+                three_prime_utr_id: str = transcript['Exon'][-1]['id']
+                out.append(TranscriptAndUTR(transcript['id'], three_prime_utr_id))
+                found_utr = True
+        if not found_utr:
+            raise ValueError("couldn't find canonical transcript for %s" % (symbol))
+    return out
+# end def
+
 def convertCDNA2Genome(transcript_id:str, idxs: Tuple[int, int]) -> dict:
     '''indices are relevant to the start of the transript
     i.e. idx 1 is the first base of the transcipt and would be 15881264
@@ -646,7 +678,7 @@ def slicedSequence( exon_id: str,
         return out
 # end def
 
-def getProbes(eid: str) -> List[dict]:
+def getArrayProbes(eid: str) -> List[dict]:
     res: list = overlap(eid, feature='array_probe')
     return _uniqueProbes(res)
 # end def
@@ -708,6 +740,61 @@ def getProbeFromList(probe_name: str, probe_list: List[dict]) -> dict:
         if x['probe_name'] == probe_name:
             return x
     raise ValueError("probe: %s not found in list" % (probe_name))
+# end def
+
+def getProbesForID(eid: str, keep_n: int = 0) -> pd.DataFrame:
+    '''get a dataframe of overlapping probes for a given ensembl ID
+
+    Args:
+        eid: ensembl ID of the item (Transcript, Exon, etc)
+        keep_n: keep the n most frequent in the arrays founds
+
+    Returns:
+        Dataframe of the probes with columns::
+
+            [
+            'probe_name',
+            'start',
+            'end',
+            'strand',
+            'probe_length',
+            'seq_region_name'
+            ]
+    '''
+    out_list: List[dict] = getArrayProbes(eid)
+    if len(out_list) == 0:
+        raise ValueError
+
+    COLUMNS: List[str] = [
+        'probe_name',
+        'start',
+        'end',
+        'probe_length',
+        'feature_type',
+        'probe_set',
+        'seq_region_name',
+        'strand',
+        'microarray'
+    ]
+    df: pd.DataFrame = pd.DataFrame(out_list, columns=COLUMNS)
+
+    if keep_n > 0:
+        grouped: DataFrameGroupBy_T = df.groupby('probe_name')
+        count_of_probe_use: pd.Series = grouped.size()
+        largest = count_of_probe_use.nlargest(5)
+        filtered_probes: pd.DataFrame = df[df['probe_name'].isin(largest.index.values)]
+    else:
+        filtered_probes: pd.DataFrame = df
+    columns_to_keep: List[str] = [
+        'probe_name',
+        'start',
+        'end',
+        'strand',
+        'probe_length',
+        'seq_region_name'
+    ]
+    filtered_probes = filtered_probes.loc[:, columns_to_keep].drop_duplicates()
+    return filtered_probes
 # end def
 
 # def getProbeSeq(probe_name: str, probe_list, gene_eid: str) -> str:

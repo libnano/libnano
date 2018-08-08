@@ -285,7 +285,8 @@ install_requires = ['six>=1.11.0',
                     'primer3-py>=0.5.5',
                     'click>=6.7',
                     'ssw-py>=0.2.6',
-                    'pygments'
+                    'pygments',
+                    'pandas'
                     ]
 if sys.platform == 'win32':
     install_requires.append('colorama')

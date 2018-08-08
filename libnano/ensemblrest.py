@@ -20,6 +20,8 @@ import copy
 import requests
 import pandas as pd
 
+from libnano.seqstr import reverseComplement
+
 DataFrameGroupBy_T = pd.core.groupby.groupby.DataFrameGroupBy
 
 USE_CACHE: bool = True
@@ -508,13 +510,65 @@ def getRegionSequence(  species: str,
                         strand: int = None,
                         is_rev: bool = None
                         ) -> str:
+    '''
+    Args:
+        species:
+        chromosome:
+        start_idx:
+        end_idx:
+        strand:
+        is_rev:
+
+    Returns:
+        sequence string matching query
+    '''
     global ensembl_cache
     if strand is None:
+        if is_rev is None:
+            raise ValueError("strand and is_rev arguments can't both be None")
         strand = -1 if is_rev else 1
+    elif strand not in (-1, 1):
+        raise ValueError("strand argument needs to be -1 or 1")
     region: str = "%s:%d..%d:%d" % (chromosome, start_idx, end_idx, strand)
     query: str = "/sequence/region/%s/%s" % (species, region)
     url: str = SERVER + query
-    return getCache(url, query, ensembl_cache, content_type="text/plain")
+    res: str = getCache(url, query, ensembl_cache, content_type="text/plain")
+    assert(len(res) == (end_idx - start_idx + 1))
+    return res
+# end def
+
+def filterRegionSequence(   query_seq: str,
+                            query_strand: int,
+                            transcript_id: str) -> Tuple[str, bool]:
+    '''Confirm sequence exists in the transcript and return the aligned to the
+    strand direction of the transcript sequence
+
+    Args:
+        query_seq:
+        query_strand:
+        transcript_id:
+    Returns: Tuple of the form
+
+        sequence, was_rc
+
+        sequence corresponding to the query.  If transcript_id is provided
+        the sequence will exist in the transcript and get reverse complemented
+        as necessary and was_rc should be checked
+    '''
+    was_rc: bool = False
+    query_seq_out: str = query_seq
+    transcript = lookUpID(transcript_id)
+    transcript_seq: str = getSequence(transcript_id)
+    if transcript['strand'] != query_strand:
+        query_seq_out: str = reverseComplement(query_seq)
+        was_rc = True
+    if query_seq_out not in transcript_seq:
+        # print(len(res))
+        # print(len(res_out))
+        # print(res_out)
+        # print(transcript_seq)
+        raise ValueError("region sequence not in transcript_id: %s: %d" % (transcript_id, strand))
+    return query_seq_out, was_rc
 # end def
 
 def overlap(eid: str, feature: str = 'variation') -> dict:

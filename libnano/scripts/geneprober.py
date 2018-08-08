@@ -2,7 +2,8 @@ import sys
 from pprint import pprint
 from typing import (
     List,
-    Dict
+    Dict,
+    NamedTuple
 )
 from contextlib import contextmanager
 

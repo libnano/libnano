@@ -17,7 +17,7 @@ if os.environ.get('IS_TRAVIS') is None:
             PROBE_NAME: str = 'ILMN_1767842'
             GENE_EID: str = 'ENSG00000179520'
 
-            out_list: list = er.getProbes(TRANSCRIPT)
+            out_list: list = er.getArrayProbes(TRANSCRIPT)
             self.assertIsInstance(out_list, list)
             self.assertTrue(len(out_list) > 0)
             self.assertIsInstance(out_list[0], dict)

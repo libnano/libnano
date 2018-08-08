@@ -848,6 +848,10 @@ def getProbesForID(eid: str, keep_n: int = 0) -> pd.DataFrame:
         'seq_region_name'
     ]
     filtered_probes = filtered_probes.loc[:, columns_to_keep].drop_duplicates()
+
+    # Filter out probes where the length doesn't match the index delta
+    filtered_probes = filtered_probes[filtered_probes.end - filtered_probes.start + 1 == filtered_probes.probe_length]
+
     return filtered_probes
 # end def
 

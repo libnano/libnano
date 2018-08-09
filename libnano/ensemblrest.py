@@ -370,6 +370,7 @@ def lookUpID(   eid: str,
     url = SERVER + "/lookup/id/%s?expand=1;utr=1;phenotypes=1" % (eid)
     res = getCache(url, eid, ensembl_cache)
 
+    # is it a gene?
     if is_protein_coding and 'G' in eid:
         out = []
         for item in res['Transcript']:
@@ -539,35 +540,44 @@ def getRegionSequence(  species: str,
 
 def filterRegionSequence(   query_seq: str,
                             query_strand: int,
-                            transcript_id: str) -> Tuple[str, bool]:
+                            transcript_id: str,
+                            transcript: dict = None,
+                            reference_seq: str = None) -> Tuple[str, bool]:
     '''Confirm sequence exists in the transcript and return the aligned to the
-    strand direction of the transcript sequence
+    strand direction of the transcript sequence.  NOTE: Sometimes there are
+    errors in probes so be sure to validate all sequence lookups!!!
 
     Args:
         query_seq:
         query_strand:
         transcript_id:
-    Returns: Tuple of the form
+        transcript_dict: Default is None.  If provided omit lookUp call
+        reference_seq: Default is None.  If provided omit getSequence call
+
+    Returns:
+        Tuple of the form
 
         sequence, was_rc
 
         sequence corresponding to the query.  If transcript_id is provided
         the sequence will exist in the transcript and get reverse complemented
         as necessary and was_rc should be checked
+
+    Raises:
+        ValueError on sequence not found in the target reference sequence
     '''
     was_rc: bool = False
     query_seq_out: str = query_seq
-    transcript = lookUpID(transcript_id)
-    transcript_seq: str = getSequence(transcript_id)
+    if transcript is None:
+        transcript = lookUpID(transcript_id)
+    if reference_seq is None:
+        reference_seq = getSequence(transcript_id)
     if transcript['strand'] != query_strand:
         query_seq_out: str = reverseComplement(query_seq)
         was_rc = True
-    if query_seq_out not in transcript_seq:
-        # print(len(res))
-        # print(len(res_out))
-        # print(res_out)
-        # print(transcript_seq)
-        raise ValueError("region sequence not in transcript_id: %s: %d" % (transcript_id, strand))
+    if query_seq_out not in reference_seq:
+        err: str = "Region sequence not in transcript_id: %s: %d, rc: %s"
+        raise ValueError(err % (transcript_id, query_strand, was_rc))
     return query_seq_out, was_rc
 # end def
 
@@ -832,13 +842,18 @@ def getProbesForID(eid: str, keep_n: int = 0) -> pd.DataFrame:
     ]
     df: pd.DataFrame = pd.DataFrame(out_list, columns=COLUMNS)
 
+    grouped: DataFrameGroupBy_T = df.groupby('probe_name')
+    count_of_probe_use: pd.Series = grouped.size()
+
     if keep_n > 0:
-        grouped: DataFrameGroupBy_T = df.groupby('probe_name')
-        count_of_probe_use: pd.Series = grouped.size()
-        largest = count_of_probe_use.nlargest(5)
+        largest = count_of_probe_use.nlargest(keep_n)
         filtered_probes: pd.DataFrame = df[df['probe_name'].isin(largest.index.values)]
     else:
         filtered_probes: pd.DataFrame = df
+
+    # print(count_of_probe_use)
+    # print(filtered_probes['probe_name'].iloc[0], type(filtered_probes['probe_name'].iloc[0]))
+
     columns_to_keep: List[str] = [
         'probe_name',
         'start',
@@ -852,6 +867,9 @@ def getProbesForID(eid: str, keep_n: int = 0) -> pd.DataFrame:
     # Filter out probes where the length doesn't match the index delta
     filtered_probes = filtered_probes[filtered_probes.end - filtered_probes.start + 1 == filtered_probes.probe_length]
 
+    # Add an array frequency column
+    array_freq: List[int] = [ count_of_probe_use.loc[filtered_probes['probe_name'].iloc[i]] for i in range(len(filtered_probes)) ]
+    filtered_probes = filtered_probes.assign(array_freq=array_freq)
     return filtered_probes
 # end def
 

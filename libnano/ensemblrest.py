@@ -841,18 +841,14 @@ def getProbesForID(eid: str, keep_n: int = 0) -> pd.DataFrame:
         'microarray'
     ]
     df: pd.DataFrame = pd.DataFrame(out_list, columns=COLUMNS)
-
-    grouped: DataFrameGroupBy_T = df.groupby('probe_name')
-    count_of_probe_use: pd.Series = grouped.size()
+    probe_name_series: pd.Series = df['probe_name']
+    count_of_probe_use: pd.Series = probe_name_series.value_counts()
 
     if keep_n > 0:
-        largest = count_of_probe_use.nlargest(keep_n)
-        filtered_probes: pd.DataFrame = df[df['probe_name'].isin(largest.index.values)]
+        largest = count_of_probe_use[:keep_n]
+        filtered_probes: pd.DataFrame = df[probe_name_series.isin(largest.index.values)]
     else:
         filtered_probes: pd.DataFrame = df
-
-    # print(count_of_probe_use)
-    # print(filtered_probes['probe_name'].iloc[0], type(filtered_probes['probe_name'].iloc[0]))
 
     columns_to_keep: List[str] = [
         'probe_name',
@@ -870,15 +866,9 @@ def getProbesForID(eid: str, keep_n: int = 0) -> pd.DataFrame:
     # Add an array frequency column
     array_freq: List[int] = [ count_of_probe_use.loc[filtered_probes['probe_name'].iloc[i]] for i in range(len(filtered_probes)) ]
     filtered_probes = filtered_probes.assign(array_freq=array_freq)
-    return filtered_probes
-# end def
 
-# def getProbeSeq(probe_name: str, probe_list, gene_eid: str) -> str:
-#     '''
-#     '''
-#     probe: dict = getProbeFromList(probe_name, probe_list)
-#     seq: str = getSequence(gene_eid)
-#     return seq[probe['start']: probe['end'] + 1]
+    return filtered_probes.reset_index(drop=True)
+# end def
 
 def permittedSequences( transcript: Transcript,
                         exon_id: str = None) -> List[List[Tuple[int, str]]]:

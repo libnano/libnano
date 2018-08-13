@@ -130,7 +130,10 @@ CONSEQUENCE_TYPES: List[str] = [
     'splice_region_variant',
     '5_prime_UTR_variant'
 ]
-POST_JSON: dict ={ "Content-Type" : "application/json", "Accept" : "application/json"}
+POST_JSON: dict = {
+    "Content-Type" : "application/json",
+    "Accept" : "application/json"
+}
 
 home_path: str = str(Path.home())
 CACHE_FILE: str = os.path.join(home_path, '.ENSEMBLCACHE.pickle')
@@ -743,6 +746,13 @@ def slicedSequence( exon_id: str,
 # end def
 
 def getArrayProbes(eid: str) -> List[dict]:
+    '''
+    Args:
+        eid:  ensymbl ID
+
+    Returns:
+        Uniquified list of probes from a call to the `overlap` REST request
+    '''
     res: list = overlap(eid, feature='array_probe')
     return _uniqueProbes(res)
 # end def
@@ -764,7 +774,13 @@ def _uniqueProbes(probe_list: List[dict]) -> List[dict]:
 # end def
 
 def probeListGroupByProbeName(probe_list: List[dict]) -> List[dict]:
-    '''
+    '''Get a dict per probe with a List of microarrays that the probe is in
+
+    Args:
+        probe_list: result from a call to :func:`getArrayProbes`
+
+    Returns:
+        lists of probes with only one entry per `probe_name` key
     '''
     probe_name_idx_dict: Dict[str, int] = {}
     idx: int = 0
@@ -789,7 +805,9 @@ def probeListGroupByProbeName(probe_list: List[dict]) -> List[dict]:
 # end def
 
 def getProbeFromList(probe_name: str, probe_list: List[dict]) -> dict:
-    '''
+    '''Look up a probe dictionary in a `probe_list` which was a result from
+    a call to  :func:`getArrayProbes`
+
     Args:
         probe_name:
         probe_list:
@@ -872,7 +890,8 @@ def getProbesForID(eid: str, keep_n: int = 0) -> pd.DataFrame:
 
 def permittedSequences( transcript: Transcript,
                         exon_id: str = None) -> List[List[Tuple[int, str]]]:
-    '''
+    '''get a list of start indices and their associated Exon dictionary
+
     Args:
         transcript:  :class:`Transcript` as calculated through a call to
             :meth:`lookUpID` and wrapped in the class

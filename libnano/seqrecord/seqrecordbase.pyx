@@ -8,7 +8,12 @@ from copy import (
 )
 from typing import (
     List,
+    Dict,
+    Any,
     Union
+)
+from enum import (
+    IntEnum
 )
 
 from cpython.list cimport (
@@ -31,75 +36,98 @@ from libnano.fileio import (
     gb_writer
 )
 from libnano.fileio import fasta
-from libnano.datastructures.seqrecord.feature import (
+
+from libnano.seqrecord.feature import (
     Feature,
     DummyFeature,
     locationStr2Feature
 )
-from libnano.datastructures.seqrecord.featuretypes import FeatureTypes
-from libnano.datastructures.list_bisect cimport (
+from libnano.seqrecord.featuretypes import FeatureTypes
+from libnano.list_bisect cimport (
     bisect_left,
     bisect_right,
     insort_left
 )
 
+class AlphaEnum(IntEnum):
+    DNA: int = 0
+    RNA: int = 1
+
+ALPHABETS: Tuple[int, int] = tuple(a.value for a in AlphaEnum)
+
 cdef class SeqRecord:
     """
-    def __getitem__(self, slice):
-            return self.data[slice]
-
-    slice.start slice.step slice.stop
     """
     cdef public object info
     cdef object sequence, feature_types
     cdef dict feature_instance_dict
     cdef list feature_instance_list
 
-    def __init__(self, feature_types: FeatureTypes = None):
+    def __init__(self,  sequence: str = None,
+                        feature_types: FeatureTypes = None,
+                        name: str = None,
+                        alphabet: int = AlphaEnum.DNA):
         cdef object obj
-        self.feature_instance_dict = {}
-        self.feature_instance_list = []
+        self.feature_instance_dict: Dict[str, List[Feature]] = {}
+        self.feature_instance_list: List[Feature] = []
 
         if feature_types is None:
             self.feature_types = FeatureTypes()
         else:
             self.feature_types = feature_types
 
-        self.sequence = ''
-        self.info = {}
+        assert(alphabet in ALPHABETS)
+        if name is None:
+            name = ''
+        assert(isinstance(name, str))
+
+        self.info: Dict[str, Any] = {
+            'alphabet': alphabet,
+            'name': name
+        }
+
+        if sequence is None:
+            self.sequence: str = ''
+        else:
+            # TODO add alphabet linting for DNA and/or RNA
+            self.sequence: str = sequence.lower()
     # end def
 
     property name:
-        def __get__(self):
+        def __get__(self) -> str:
             return self.info['name']
-        def __set__(self, value):
+        def __set__(self, value: str):
             self.info['name'] = value
         def __del__(self):
             del self.info['name']
 
     property description:
-        def __get__(self):
-            return self.info['definition']
-        def __set__(self, value):
+        def __get__(self) -> str:
+            return self.info.get('definition', '')
+        def __set__(self, value: str):
             self.info['definition'] = value
         def __del__(self):
             del self.info['definition']
 
     property ID:
-        def __get__(self):
-            return self.info['version']
-        def __set__(self, value):
+        def __get__(self) -> str:
+            return self.info.get('version', '')
+        def __set__(self, value: str):
             self.info['version'] = value
         def __del__(self):
             del self.info['version']
 
-    property seq:
-        def __get__(self):
-            return self.sequence
-        def __set__(self, value):
-            self.sequence = value
+    property alphabet:
+        def __get__(self) -> int:
+            return self.info['alphabet']
 
-    def __contains__(self, feature_type):
+    property seq:
+        def __get__(self) -> str:
+            return self.sequence
+        def __set__(self, value: str):
+            self.sequence = value.lower()
+
+    def __contains__(self, feature_type: Feature) -> bool:
         """allow for ``feature_type in SeqRecord()`` construction
         """
         return feature_type in self.feature_instance_dict
@@ -138,13 +166,17 @@ cdef class SeqRecord:
     def __copy__(self):
         """ don't copy info
         """
-        sr = type(self)(feature_types=copy(self.feature_types))
-        sr.seq = copy(self.sequence)
+        sr = type(self)(
+            feature_types=copy(self.feature_types),
+            name=self.name,
+            alphabet=self.alphabet,
+            sequence=copy(self.sequence)
+        )
         for f in self.feature_instance_list:
             sr.addFeature(f.__copy__()) # copy the feature too?
         return sr
 
-    def __add__(self, x):
+    def __add__(self, x: 'SeqRecord'):
         """ don't copy info
         """
         cdef Py_ssize_t start = len(self.sequence)
@@ -156,7 +188,15 @@ cdef class SeqRecord:
             fcopy = f.copyForSlice(start)
             sr.addFeature(fcopy)
         sr.seq = sr.seq + x.seq
+        return sr
     # end def
+
+    def __eq__(self, x: 'SeqRecord'):
+        return True if self.seq == x.seq else False
+    # end def
+
+    def __hash__(self):
+        return hash(self.seq.lower())
 
     cdef constructFeaturesFromGenbankLike(self, list feature_list):
         """ Does not assume input feature_list is sorted
@@ -190,12 +230,12 @@ cdef class SeqRecord:
     cdef list serializeFeatures(self, bint clone):
         cdef object item
         cdef Py_ssize_t i
-        cdef list feature_instance_list = self.feature_instance_list
-        cdef Py_ssize_t len_features = PyList_Size(feature_instance_list)
+        cdef list fi_list = self.feature_instance_list
+        cdef Py_ssize_t len_features = PyList_Size(fi_list)
         cdef list out = PyList_New(len_features)    # preallocate known size
 
         for i in range(len_features):
-            item = feature_instance_list[i].dump(clone)
+            item = fi_list[i].dump(clone)
             Py_INCREF(item) # cython needs this due to SET_ITEM ref steal
             PyList_SET_ITEM(out, i, item)
         # end for
@@ -215,10 +255,11 @@ cdef class SeqRecord:
         Returns:
             dictionary or a string
         """
-        d = { 'seq': self.sequence,
-                'features': self.serializeFeatures(clone),
-                'info': self.info
-            }
+        d = {
+            'seq': self.sequence,
+            'features': self.serializeFeatures(clone),
+            'info': self.info
+        }
         if to_json:
             return json.dumps(d)
         elif to_json_file is not None:
@@ -241,50 +282,49 @@ cdef class SeqRecord:
         feature_name = feature.name()
         feature_types = self.feature_types
 
-        feature_instance_list = self.feature_instance_list
-        feature_instance_dict = self.feature_instance_dict
+        fi_list: List[Feature] = self.feature_instance_list
+        fi_dict: Dict[str, List[Feature]] = self.feature_instance_dict
 
         if feature_name not in feature_types:
             ft_id = feature_types.addFeatureType(feature_name, description=description)
         else:
             ft_id = feature_types.getFTID(feature_name)
 
-        insort_left(self.feature_instance_list, feature, 0, -1)
+        insort_left(fi_list, feature, 0, -1)
 
-        if feature_name in self.feature_instance_dict:
-            insort_left(feature_instance_dict[feature_name], feature, 0, -1)
+        if feature_name in fi_dict:
+            insort_left(fi_dict[feature_name], feature, 0, -1)
         else:
-            feature_instance_dict[feature_name] = [feature]
+            fi_dict[feature_name] = [feature]
     # end def
 
     cpdef removeFeature(self, feature: Feature):
         cdef Py_ssize_t idx
         feature_name = feature.name()
 
-        feature_instance_list = self.feature_instance_list
-        feature_instance_dict = self.feature_instance_dict
+        fi_list: List[Feature] =              self.feature_instance_list
+        fi_dict: Dict[str, List[Feature]] =   self.feature_instance_dict
 
-        idx = bisect_left(feature_instance_list, feature, 0, -1)
-        if idx == len(feature_instance_list) or \
-            feature_instance_list[idx] != feature:
+        idx = bisect_left(fi_list, feature, 0, -1)
+        if idx == len(fi_list) or \
+            fi_list[idx] != feature:
             raise ValueError("removeFeature: feature not in SeqRecord")
-        feature_instance_list.pop(idx)
+        fi_list.pop(idx)
 
-
-        ilist = feature_instance_dict[feature_name]
+        ilist = fi_dict[feature_name]
         ilist.remove(feature)
         if len(ilist) == 0:
-            del feature_instance_dict[feature_name]
+            del fi_dict[feature_name]
     # end def
 
     cpdef list getFeatures(self, Py_ssize_t start, Py_ssize_t end):
         cdef Py_ssize_t idx_lo, idx_hi
-        cdef object feature_instance_list = self.feature_instance_list
+        cdef object fi_list = self.feature_instance_list
         cdef object temp = DummyFeature(start, start)
-        idx_lo = bisect_left(feature_instance_list, temp, 0 , -1)
+        idx_lo = bisect_left(fi_list, temp, 0 , -1)
         temp = DummyFeature(end, end)
-        idx_hi = bisect_right(feature_instance_list, temp, 0, -1)
-        return feature_instance_list[idx_lo:idx_hi]
+        idx_hi = bisect_right(fi_list, temp, 0, -1)
+        return fi_list[idx_lo:idx_hi]
     # end def
 
     def iterFeatures(self):

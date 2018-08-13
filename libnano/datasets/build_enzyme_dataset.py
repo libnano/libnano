@@ -66,9 +66,22 @@ from typing import (
     List,
     Tuple
 )
+import pprint
 
-from libnano import seqstr
-from libnano.helpers.jsonbytes import base_decode_dict
+try:
+    from libnano.helpers.jsonbytes import base_decode_dict
+    from libnano.seqstr import reverseComplement
+except:
+    from os.path import (
+        abspath,
+        dirname
+    )
+    from os.path import join as pjoin
+    LIBNANO_PATH = pjoin(dirname(abspath(__file__)), '..', '..')
+    print(LIBNANO_PATH)
+    sys.path = [LIBNANO_PATH] + sys.path
+    from libnano.helpers.jsonbytes import base_decode_dict
+    from libnano.seqstr import reverseComplement
 
 LOCAL_DIR: str = os.path.dirname(os.path.realpath(__file__))
 
@@ -101,7 +114,7 @@ NEB_P_SHORTHAND_RE: '_sre.SRE_Pattern'  = re.compile(
      '(?P<seq>[' + NEB_ALPHABET + ']+)'
     r'(?:\((?P<endidx>[\d|-]+)/(?P<endrevidx>[\d|-]+)\))?$')
 
-rc = seqstr.reverseComplement
+rc = reverseComplement
 condInt = lambda i: int(i) if i is not None else None
 
 def seqToRegex(seq: str) -> str:
@@ -205,12 +218,12 @@ def processNebShorthand(neb_shorthand: str) -> dict:
     Raises:
         ValueError (if the neb_shorthand is not in the proper format)
     '''
-    neb_shorthand = neb_shorthand.strip()
-    core_seq = [None, None]
-    full_seq = [None, None]
-    core_regex = [None, None]
-    full_regex = [None, None]
-    cutsite_idxs = [[], []]
+    neb_shorthand: str =    neb_shorthand.strip()
+    core_seq: List[str] =   [None, None]
+    full_seq: List[str] =   [None, None]
+    core_regex: List[str] = [None, None]
+    full_regex: List[str] = [None, None]
+    cutsite_idxs: List[List[int]] = [[], []]
     # Unknown / uncharacterized recognition sequence
     if neb_shorthand == '?':
         pass
@@ -218,9 +231,10 @@ def processNebShorthand(neb_shorthand: str) -> dict:
     elif re.match(NEB_I_SHORTHAND_RE, neb_shorthand):
         if '^' in neb_shorthand:
             caret_idx = neb_shorthand.index('^')
-            cutsite_idxs = [[caret_idx, None],
-                            [len(neb_shorthand)-caret_idx-1, None]]
+            cutsite_idxs = [[caret_idx],
+                            [len(neb_shorthand) - caret_idx - 1]]
         else:
+            # NOTE skip this? Consider raising an Exception?
             pass
         b_seq = neb_shorthand.replace('^', '')
         core_seq = [b_seq, rc(b_seq)]
@@ -243,17 +257,18 @@ def processNebShorthand(neb_shorthand: str) -> dict:
                 full_seq = core_seq
             # Cutsite outside of recognition sequence
             else:
-                if si is None:
-                    si = 0
-                if sri is None:
-                    sri = 0
-                front_offset = max(si, sri, 0)
-                ex_seq = 'N' * max(si, sri, 0) + seq + 'N' * max(ei, eri, 0)
-                full_seq = [ex_seq, rc(ex_seq)]
-                if max(si, sri) is not None:
+                # IMPORTANT: Check if si and sri were found to be None by
+                # the regex to create the the sequence strings
+                si_temp: int = 0 if si is None else si
+                sri_temp: int = 0 if sri is None else sri
+
+                front_offset: int = max(si_temp, sri_temp, 0)
+                ex_seq: str = 'N' * front_offset + seq + 'N' * max(ei, eri, 0)
+                full_seq: List[str] = [ex_seq, rc(ex_seq)]
+                if si is not None and sri is not None:
                     cutsite_idxs[0].append(front_offset - si)
                     cutsite_idxs[1].append(front_offset - sri)
-                if max(ei, eri) is not None:
+                if ei is not None and eri is not None:
                     cutsite_idxs[0].append(ei + front_offset + len(seq))
                     cutsite_idxs[1].append(eri + front_offset + len(seq))
         else:
@@ -262,8 +277,7 @@ def processNebShorthand(neb_shorthand: str) -> dict:
     # Build regular expressions
     if core_seq is not None:
         core_regex = [seqToRegex(core_seq[0]), seqToRegex(core_seq[1])]
-        full_regex = [seqToRegex(full_seq[0]),
-                          seqToRegex(full_seq[1])]
+        full_regex = [seqToRegex(full_seq[0]), seqToRegex(full_seq[1])]
     output_dict = {
         'core_seq': core_seq,
         'full_seq': full_seq,
@@ -308,6 +322,7 @@ def processEnzymeRecord(record_tuple: tuple) -> dict:
               }]
             }
     '''
+    name = record_tuple[0]
     neb_shorthand = record_tuple[4].strip()
     cutsites = []
     # Check for multiple sequences
@@ -318,7 +333,7 @@ def processEnzymeRecord(record_tuple: tuple) -> dict:
     else:
         cutsites.append(processNebShorthand(neb_shorthand))
     enzyme_rec = {
-        'name': record_tuple[0],
+        'name': name,
         'cutsites': cutsites,
         'availability:': record_tuple[6]
     }
@@ -336,7 +351,7 @@ def qcEnzymeDataset(enzyme_dataset_by_name: dict):
                 'shorthand': 'G^AATTC',
                 'core_seq': ['GAATTC', 'GAATTC'],
                 'full_regex': ['GAATTC', 'GAATTC'],
-                'cutsite_idxs': [[1, None], [5, None]],
+                'cutsite_idxs': [[1], [5]],
                 'core_regex': ['GAATTC', 'GAATTC'],
                 'full_seq': ['GAATTC', 'GAATTC']
             }
@@ -350,7 +365,7 @@ def qcEnzymeDataset(enzyme_dataset_by_name: dict):
                 'shorthand': 'GGTCTC(1/5)',
                 'core_seq': ['GGTCTC', 'GAGACC'],
                 'full_regex': ['GGTCTC[ATGC]{5}', '[ATGC]{5}GAGACC'],
-                'cutsite_idxs': [[0, 7], [0, 11]],
+                'cutsite_idxs': [[7], [11]],
                 'core_regex': ['GGTCTC', 'GAGACC'],
                 'full_seq': ['GGTCTCNNNNN', 'NNNNNGAGACC']
             }
@@ -413,6 +428,7 @@ def updateEnzymeDataset():
             current_version = current_dataset['rebase_version']
             if latest_version == current_version:
                 needs_update = False
+                needs_update = True
     except (IOError, OSError):
         pass
     if needs_update:

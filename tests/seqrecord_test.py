@@ -7,16 +7,14 @@ from os.path import (
     dirname
 )
 
-import _setup
-from libnano.datastructures.seqrecord import (
+import conftest
+from libnano.seqrecord import (
     SeqRecord,
-    fromGenbankLike
-)
-from libnano.datastructures.seqrecord import (
+    fromGenbankLike,
     Feature,
-    locationStr2Feature
+    locationStr2Feature,
+    Location
 )
-from libnano.datastructures.seqrecord import Location
 
 LOCAL_DIR: str = abspath(dirname(__file__))
 

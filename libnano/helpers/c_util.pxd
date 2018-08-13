@@ -1,8 +1,15 @@
-from cpython.ref cimport PyObject
+from cpython.ref cimport (
+    PyObject,
+    Py_INCREF,
+    Py_XINCREF
+)
 from cpython.mem cimport (
     PyMem_Malloc,
     PyMem_Realloc,
-    PyMem_Free
+    PyMem_Free,
+    # Raw free is not available in Cython
+    # PyMem_RawMalloc,
+    # PyMem_RawFree
 )
 from libc.string cimport (
     memset,
@@ -21,17 +28,19 @@ cdef inline bytes _bytes(s):
         return s
 # end def
 
+# not all of these methods are available in Cython pxd file so we are importing
+# them here
 cdef extern from "Python.h":
-    cdef bint PyBytes_Check(object)
-    cdef int PyBytes_AsStringAndSize(object, char **, Py_ssize_t *)
-    cdef object PyBytes_FromString(const char*)
-    cdef object PyBytes_FromStringAndSize(const char *, Py_ssize_t)
-    cdef char* PyBytes_AsString(object)
+    bint PyBytes_Check(object)
+    int PyBytes_AsStringAndSize(object, char **, Py_ssize_t *)
+    object PyBytes_FromString(const char*)
+    object PyBytes_FromStringAndSize(const char *, Py_ssize_t)
+    char* PyBytes_AsString(object)
 
-    cdef char* PyUnicode_AsUTF8AndSize(object, Py_ssize_t *)
-    cdef object PyUnicode_FromString(const char *)
-    cdef object PyUnicode_FromStringAndSize(const char *, Py_ssize_t)
-    cdef char* PyUnicode_AsUTF8(object)
+    char* PyUnicode_AsUTF8AndSize(object, Py_ssize_t *)
+    object PyUnicode_FromString(const char *)
+    object PyUnicode_FromStringAndSize(const char *, Py_ssize_t)
+    char* PyUnicode_AsUTF8(object)
 
 """
 The following functions take a
@@ -59,7 +68,8 @@ cdef inline object copy_obj_to_cstr_unsafe( object      o1,
             raise TypeError("copy_obj_to_cstr:")
         b_length = length[0]
         o2 = PyBytes_FromStringAndSize(c_str1, b_length)
-        #if o2 == NULL:
+        # NOTE: comment NULL compare out due to Cython warning on the object
+        # if o2 == NULL:
         #    raise OSError("copy_obj_to_cstr:")
         c_str2[0] = PyBytes_AsString(o2)
     else:
@@ -97,20 +107,19 @@ cdef inline int copy_obj_to_cstr(   object      o1,
     cdef char* temp = NULL
     cdef size_t b_length
     cdef int obj_type = 0
+
     if PyBytes_Check(o1):
-        obj_type = 1
         if PyBytes_AsStringAndSize(o1, &(c_str1), length) == -1:
-            #raise TypeError("copy_obj_to_cstr:")
             return -1
+        obj_type = 1
     else:
         obj_type = 0
         c_str1 = PyUnicode_AsUTF8AndSize(o1, length)
         if c_str1 == NULL:
-            #raise OSError("copy_obj_to_cstr:")
             return -1
-    b_length = length[0]+1
-    #temp = <char *> PyMem_Malloc(b_length*sizeof(char))
-    temp = <char *> malloc(b_length*sizeof(char))
+    b_length = length[0] + 1 # add 1 byte for the 0 or NULL
+    temp = <char *> PyMem_Malloc(b_length*sizeof(char))
+    #temp = <char *> malloc(b_length*sizeof(char))
     if temp == NULL:
         return -1
     memcpy(temp, c_str1, b_length)
@@ -138,10 +147,11 @@ cdef inline cstr_to_obj(char*       c_str,
         obj = PyBytes_FromStringAndSize(c_str, length)
     else:
         obj = PyUnicode_FromStringAndSize(<const char *>c_str, length)
-    #PyMem_Free(c_str)
-    free(c_str)
+    PyMem_Free(c_str)
+    # free(c_str)
     return obj
 # end cdef
+
 cdef inline cstr_to_obj_nofree( char*       c_str,
                                 Py_ssize_t  length,
                                 int         obj_type):
@@ -179,12 +189,12 @@ cdef inline char* obj_to_cstr(object o1):
     cdef Py_ssize_t length
     if PyBytes_Check(o1):
         if PyBytes_AsStringAndSize(o1, &(c_str1), &length) == -1:
-            raise TypeError("obj_to_cstr:")
+            raise OSError("obj_to_cstr: bytes error")
         return c_str1
     else:
         c_str1 = PyUnicode_AsUTF8AndSize(o1, &length)
         if c_str1 == NULL:
-            raise OSError("obj_to_cstr:")
+            raise OSError("obj_to_cstr: unicode error")
     return c_str1
 # end def
 
@@ -196,12 +206,12 @@ cdef inline char* obj_to_cstr_len(  object      o1,
     cdef char* c_str1
     if PyBytes_Check(o1):
         if PyBytes_AsStringAndSize(o1, &(c_str1), length) == -1:
-            raise TypeError("obj_to_cstr:")
+            raise OSError("obj_to_cstr_len: bytes error")
         return c_str1
     else:
         c_str1 = PyUnicode_AsUTF8AndSize(o1, length)
         if c_str1 == NULL:
-            raise OSError("obj_to_cstr:")
+            raise OSError("obj_to_cstr_len: unicode error")
     return c_str1
 # end IF
 

@@ -12,7 +12,7 @@ from os.path import (
     dirname
 )
 
-import _setup
+import conftest
 
 from libnano.search import (
     submerpool,

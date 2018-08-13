@@ -5,7 +5,7 @@ import unittest
 import re
 import time
 
-import _setup
+import conftest
 from libnano.search import seedfinder
 
 """ TODO Fix this file for the submer module

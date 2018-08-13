@@ -3,7 +3,7 @@ from copy import (
     deepcopy
 )
 
-from libnano.datastructures.seqrecord.location import (
+from libnano.seqrecord.location import (
     Location,
     parseLocation,
     createLocationStr

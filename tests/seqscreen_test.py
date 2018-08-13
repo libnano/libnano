@@ -2,7 +2,7 @@
 import random
 import unittest
 
-import _setup
+import conftest
 from libnano.metric import seqscreen
 
 class TestSeqFilter(unittest.TestCase):

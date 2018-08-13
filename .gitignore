@@ -12,7 +12,7 @@ build
 *.ipynb
 
 libnano/cymem/*.c
-libnano/datastructures/*.c
+libnano/*.c
 libnano/helpers/*.c
 libnano/search/*.c
 libnano/metric/*.c
@@ -24,7 +24,7 @@ libnano/core/seqrecord/*.c
 libnano/core/seqsearch/*.c
 libnano/core/seqmetric/*.c
 libnano/core/*.c
-libnano/datastructures/seqrecord/*.c
+libnano/seqrecord/*.c
 libnano/dev/*.c
 
 .pytest_cache/
@@ -36,3 +36,4 @@ node_modules/
 scratch_nocommit/
 
 scratch/
+.ipynb_checkpoints/

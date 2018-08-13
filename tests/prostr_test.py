@@ -3,7 +3,7 @@ import unittest
 import json
 import itertools
 
-import _setup
+import conftest
 from libnano.prostr import (
     dnaToAA,
     rnaToAA,

@@ -2,7 +2,8 @@ import sys
 from pprint import pprint
 from typing import (
     List,
-    Dict
+    Dict,
+    NamedTuple
 )
 from contextlib import contextmanager
 
@@ -26,7 +27,8 @@ from libnano.ensemblrest import (
     lookUpSymbolList,
     overlap,
     LookUp,
-    permittedSequences
+    permittedSequences,
+    Transcript
 )
 import libnano.ensemblrest as ger
 
@@ -41,29 +43,32 @@ BARCODE_LIST = bt.getBarcodeSet('34_3hd_5mer_v00')
 
 THIS_FILE: str = __file__
 
+GeneIds = NamedTuple('GeneIds', [('mouse', str), ('human', str)])
+
 ALL_GENES: Dict[str, str] = {
-'TUBB3':    'ENSMUSG00000062380',
-'SLC18A2':  'ENSMUSG00000025094',
-'SLC17A8':  'ENSMUSG00000019935',
-'GAD1':     'ENSMUSG00000070880',
-'GFAP':     'ENSMUSG00000020932',   # look at off target
-'MBP':      'ENSMUSG00000041607',
-'TMEM119':  'ENSMUSG00000054675',
-'REST':     'ENSMUSG00000029249',
-'FOXO1':    'ENSMUSG00000044167',
-'FOXO3':    'ENSMUSG00000048756',
-'DISC1':    'ENSMUSG00000043051',
-'DRD2':     'ENSMUSG00000032259',
-'SST':      'ENSMUSG00000004366',
-'CALB1':    'ENSMUSG00000028222',   # look at off target
-'SNAP25':   'ENSMUSG00000027273',
-'SYN1':     'ENSMUSG00000037217',
-'PSEN2':    'ENSMUSG00000010609',
-'DAXX':     'ENSMUSG00000002307',
-'CDK5R1':   'ENSMUSG00000048895',
-'SLC22A7':  'ENSMUSG00000067144',
-'APP':      'ENSMUSG00000022892'
+'TUBB3':    GeneIds('ENSMUSG00000062380', 'ENSG00000258947'),
+'SLC18A2':  GeneIds('ENSMUSG00000025094', 'ENSG00000165646'),
+'SLC17A8':  GeneIds('ENSMUSG00000019935', 'ENSG00000179520'),
+'GAD1':     GeneIds('ENSMUSG00000070880', 'ENSG00000128683'),
+'GFAP':     GeneIds('ENSMUSG00000020932', 'ENSG00000131095'), # look at off target
+'MBP':      GeneIds('ENSMUSG00000041607', 'ENSG00000197971'),
+'TMEM119':  GeneIds('ENSMUSG00000054675', 'ENSG00000183160'),
+'REST':     GeneIds('ENSMUSG00000029249', 'ENSG00000084093'),
+'FOXO1':    GeneIds('ENSMUSG00000044167', 'ENSG00000150907'),
+'FOXO3':    GeneIds('ENSMUSG00000048756', 'ENSG00000118689'),
+'DISC1':    GeneIds('ENSMUSG00000043051', 'ENSG00000162946'),
+'DRD2':     GeneIds('ENSMUSG00000032259', 'ENSG00000149295'),
+'SST':      GeneIds('ENSMUSG00000004366', 'ENSG00000157005'),
+'CALB1':    GeneIds('ENSMUSG00000028222', 'ENSG00000104327'),  # look at off target
+'SNAP25':   GeneIds('ENSMUSG00000027273', 'ENSG00000132639'),
+'SYN1':     GeneIds('ENSMUSG00000037217', 'ENSG00000008056'),
+'PSEN2':    GeneIds('ENSMUSG00000010609', 'ENSG00000143801'),
+'DAXX':     GeneIds('ENSMUSG00000002307', 'ENSG00000204209'),
+'CDK5R1':   GeneIds('ENSMUSG00000048895', 'ENSG00000176749'),
+'SLC22A7':  GeneIds('ENSMUSG00000067144', 'ENSG00000137204'),
+'APP':      GeneIds('ENSMUSG00000022892', 'ENSG00000142192')
 }
+
 ALL_SYMBOLS: List[str] = sorted(ALL_GENES.keys())
 
 @contextmanager
@@ -78,7 +83,7 @@ def useCache(is_on: bool):
 # end def
 
 def listExons(transcript_id: str):
-    res = lookUpID(transcript_id)
+    res: dict = lookUpID(transcript_id)
     msg = '%-10s%8d'
     exon = res.get('Exon')
     if exon is None:
@@ -104,25 +109,25 @@ def listTranscriptsIdxs(species: str,
         symbols:
     '''
     print("Listing transcript indices")
-    res = lookUpSymbolList(species, symbols)
-    msg = '%-12s%-20s%8s%8s%8s%8s%8s%8s'
+    res: dict = lookUpSymbolList(species, symbols)
+    msg: str = '%-12s%-20s%8s%8s%8s%8s%8s%8s'
     print(msg % ('Name', 'EID', 'start', 'end', 'delta', 'elength', 'canon', 'strand'))
-    msg = '%-12s%-20s%8d%8d%8d%8d%8s%8s'
+    msg: str = '%-12s%-20s%8d%8d%8d%8d%8s%8s'
     for symbol in symbols:
-        item = res[symbol]
-        transcripts = item['Transcript']
-        start_min = 1e20
-        end_canon = 0
+        item: dict = res[symbol]
+        transcripts: dict = item['Transcript']
+        # start_min: float = 1e20
+        end_canon: int = 0
         for transcript in transcripts:
             start, end  = transcript['start'], transcript['end']
             if transcript['is_canonical'] == 1:
                 end_canon = end
-                start_canon = start
+                start_canon: int = start
         if item['strand'] == 1:
             for transcript in transcripts:
                 start, end  = transcript['start'], transcript['end']
                 is_canonical = 'Yes' if transcript['is_canonical'] == 1 else 'No'
-                elength = 0
+                elength: int = 0
                 for exon in transcript['Exon']:
                     elength += abs(exon['end'] - exon['start'])
                 print(msg % (
@@ -137,8 +142,8 @@ def listTranscriptsIdxs(species: str,
         else:
             for transcript in transcripts:
                 start, end  = transcript['start'], transcript['end']
-                is_canonical = 'Yes' if transcript['is_canonical'] == 1 else 'No'
-                elength = 0
+                is_canonical: str = 'Yes' if transcript['is_canonical'] == 1 else 'No'
+                elength: int = 0
                 for exon in transcript['Exon']:
                     elength += abs(exon['end'] - exon['start'])
                 print(msg % (
@@ -172,23 +177,23 @@ def listDetails(species: str,
         filename: Default is ``None``. This is unused
     '''
     print("Listing Details")
-    res = lookUpSymbolList(species, symbols)
-    msg = '%-8s%6s%8s%8s%8s%8s'
+    res: dict = lookUpSymbolList(species, symbols)
+    msg: str = '%-8s%6s%8s%8s%8s%8s'
     print(msg % ('Name', '#PCTs', 'strand', 'length', 'elength', '#vars'))
-    msg = '%-8s%6d%8s%8d%8d%8d'
+    msg: str = '%-8s%6d%8s%8d%8d%8d'
     for symbol in symbols:
         try:
-            item = res[symbol]
+            item: dict = res[symbol]
         except:
             print(res)
             raise
         length = item['end'] - item['start']
 
-        elength = 0
-        variant_count = -1
+        elength: int = 0
+        variant_count: int = -1
         for transcript in item['Transcript']:
             if transcript['is_canonical'] == 1:
-                three_prime_utr_id = transcript['Exon'][-1]['id']
+                three_prime_utr_id: str = transcript['Exon'][-1]['id']
                 variant_count = len(overlap(three_prime_utr_id))
                 for exon in transcript['Exon']:
                     elength += exon['end'] - exon['start']
@@ -226,26 +231,27 @@ def designPadlocks( species: str,
     print("Designing Padlocks")
     out: dict = {symbol: [] for symbol in symbols}
 
-    p_params = DEFAULT_PADLOCK_CONFIG()
+    p_params: dict = DEFAULT_PADLOCK_CONFIG()
 
     if barcodes is None:
         barcodes = BARCODE_LIST
 
-    arm_length_2X = 2*arm_length
-    res = lookUpSymbolList(species, symbols)
-    barcode_idx = 0
+    arm_length_2X: int = 2*arm_length
+    res: dict = lookUpSymbolList(species, symbols)
+    barcode_idx: int = 0
     for symbol in symbols:
-        lookup = LookUp(res[symbol])
+        lookup: LookUp = LookUp(res[symbol])
         for prospective_transcript in lookup.transcripts:
             if prospective_transcript['is_canonical'] == 1:
                 canon_transcript = Transcript(prospective_transcript)
                 break
 
-        canon_transcript_id = canon_transcript.id
-        exon_id = canon_transcript.Exon[exon_index]['id']
+        canon_transcript_id: str = canon_transcript.id
+        exon_id: str = canon_transcript.Exon[exon_index]['id']
 
         p_seqs: List[List[Tuple[int, str]]] = permittedSequences(canon_transcript)
-        exon_segments: List[str] = p_seqs[exon_index]
+        exon_segments: List[Tuple[int, str]] = p_seqs[exon_index]
+        # print(exon_segments)
         max_idx: int = sum([len(x[1]) for x in exon_segments])
 
         strand_dir: str = 'fwd' if lookup.is_fwd else 'rev'
@@ -254,15 +260,16 @@ def designPadlocks( species: str,
             msg = '%8s%8s%8s%8s%10s'
             print(msg % ('start', 'maxidx', 'seglen', 'addlen', 'g_index'))
             msg = '%8d%8d%8d%8d%10d'
-        candidate_segments: List[str] = []
-        idx = 0
-        bound_idx = max_idx - three_prime_delta
+        candidate_segments: List[Tuple[int, str]] = []
+        idx: int = 0
+        bound_idx: int = max_idx - three_prime_delta
         for g_index, segment in exon_segments:
-            len_segment = len(segment)
+            len_segment: int = len(segment)
+            # print(len_segment, arm_length_2X)
             if len_segment > arm_length_2X:
                 if idx + len_segment > bound_idx:
                     # Of the form:: len_segment - (idx + len_segment - bound_idx)
-                    adjust_bound = bound_idx - idx
+                    adjust_bound: int = bound_idx - idx
                     if adjust_bound < arm_length_2X:
                         continue
                     # print("Do adjust", adjust_bound,
@@ -271,19 +278,19 @@ def designPadlocks( species: str,
                     #                     idx + len_segment, idx)
                     if lookup.is_rev:
                         g_index = g_index - (len_segment - adjust_bound)
-                    add_segment = segment[:adjust_bound]
+                    add_segment: str = segment[:adjust_bound]
                 else:
-                    add_segment = segment
+                    add_segment: str = segment
                 if do_print:
                     print(msg %     (idx, max_idx, len_segment,
                                     len(add_segment), g_index) )
                 candidate_segments.append((g_index, add_segment))
             idx += len_segment
         # end for
-        barcode = barcodes[barcode_idx]
+        barcode: str = barcodes[barcode_idx]
         barcode_idx += 1
 
-        pads = out[symbol]
+        pads: list = out[symbol]
         for g_index, segment in candidate_segments:
             pads += generatePadlocks(segment,
                                     canon_transcript_id,
@@ -298,7 +305,7 @@ def designPadlocks( species: str,
         '''Retry for No hits with higher allowable GC max content'''
         if len(pads) == 0:
             print(">> bumping GC content for %s" % symbol)
-            bumped_params = DEFAULT_PADLOCK_CONFIG()
+            bumped_params: dict = DEFAULT_PADLOCK_CONFIG()
             bumped_params['arm_gc_max'] = 0.65
             for g_index, segment in candidate_segments:
                 pads += generatePadlocks(segment,
@@ -316,7 +323,12 @@ def designPadlocks( species: str,
         writePadlocksToCSV(out, filename)
 # end def
 
-output_help = '''Kind of function to run, d: listDetails, i: listTranscriptsIdxs'''
+output_help = '''Kind of function to run:
+    d: listDetails
+    e: listExons
+    i: listTranscriptsIdxs
+    p: designPadlocks
+'''
 barcode_help = '''if genes are mapped to specific barcodes, only used when genes
                 is specifically set. use the form:
 

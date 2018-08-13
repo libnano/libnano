@@ -9,18 +9,26 @@ from typing import (
     Tuple,
     Set,
     Any,
-    Union
+    Union,
+    NamedTuple
 )
 from pprint import pprint
 import json
 import pickle
+import copy
 
 import requests
+import pandas as pd
+
+from libnano.seqstr import reverseComplement
+
+DataFrameGroupBy_T = pd.core.groupby.groupby.DataFrameGroupBy
 
 USE_CACHE: bool = True
+DO_PRINT_CACHE: bool = False
 TIMEOUT_FAST: float = 2.0
 TIMEOUT_SLOW: float = 6.0
-TIMEOUT_REQU: float = TIMEOUT_SLOW
+TIMEOUT_REQU: float = 5*TIMEOUT_SLOW
 
 SERVER: str = "https://rest.ensembl.org"
 EXON_KEYS: List[str] = [
@@ -86,6 +94,21 @@ LOOKUP_KEYS: List[str] = [
     'version'
 ]
 
+Probe: NamedTuple = NamedTuple('Probe',
+    [
+        ('end', int),
+        ('feature_type', str),
+        ('microarray', str),
+        ('probe_length', int),
+        ('probe_name', str),
+        ('probe_set', str),
+        ('seq_region_name', str),
+        ('start', int),
+        ('strand', int)
+    ]
+)
+PROBE_KEYS: Tuple[str] = Probe._fields
+
 SPECIES_NAMES: dict = {'mouse': ['mus_musculus']}
 ASSEMBLY_NAMES: dict = {'mouse': ['GRCm38']}
 
@@ -107,7 +130,10 @@ CONSEQUENCE_TYPES: List[str] = [
     'splice_region_variant',
     '5_prime_UTR_variant'
 ]
-POST_JSON: dict ={ "Content-Type" : "application/json", "Accept" : "application/json"}
+POST_JSON: dict = {
+    "Content-Type" : "application/json",
+    "Accept" : "application/json"
+}
 
 home_path: str = str(Path.home())
 CACHE_FILE: str = os.path.join(home_path, '.ENSEMBLCACHE.pickle')
@@ -127,16 +153,22 @@ def makeCache(species_list: List[str] = SPECIES_LIST) -> dict:
     return d
 # end def
 
-if Path(CACHE_FILE).exists():
+def loadCache(filename: str) -> dict:
     try:
-        with io.open(CACHE_FILE, 'rb') as fd:
-            ensembl_cache = pickle.load(fd)
-            SPECIES_LIST = ensembl_cache['species_list']
-            _cache_dirty = False
-            print("LOADED cache for {}: {}".format(THE_FILE, CACHE_FILE))
+        with io.open(filename, 'rb') as fd:
+            the_cache: dict = pickle.load(fd)
     except:
-        print("Couldn't load cache for {}: {}".format(THE_FILE, CACHE_FILE))
-        ensembl_cache = makeCache()
+        if DO_PRINT_CACHE:
+            print("Couldn't load cache for {}: {}".format(THE_FILE, filename))
+        the_cache = makeCache()
+    if DO_PRINT_CACHE:
+        print("LOADED cache for {}: {}".format(THE_FILE, CACHE_FILE))
+    return the_cache
+
+if Path(CACHE_FILE).exists():
+    ensembl_cache = loadCache(CACHE_FILE)
+    SPECIES_LIST = ensembl_cache['species_list']
+    _cache_dirty = False
 else:
     ensembl_cache = makeCache()
 
@@ -149,6 +181,7 @@ def clearCache(species_list: List[str] = None):
 
 def addSpecies(species: str):
     global SPECIES_LIST
+    global _cache_dirty
     if species not in SPECIES_LIST:
         SPECIES_LIST.append(species)
         ensembl_cache[species] = {}
@@ -161,6 +194,7 @@ def _closeCache():
     if _cache_dirty:
         with io.open(CACHE_FILE, 'wb') as fd:
             pickle.dump(ensembl_cache, fd)
+        if DO_PRINT_CACHE:
             print("UPDATED {} cache".format(THE_FILE))
 atexit.register(_closeCache)
 
@@ -339,6 +373,7 @@ def lookUpID(   eid: str,
     url = SERVER + "/lookup/id/%s?expand=1;utr=1;phenotypes=1" % (eid)
     res = getCache(url, eid, ensembl_cache)
 
+    # is it a gene?
     if is_protein_coding and 'G' in eid:
         out = []
         for item in res['Transcript']:
@@ -411,6 +446,35 @@ def lookUpSymbolList(   species: str,
     return res
 # end def
 
+TranscriptAndUTR = NamedTuple('TranscriptAndUTR', [('transcript_id', str), ('utr_id', str)])
+def getThreePrimeUTRs(  species: str,
+                        symbols: List[str]) -> List[TranscriptAndUTR]:
+    '''
+    Returns:
+        List of Tuples of the form::
+
+            <canonical transcript ID>, <three prime UTR ID>
+    '''
+
+    res: dict = lookUpSymbolList(species, symbols)
+    out: List[str] =  []
+    for symbol in symbols:
+        try:
+            item: dict = res[symbol]
+        except:
+            print(res)
+            raise
+        found_utr: bool = False
+        for transcript in item['Transcript']:
+            if transcript['is_canonical'] == 1:
+                three_prime_utr_id: str = transcript['Exon'][-1]['id']
+                out.append(TranscriptAndUTR(transcript['id'], three_prime_utr_id))
+                found_utr = True
+        if not found_utr:
+            raise ValueError("couldn't find canonical transcript for %s" % (symbol))
+    return out
+# end def
+
 def convertCDNA2Genome(transcript_id:str, idxs: Tuple[int, int]) -> dict:
     '''indices are relevant to the start of the transript
     i.e. idx 1 is the first base of the transcipt and would be 15881264
@@ -438,8 +502,86 @@ def getSequence(eid: str, seq_type: str='cdna') -> str:
         seq_type: Enum(genomic,cds,cdna,protein), default is cdna
     '''
     global ensembl_cache
-    url = SERVER + "/sequence/id/%s?;type=%s" % (eid, seq_type)
-    return getCache(url, eid + 'sequence', ensembl_cache, content_type="text/plain")
+    query: str = "/sequence/id/%s?;type=%s" % (eid, seq_type)
+    url: str = SERVER + query
+    return getCache(url, query, ensembl_cache, content_type="text/plain")
+# end def
+
+def getRegionSequence(  species: str,
+                        chromosome: str,
+                        start_idx: int,
+                        end_idx: int,
+                        strand: int = None,
+                        is_rev: bool = None
+                        ) -> str:
+    '''
+    Args:
+        species:
+        chromosome:
+        start_idx:
+        end_idx:
+        strand:
+        is_rev:
+
+    Returns:
+        sequence string matching query
+    '''
+    global ensembl_cache
+    if strand is None:
+        if is_rev is None:
+            raise ValueError("strand and is_rev arguments can't both be None")
+        strand = -1 if is_rev else 1
+    elif strand not in (-1, 1):
+        raise ValueError("strand argument needs to be -1 or 1")
+    region: str = "%s:%d..%d:%d" % (chromosome, start_idx, end_idx, strand)
+    query: str = "/sequence/region/%s/%s" % (species, region)
+    url: str = SERVER + query
+    res: str = getCache(url, query, ensembl_cache, content_type="text/plain")
+    assert(len(res) == (end_idx - start_idx + 1))
+    return res
+# end def
+
+def filterRegionSequence(   query_seq: str,
+                            query_strand: int,
+                            transcript_id: str,
+                            transcript: dict = None,
+                            reference_seq: str = None) -> Tuple[str, bool]:
+    '''Confirm sequence exists in the transcript and return the aligned to the
+    strand direction of the transcript sequence.  NOTE: Sometimes there are
+    errors in probes so be sure to validate all sequence lookups!!!
+
+    Args:
+        query_seq:
+        query_strand:
+        transcript_id:
+        transcript_dict: Default is None.  If provided omit lookUp call
+        reference_seq: Default is None.  If provided omit getSequence call
+
+    Returns:
+        Tuple of the form
+
+        sequence, was_rc
+
+        sequence corresponding to the query.  If transcript_id is provided
+        the sequence will exist in the transcript and get reverse complemented
+        as necessary and was_rc should be checked
+
+    Raises:
+        ValueError on sequence not found in the target reference sequence
+    '''
+    was_rc: bool = False
+    query_seq_out: str = query_seq
+    if transcript is None:
+        transcript = lookUpID(transcript_id)
+    if reference_seq is None:
+        reference_seq = getSequence(transcript_id)
+    if transcript['strand'] != query_strand:
+        query_seq_out: str = reverseComplement(query_seq)
+        was_rc = True
+    if query_seq_out not in reference_seq:
+        err: str = "Region sequence not in transcript_id: %s: %d, rc: %s"
+        raise ValueError(err % (transcript_id, query_strand, was_rc))
+    return query_seq_out, was_rc
 # end def
 
 def overlap(eid: str, feature: str = 'variation') -> dict:
@@ -451,7 +593,7 @@ def overlap(eid: str, feature: str = 'variation') -> dict:
             somatic_structural_variation, constrained, regulatory, motif,
             chipseq, array_probe)
     '''
-    url = SERVER + "/overlap/id/%s?;feature=%s" % (eid, feature)
+    url: str = SERVER + "/overlap/id/%s?;feature=%s" % (eid, feature)
     return getCache(url, eid+feature, ensembl_cache)
 # end def
 
@@ -603,9 +745,153 @@ def slicedSequence( exon_id: str,
         return out
 # end def
 
+def getArrayProbes(eid: str) -> List[dict]:
+    '''
+    Args:
+        eid:  ensymbl ID
+
+    Returns:
+        Uniquified list of probes from a call to the `overlap` REST request
+    '''
+    res: list = overlap(eid, feature='array_probe')
+    return _uniqueProbes(res)
+# end def
+
+def _probe_dict_2_str(probe: dict) -> str:
+    global PROBE_KEYS
+    return ''.join(str(probe[x]) for x in PROBE_KEYS)
+# end def
+
+def _uniqueProbes(probe_list: List[dict]) -> List[dict]:
+    probe_cache: Set[str] = set()
+    out: List[dict] = []
+    for probe in probe_list:
+        probe_hash: str = _probe_dict_2_str(probe)
+        if probe_hash not in probe_cache:
+            out.append(probe)
+            probe_cache.add(probe_hash)
+    return out
+# end def
+
+def probeListGroupByProbeName(probe_list: List[dict]) -> List[dict]:
+    '''Get a dict per probe with a List of microarrays that the probe is in
+
+    Args:
+        probe_list: result from a call to :func:`getArrayProbes`
+
+    Returns:
+        lists of probes with only one entry per `probe_name` key
+    '''
+    probe_name_idx_dict: Dict[str, int] = {}
+    idx: int = 0
+    out: List[dict] = []
+    for probe in probe_list:
+        probe_name: str = probe['probe_name']
+        if probe_name not in probe_name_idx_dict:
+            probe_copy = copy.copy(probe)
+            probe_copy['microarrays'] = [ probe_copy['microarray'] ]
+            del probe_copy['microarray']
+            out.append(probe_copy)
+
+            # store the lookup
+            probe_name_idx_dict[probe_name] = idx
+            idx += 1
+        else:
+            j: int = probe_name_idx_dict[probe_name]
+            ref_probe: dict = out[j]
+            ref_probe['microarrays'].append(probe['microarray'])
+    # end for
+    return out
+# end def
+
+def getProbeFromList(probe_name: str, probe_list: List[dict]) -> dict:
+    '''Look up a probe dictionary in a `probe_list` which was a result from
+    a call to  :func:`getArrayProbes`
+
+    Args:
+        probe_name:
+        probe_list:
+
+    Returns:
+        dictionary of the probe
+
+    Raises:
+        ValueError
+    '''
+    for x in probe_list:
+        if x['probe_name'] == probe_name:
+            return x
+    raise ValueError("probe: %s not found in list" % (probe_name))
+# end def
+
+def getProbesForID(eid: str, keep_n: int = 0) -> pd.DataFrame:
+    '''get a dataframe of overlapping probes for a given ensembl ID
+
+    Args:
+        eid: ensembl ID of the item (Transcript, Exon, etc)
+        keep_n: keep the n most frequent in the arrays founds
+
+    Returns:
+        Dataframe of the probes with columns::
+
+            [
+            'probe_name',
+            'start',
+            'end',
+            'strand',
+            'probe_length',
+            'seq_region_name'
+            ]
+    '''
+    out_list: List[dict] = getArrayProbes(eid)
+    if len(out_list) == 0:
+        raise ValueError
+
+    COLUMNS: List[str] = [
+        'probe_name',
+        'start',
+        'end',
+        'probe_length',
+        'feature_type',
+        'probe_set',
+        'seq_region_name',
+        'strand',
+        'microarray'
+    ]
+    df: pd.DataFrame = pd.DataFrame(out_list, columns=COLUMNS)
+    probe_name_series: pd.Series = df['probe_name']
+    count_of_probe_use: pd.Series = probe_name_series.value_counts()
+
+    if keep_n > 0:
+        largest = count_of_probe_use[:keep_n]
+        filtered_probes: pd.DataFrame = df[probe_name_series.isin(largest.index.values)]
+    else:
+        filtered_probes: pd.DataFrame = df
+
+    columns_to_keep: List[str] = [
+        'probe_name',
+        'start',
+        'end',
+        'strand',
+        'probe_length',
+        'seq_region_name'
+    ]
+    filtered_probes = filtered_probes.loc[:, columns_to_keep].drop_duplicates()
+
+    # Filter out probes where the length doesn't match the index delta
+    filtered_probes = filtered_probes[filtered_probes.end - filtered_probes.start + 1 == filtered_probes.probe_length]
+
+    # Add an array frequency column
+    array_freq: List[int] = [ count_of_probe_use.loc[filtered_probes['probe_name'].iloc[i]] for i in range(len(filtered_probes)) ]
+    filtered_probes = filtered_probes.assign(array_freq=array_freq)
+
+    return filtered_probes.reset_index(drop=True)
+# end def
+
 def permittedSequences( transcript: Transcript,
                         exon_id: str = None) -> List[List[Tuple[int, str]]]:
-    '''
+    '''get a list of start indices and their associated Exon dictionary
+
     Args:
         transcript:  :class:`Transcript` as calculated through a call to
             :meth:`lookUpID` and wrapped in the class
@@ -616,7 +902,7 @@ def permittedSequences( transcript: Transcript,
             sequences of the exons
     '''
     slices: List[List[Tuple[int, int]]] = permittedRegions(transcript)
-    is_rev = transcript.strand == -1
+    is_rev: bool = transcript.strand == -1
     if exon_id is not None:
         regions = []
         for i, item in enumerate(transcript.Exon):
@@ -632,6 +918,7 @@ def permittedSequences( transcript: Transcript,
         out = []
         for item, regions in zip(transcript.Exon, slices):
             idx_l, idx_h = idxLo2Hi(item)
+            # print(idx_h - idx_l)
             out.append(slicedSequence(item['id'], idx_l, is_rev, regions))
         return out
 # end def

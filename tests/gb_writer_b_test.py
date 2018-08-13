@@ -10,7 +10,7 @@ from os.path import (
     dirname
 )
 
-import _setup
+import conftest
 from libnano.fileio import gb_reader_b
 from libnano.fileio import gb_writer_b
 

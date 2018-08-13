@@ -145,7 +145,6 @@ if os.environ.get('IS_TRAVIS') is None:
 
                     # sometimes p_length doesn't match start and end indices so let's filter those out
                     if (p_end - p_start + 1) > p_length:
-                        print(probe['probe_name'])
                         continue
                     elif p_length < PROBE_CUTOFF_LENGTH:
                         # Try extending from the 5' end of the sequences
@@ -172,8 +171,6 @@ if os.environ.get('IS_TRAVIS') is None:
                             strand=p_strand
                         )
                     except:
-                        print(item.symbol, transcript_id, probe['probe_name'])
-                        print(p_start, p_end)
                         raise
                     try:
                         was_rc: bool

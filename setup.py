@@ -224,14 +224,14 @@ addExtension(
     extra_compile_args=extra_compile_args,
 )
 
-addExtension(
-    'libnano.dseq2',
-    depends=[],
-    sources=[   'libnano/dseq2.pyx'],
-                # 'libnano/src/ss_seqstr.c'],
-    include_dirs=common_include + numpy_include,
-    extra_compile_args=extra_compile_args,
-)
+# addExtension(
+#     'libnano.dseq2',
+#     depends=[],
+#     sources=[   'libnano/dseq2.pyx'],
+#                 # 'libnano/src/ss_seqstr.c'],
+#     include_dirs=common_include + numpy_include,
+#     extra_compile_args=extra_compile_args,
+# )
 
 # add header files or extra c files
 for path in common_include:

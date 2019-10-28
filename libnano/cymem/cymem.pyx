@@ -156,7 +156,7 @@ cdef class Address:
 
     def __init__(self, size_t number, size_t elem_size):
         self.ptr = PyMem_Malloc(number * elem_size)
-        memset(self.ptr, 0, number * elem_size)
+        memset(<void*> self.ptr, 0, number * elem_size)
 
     property addr:
         def __get__(self):

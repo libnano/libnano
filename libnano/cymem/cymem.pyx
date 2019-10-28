@@ -151,6 +151,8 @@ cdef class Address:
         ptr (void*): Pointer to the memory block.
         addr (size_t): Read-only size_t cast of the pointer.
     """
+    cdef void* ptr
+
     def __cinit__(self, size_t number, size_t elem_size):
         self.ptr = NULL
 

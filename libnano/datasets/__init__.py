@@ -1,5 +1,22 @@
+# Copyright (C) 2023. Nick Conway;
+# See LICENSE.TXT for full GPLv2 license.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 '''
-libnano.datasets
+libnano.datasets.__init__
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
 For now this only contains lazy-loaded access to the restriction enzyme
 dataset, but it may act as the general access to libnano datasets should the
@@ -11,23 +28,20 @@ The unicode versions have a "_U" suffix.
 
 import json as _json
 import os as _os
-import sys as _sys
-from typing import (
-    Dict
-)
+from typing import Dict
 
-from libnano.helpers import jsonbytes as _jsonbytes
-from libnano.datasets.build_enzyme_dataset import qcEnzymeDataset
 from libnano.datasets.build_codon_freq_dataset import (
-    RNA_TO_AA,
-    DNA_TO_AA,
     AA_TO_DNA,
     AA_TO_RNA,
+    DNA_TO_AA,
+    RNA_TO_AA,
     getOrganismFrequencies,
-    updateCodonFreqDataset
 )
+from libnano.datasets.build_enzyme_dataset import qcEnzymeDataset
+from libnano.helpers import jsonbytes as _jsonbytes
 
 _LOCAL_DIR: str = _os.path.dirname(_os.path.realpath(__file__))
+
 
 class DatasetContainer(object):
     ''' Supports lazy loading of datasets to minimize memory footprint
@@ -39,9 +53,15 @@ class DatasetContainer(object):
 
     # ~~~~~~~~~~~~~~~~~~~~~~~ Codon frequency dataset ~~~~~~~~~~~~~~~~~~~~~~~ #
 
-    def _loadCodonFreqDataset(self, as_unicode: bool = False) -> dict:
+    def _loadCodonFreqDataset(
+            self,
+            as_unicode: bool = False,
+    ) -> None:
         jsonlib = _json if as_unicode else _jsonbytes
-        dataset_fp = _os.path.join(_LOCAL_DIR, 'codon_freq_dataset.json')
+        dataset_fp = _os.path.join(
+            _LOCAL_DIR,
+            'codon_freq_dataset.json',
+        )
         with open(dataset_fp) as fd:
             raw_data = jsonlib.load(fd)
             if as_unicode:
@@ -65,14 +85,22 @@ class DatasetContainer(object):
             self._loadCodonFreqDataset(as_unicode=True)
             return self._CODON_FREQ_DATASET_U
 
-    def organismFrequencies(self,
-                            organism_id: int,
-                            organism_class: str) -> Dict[str, Dict[str, float]]:
-        return getOrganismFrequencies(organism_id, organism_class)
+    def organismFrequencies(
+            self,
+            organism_id: int,
+            organism_class: str,
+    ) -> Dict[str, Dict[str, float]]:
+        return getOrganismFrequencies(
+            organism_id,
+            organism_class,
+        )
 
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Enzyme dataset ~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 
-    def _loadEnzymeDataset(self, as_unicode: bool = False):
+    def _loadEnzymeDataset(
+            self,
+            as_unicode: bool = False,
+    ):
         jsonlib = _json if as_unicode else _jsonbytes
         dataset_fp = _os.path.join(_LOCAL_DIR, 'enzyme_dataset.json')
         with open(dataset_fp) as fd:
@@ -85,7 +113,7 @@ class DatasetContainer(object):
                 self._REBASE_VERSION = raw_data[b'rebase_version']
 
     @property
-    def ENZYME_DATASET(self) -> dict:
+    def ENZYME_DATASET(self) -> Dict:
         try:
             return self._ENZYME_DATASET
         except AttributeError:
@@ -93,7 +121,7 @@ class DatasetContainer(object):
             return self._ENZYME_DATASET
 
     @property
-    def REBASE_VERSION(self) -> dict:
+    def REBASE_VERSION(self) -> Dict:
         try:
             return self._REBASE_VERSION
         except AttributeError:
@@ -101,7 +129,7 @@ class DatasetContainer(object):
             return self._REBASE_VERSION
 
     @property
-    def ENZYME_DATASET_U(self) -> dict:
+    def ENZYME_DATASET_U(self) -> Dict:
         try:
             return self._ENZYME_DATASET_U
         except AttributeError:

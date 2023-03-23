@@ -1,10 +1,10 @@
 LOCUS       DS_SPcas__addgen        6806 bp ds-DNA     linear       10-APR-2014
 DEFINITION  DS-SPcas
-ACCESSION   
-KEYWORDS    
-SOURCE      
+ACCESSION
+KEYWORDS
+SOURCE
   ORGANISM  other sequences; artificial sequences; vectors.
-COMMENT     
+COMMENT
 COMMENT     ApEinfo:methylated:1
 FEATURES             Location/Qualifiers
      terminator      153..180
@@ -246,5 +246,5 @@ ORIGIN
      6601 agcccgtcat acttgaagct agacaggctt atcttggaca agaagaagat cgcttggcct
      6661 cgcgcgcaga tcagttggaa gaatttgtcc actacgtgaa aggcgagatc accaaggtag
      6721 tcggcaaata atgtctaaca attcgttcaa gccgaggggc cgcaagatcc ggccacgatg
-     6781 acccggtcgt cggttcaggg cagggt   
+     6781 acccggtcgt cggttcaggg cagggt
 //

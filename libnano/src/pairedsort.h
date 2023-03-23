@@ -1,6 +1,6 @@
 /* Sort by an array of type_t while also sorting and array of slave_t
 * this is done with the expectation that the array of type_t will be freed
-* soon after this sorting is complete rather than building a struct to couple 
+* soon after this sorting is complete rather than building a struct to couple
 * them
 * this is forked from ksort.h in klib
 */

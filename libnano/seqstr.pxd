@@ -1,4 +1,22 @@
-"""
+# cython: language_level=3, boundscheck=False, wraparound=False
+# Copyright (C) 2014-2018. Nick Conway & Ben Pruitt; Wyss Institute
+# Copyright (C) 2023 Nick Conway & Ben Pruitt;
+# See LICENSE.TXT for full GPLv2 license.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+'''
 libnano.seqstr
 ~~~~~~~~~~~~~~
 
@@ -11,20 +29,23 @@ Basic operations of DNA, RNA, and amino acid (AA) sequences (e.g.,
 complement, reverse, reverse complement, etc)
 
 Includes hamming distance method and derivative heuristic methods.
-"""
+'''
 
-cdef char* reverse_c(char* seq, int length)
-cdef void reverse_cb(char* seq, char* out, int length)
+cdef:
+    char* reverse_c(char* seq, int length)
+    void reverse_cb(char* seq, char* out, int length)
 
-cdef char* complement_c(char* seq, int length)
-cdef void complement_cb(char* seq, char* out, int length)
+    char* complement_c(char* seq, int length)
+    void complement_cb(char* seq, char* out, int length)
 
-cdef char* reverseComplement_c(char* seq, int length)
-cdef void reverseComplement_cb(char* seq, char* out, int length)
+    char* reverseComplement_c(char* seq, int length)
+    void reverseComplement_cb(char* seq, char* out, int length)
 
-cdef int hammingDistance_c(char* seq1, char* seq2, int len1)
+    int hammingDistance_c(char* seq1, char* seq2, int len1)
 
-cdef void rollingHammingDistance_c(char* seq1, char* seq2,
-                                        int len1, int len2,
-                                        int overlap,
-                                        int* hamming_distance_arr)
+    void rollingHammingDistance_c(
+        char* seq1, char* seq2,
+        int len1, int len2,
+        int overlap,
+        int* hamming_distance_arr,
+    )

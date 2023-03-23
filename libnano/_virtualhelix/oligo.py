@@ -1,16 +1,37 @@
-import sys
-from typing import (
-    List,
-    Generator
-)
+# Copyright (C) 2014-2018. Nick Conway & Ben Pruitt; Wyss Institute
+# Copyright (C) 2023 Nick Conway & Ben Pruitt;
+# See LICENSE.TXT for full GPLv2 license.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+'''
+libnano._virtualhelix.oligo
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+'''
+# import sys
+# from typing import (
+#     Optional,
+# )
 
-import __init__
-from libnano.seqrecord.seqrecordbase import (
-    AlphaEnum,
-    ALPHABETS
-)
+# import __init__
+# from strand import Strand
 
-from strand import Strand
+# from libnano.seqrecord.seqrecordbase import (
+#     ALPHABETS,
+#     AlphaEnum,
+# )
+
 # from libnano.cymem.cymem cimport Pool
 
 # cdef char* cseq(self):
@@ -44,7 +65,10 @@ from strand import Strand
 #         self.mem = mem = Pool()
 #         self.assembly = assembly
 #         cdef:
-#             Strand_t* strands = <Strand_t*>mem.malloc(OLIGO_DEFAULT_LEN, sizeof(Strand_t)) # order 5' to 3'
+#             Strand_t* strands = <Strand_t*> mem.malloc(
+#                  OLIGO_DEFAULT_LEN,
+#                   sizeof(Strand_t),
+#             ) # order 5' to 3'
 #             self.strands = strands
 #         if strand5p is not None:
 #             strands[0].start = 0
@@ -83,32 +107,32 @@ from strand import Strand
 #         strand5p.strand3p = strand
 #     # end def
 
-class  Oligo(object):
-    """An Oligo"""
-    def __init__(self, seq: str = None):
-        self.seq: str = seq
-        strand: Strand = None
-        if seq is not None:
-            strand = Strand(seq, self)
-        self.strand5p: Strand = strand
+# class Oligo(object):
+#     '''An Oligo'''
 
-    def __len__(self) -> int:
-        return sum(len(x) for x in self.strand5p.gen3p())
-    # end def
+#     def __init__(self, seq: str = ''):
+#         self.seq: str = seq
+#         self.strand5p: Optional[Strand] = Strand(seq, self) if seq else None
 
-    def __str__(self) -> str:
-        return "Oligo %d: %s" % (len(self), self.seq)
+#     def __len__(self) -> int:
+#         if self.strand5p:
+#             return sum(
+#                 len(x) for x in self.strand5p.gen3p()
+#             )
+#         else:
+#             return 0
 
-    def __repr__(self) -> str:
-        return  "Oligo <%d> %d: %s" % (id(self), len(self), self.seq)
+#     def __str__(self) -> str:
+#         return f'Oligo {len(self)}: {self.seq}'
 
-    def prepend5p(self, strand: Strand):
-        '''Append a :class:`Strand` to the 3 prime end of the oligo
-        '''
-        old_strand5p: Strand = self.strand5p
-        assert(old_strand5p.strand5p is None)
-        old_strand5p.strand5p = strand
-        self.strand5p = strand
-        strand.strand3p = old_strand5p
-    # end def
-# end class
+#     def __repr__(self) -> str:
+#         return f'Oligo <{id(self)}> {len(self)}: {self.seq}'
+
+#     def prepend5p(self, strand: Strand):
+#         '''Append a :class:`Strand` to the 3 prime end of the oligo
+#         '''
+#         old_strand5p: Strand = self.strand5p
+#         assert (old_strand5p.strand5p is None)
+#         old_strand5p.strand5p = strand
+#         self.strand5p = strand
+#         strand.strand3p = old_strand5p

@@ -32,8 +32,8 @@ COMMENT     MDS42 is a genome reduced strain constructed from MG1655 by Posfai
             Blattner). We re-confirmed the whole genome sequence of MDS42 by
             the next generation resequencing technology based on SOLiD3
             (Applied Biosystems)
-            
-            
+
+
             ##Genome-Assembly-Data-START##
             Assembly Method       :: Bioscope v. 1.3
             Genome Coverage       :: 300x
@@ -93,7 +93,7 @@ FEATURES             Location/Qualifiers
                      KDDQIITETEVFDEFRSSLNSLIMHLEKLPKVNDDTITFEAVINAIELELGHKLDRNR
                      RVDSLEEKAEIERDSNWVKCQEDENLPDNNGFQPPKIKLTSLVGSDVGPLIIHQFSEK
                      LISGDDKILNGVYSQYEEGESIFGSLF"
-ORIGIN      
+ORIGIN
         1 gatcctccat atacaacggt atctccacct caggtttaga tctcaacaac ggaaccattg
        61 ccgacatgag acagttaggt atcgtcgaga gttacaagct aaaacgagca gtagtcagct
       121 ctgcatctga agccgctgaa gttctactaa gggtggataa catcatccgt gcaagaccaa

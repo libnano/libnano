@@ -22,17 +22,18 @@ libnano.seqint
 
 Compact integer representations of DNA sequences
 '''
-cimport c_util
 from cpython.mem cimport (  # PyMem_Realloc,
     PyMem_Free,
     PyMem_Malloc,
 )
 
+from libnano.helpers cimport c_util
+
 from typing import Union
 
 STR_T = Union[str, bytes]
 
-cdef extern from "si_seqint.h":
+cdef extern from 'si_seqint.h':
     uint64_t si_seq2Int(char*, int)
     int si_int2Seq(uint64_t, char*, int)
     uint64_t si_revSeqInt(uint64_t, int)
@@ -81,7 +82,7 @@ def seq2Int(
 
     seq = c_util.obj_to_cstr(seq_obj)
 
-    ``seqint`` = si_seq2Int(seq, length)
+    seqint = si_seq2Int(seq, length)
     return seqint
 
 
@@ -280,7 +281,7 @@ def int2Seq(
         PyMem_Free(out_seq)
 
     return ret_obj
-# end def
+
 
 cdef inline int2Seq_c(uint64_t seqint, char* out, int length):
     '''Cython header exposed wrapper for si_int2Seq

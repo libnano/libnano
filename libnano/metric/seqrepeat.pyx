@@ -22,7 +22,7 @@ libnano.metric.seqrepeat
 Find repeats in a DNA sequence
 
 '''
-cimport c_util
+from libnano.helpers cimport c_util
 
 import numpy as np
 

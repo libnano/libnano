@@ -188,8 +188,9 @@ def writeAccession(
         fd: File descriptor
         d: Accession dictionary to write keyed by bytes
     '''
-    accession_str = 'ACCESSION   '
-    fd.write(''.join([accession_str, d['accession'], '\n']))
+    if d['accession']:
+        accession_str = 'ACCESSION   '
+        fd.write(''.join([accession_str, d['accession'], '\n']))
 
 
 def writeVersion(

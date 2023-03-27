@@ -860,7 +860,7 @@ def overlap(
         Overlap dictionary given the feature
 
     '''
-    url = f'{SERVER}/overlap/id/{eid}?;feature={feature}'
+    url = f'{SERVER}/overlap/id/{eid}?feature={feature}'
     return getCache(url, eid + feature, ensembl_cache)
 
 

@@ -23,7 +23,7 @@ libnano.metric.seqscreen
 Simple filtering of DNA sequences
 
 '''
-cimport c_util
+from libnano.helpers cimport c_util
 
 __doc__ = "Simple filtering of DNA sequences"
 

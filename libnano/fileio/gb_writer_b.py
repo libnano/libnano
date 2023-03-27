@@ -205,8 +205,9 @@ def writeAccession(
         fd: File descriptor
         d: Accession dictionary to write keyed by bytes
     '''
-    accession_str = b'ACCESSION   %s%s'
-    fd.write(accession_str % (d[b'accession'], NEWLINE_BYT))
+    if d[b'accession']:
+        accession_str = b'ACCESSION   %s%s'
+        fd.write(accession_str % (d[b'accession'], NEWLINE_BYT))
 
 
 def writeVersion(
@@ -250,8 +251,9 @@ def writeKeywords(
         fd: File descriptor
         d: Keywords dictionary to write keyed by bytes
     '''
-    keywords_str = b'KEYWORDS    %s%s'
-    fd.write(keywords_str % (d[b'keywords'], NEWLINE_BYT))
+    if d[b'keywords']:
+        keywords_str = b'KEYWORDS    %s%s'
+        fd.write(keywords_str % (d[b'keywords'], NEWLINE_BYT))
 
 
 def writeSource(
@@ -264,6 +266,8 @@ def writeSource(
         fd: File descriptor
         d: Source dictionary to write keyed by bytes
     '''
+    if d[b'source'] is None:
+        return
     source_str = b'SOURCE      '
     organism_str = b'%s  ORGANISM  ' % (NEWLINE_BYT)
     indent_str = b'%s            ' % (NEWLINE_BYT)

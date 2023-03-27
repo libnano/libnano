@@ -23,11 +23,12 @@ Simple DNA sequence metrics
 '''
 # from cpython cimport array
 
-cimport c_util
 from libc.stdlib cimport (
     calloc,
     free,
 )
+
+from libnano.helpers cimport c_util
 
 # import array
 

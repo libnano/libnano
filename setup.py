@@ -102,6 +102,10 @@ LIBNANO_FILES += [
     os.listdir(HELPERS_FP) if ('.py' in f or '.pyx' in f or '.pxd' in f)
 ]
 
+NO_NUMPY_CYTHON_MACRO_WARNING = [
+    ('NPY_NO_DEPRECATED_API', 'NPY_1_7_API_VERSION'),
+]
+
 
 def add_extension(
         *ext_args,
@@ -123,6 +127,7 @@ add_extension(
         'libnano/metric/seqrepeat.pyx',
     ],
     include_dirs=COMMON_INCLUDE + NUMPY_INCLUDE,
+    define_macros=NO_NUMPY_CYTHON_MACRO_WARNING,
     extra_compile_args=EXTRA_COMPILE_ARGS,
 )
 
@@ -178,6 +183,7 @@ add_extension(
     ],
     include_dirs=COMMON_INCLUDE + NUMPY_INCLUDE,
     extra_compile_args=EXTRA_COMPILE_ARGS,
+    define_macros=NO_NUMPY_CYTHON_MACRO_WARNING,
 )
 LIBNANO_FILES.append('libnano/seqstr.pxd')
 
@@ -190,6 +196,7 @@ add_extension(
     ],
     include_dirs=COMMON_INCLUDE + NUMPY_INCLUDE,
     extra_compile_args=EXTRA_COMPILE_ARGS,
+    define_macros=NO_NUMPY_CYTHON_MACRO_WARNING,
 )
 
 add_extension(
@@ -253,14 +260,6 @@ add_extension(
     extra_compile_args=EXTRA_COMPILE_ARGS,
 )
 
-# add_extension(
-#     'libnano.dseq2',
-#     depends=[],
-#     sources=[   'libnano/dseq2.pyx'],
-#                 # 'libnano/src/ss_seqstr.c'],
-#     include_dirs=COMMON_INCLUDE + NUMPY_INCLUDE,
-#     extra_compile_args=EXTRA_COMPILE_ARGS,
-# )
 
 # add header files or extra c files
 for path in COMMON_INCLUDE:
@@ -316,20 +315,19 @@ if '--rmbuilt' in SCRIPT_ARGS:
     SCRIPT_ARGS.remove('--rmbuilt')
 
 # ~~~~~~~~~~~~~~~~~~~~~~~ cythonize cython extensions ~~~~~~~~~~~~~~~~~~~~~~~ #
-CYTHON_EXT_LIST, NP_INCLUDE_PATH = try_cythonize(
+CYTHON_EXT_LIST = try_cythonize(
     CYTHON_EXTENSIONS,
     include_path=COMMON_INCLUDE,
 )
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ rock and roll ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 INSTALL_REQUIRES = [
-    'six>=1.11.0',
-    'cython>=0.28.3',
-    'numpy>=1.14.3',
-    'PyYAML>=3.12',
-    'requests>=2.18.4',
+    'cython>=0.29.0',
+    'numpy>=1.24.0',
+    'PyYAML>=6.0',
+    'requests>=2.28.1',
     'primer3-py>=1.0.0',
-    'click>=6.7',
+    'click>=8.1.0',
     'ssw-py>=1.0.0',
     'pygments',
     'pandas',
@@ -346,7 +344,7 @@ setup(
     packages=PACKAGES_LIST,
     ext_modules=CYTHON_EXT_LIST,
     include_dirs=(
-        NP_INCLUDE_PATH + COMMON_INCLUDE
+        NUMPY_INCLUDE + COMMON_INCLUDE
     ),
     package_data={'libnano': LIBNANO_FILES},
     maintainer_email=EMAIL,
@@ -356,9 +354,9 @@ setup(
     download_url=DOWNLOAD_URL,
     long_description=LONG_DESCRIPTION,
     classifiers=CLASSIFIERS,
-    SCRIPT_ARGS=SCRIPT_ARGS,
+    script_args=SCRIPT_ARGS,
     zip_safe=False,
-    INSTALL_REQUIRES=INSTALL_REQUIRES,
+    install_requires=INSTALL_REQUIRES,
     entry_points='''
         [console_scripts]
         geneprober=libnano.scripts.geneprober:cli

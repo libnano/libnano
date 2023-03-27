@@ -26,12 +26,12 @@ from typing import (
     Union,
 )
 
-cimport c_util
 from cython.operator cimport postincrement as inc
 from libc.stdio cimport printf
 from libc.string cimport memcpy
 
 from libnano.cymem.cymem cimport Pool
+from libnano.helpers cimport c_util
 
 STR_T = Union[str, bytes]
 

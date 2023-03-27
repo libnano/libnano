@@ -37,3 +37,5 @@ scratch_nocommit/
 
 scratch/
 .ipynb_checkpoints/
+
+.vscode/

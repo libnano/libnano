@@ -1,37 +1,90 @@
-# -*- coding: utf-8 -*-
-'''libnano.barcode_tools
+# Copyright (C) 2014-2018. Nick Conway & Ben Pruitt; Wyss Institute
+# Copyright (C) 2023 Nick Conway & Ben Pruitt;
+# See LICENSE.TXT for full GPLv2 license.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+'''
+libnano.barcode_tools
+~~~~~~~~~~~~~~~~~~~~~
 
 Barcode generation and assignment methods
 
 '''
 
-import copy
-import json
-import random
+# import copy
 import itertools
-import os
+import json
+# import os
+import os.path as op
+import random
+from typing import (
+    Dict,
+    List,
+    Optional,
+)
 
-import numpy as np
-from libnano.seqgraph import hammingGraph, find_cliques
-from libnano.seqstr import minHammingDistance
+import numpy as np  # type: ignore
 
 from libnano import DATASET_DIR
+from libnano.seqgraph import (  # type: ignore
+    find_cliques,
+    hammingGraph,
+)
+from libnano.seqstr import minHammingDistance  # type: ignore
 
-BARCODE_SETS_DIR = os.path.join(DATASET_DIR, 'barcode_sets')
+BARCODE_SETS_DIR = op.join(DATASET_DIR, 'barcode_sets')
 
 
-def _getCliques(seq_list, num_needed, min_hd=2, cutoff=1):
+def _getCliques(
+        seq_list: List[str],
+        num_needed: int,
+        min_hd: int = 2,
+        cutoff: int = 1,
+) -> List[List[int]]:
     '''Helper function for finding sequence groups w/ min inter-seq hd
+
+    Args:
+        seq_list: List of Python strings
+        num_needed: Number of cliques needed to satisfy set
+        min_hd: Minimum hamming distance between any two set members
+        cutoff: Number of permissible solutions to allow
+
+    Returns:
+        Clique list of lists of integers
     '''
     hg = hammingGraph(seq_list)
     f = np.vectorize(lambda x: x[0])
     hg = f(hg)
     hd_thresh = np.zeros_like(hg)
-    np.greater(hg, np.full_like(hg, min_hd-1), hd_thresh)
-    return find_cliques(hd_thresh.astype(np.uint8), num_needed, cutoff)
+
+    np.greater(
+        hg,
+        np.full_like(hg, min_hd - 1),
+        hd_thresh,
+    )
+    return find_cliques(
+        hd_thresh.astype(np.uint8),
+        num_needed,
+        cutoff,
+    )
 
 
-def getBarcodeSet(set_name, path=None):
+def getBarcodeSet(
+        set_name: str,
+        path: Optional[str] = None,
+) -> List[str]:
     '''Load a pre-computed barcode set from the `barcode_sets` folder
 
     Args:
@@ -40,83 +93,146 @@ def getBarcodeSet(set_name, path=None):
     if path is None:
         path = BARCODE_SETS_DIR
     try:
-        with open(os.path.join(path, set_name + '.json')) as fh:
+        with open(op.join(path, f'{set_name}.json')) as fh:
             bc_set = json.load(fh)
     except OSError:
-        raise ValueError('"%s" is not a valid set name')
+        raise ValueError(f'"{set_name}" is not a valid set name')
     return bc_set
 
 
 class BarcodeGen(object):
 
-    def __init__(self, bc_len=5, initial_bcs=None):
+    def __init__(
+            self,
+            bc_len: int = 5,
+            initial_bcs: Optional[List[str]] = None,
+    ):
         '''
         Args:
-            bc_len (int): barcode length (nt)
-            initial_bcs (list of str): initial barcode pool (if not provided,
-                                       will be internally generated)
+            bc_len: barcode length (nt)
+            initial_bcs: initial barcode pool (if not provided, will be
+                internally generated)
         '''
         self._bc_len = bc_len
         self._min_hd = 0
-        self.bcs = initial_bcs or self._genInitialBcs(bc_len)
+        self.bcs: List[str] = initial_bcs or self._genInitialBcs(bc_len)
 
     def __repr__(self):
-        return "Set size of %s at %s hd is: %s" % (self._bc_len, self._min_hd, len(self.bcs))
+        return (
+            f'Set size of {self._bc_len} at {self._min_hd} hd '
+            f'is: {len(self.bcs)}'
+        )
 
-    def save(self, set_name=None, path=None):
+    def save(
+            self,
+            set_name: Optional[str] = None,
+            path: Optional[str] = None,
+    ):
+        '''Save data as a JSON file
+
+        Args:
+            set_name: Name of the JSON file. Defaults to name based on computed
+                parameters
+            path: Directory to save to. Default is ``BARCODE_SETS_DIR``
+        '''
         if set_name is None:
-            set_name = "%d_%dhd_%dmer_v00" % (len(self.bcs), self._min_hd, self._bc_len)
+            set_name = f'{len(self.bcs)}_{self._min_hd}hd_{self._bc_len}mer_v00'
         if path is None:
             path = BARCODE_SETS_DIR
-        with open(os.path.join(path, set_name + '.json')) as fh:
+        with open(op.join(path, f'{set_name}.json')) as fh:
             json.dump(self.bcs, fh)
 
-    def getBc(self, remove=False):
+    def getBc(self, remove: bool = False) -> str:
         '''Gets a barcode but does not remove it from the internal set
+
+        Args:
+            remove: If True, remove fetched value from the set.
+
+        Returns:
+            Rendom fetched barcode.
         '''
         bc_seq = random.choice(self.bcs)
         if remove:
             self.removeBc(bc_seq)
         return bc_seq
 
-    def removeBc(self, bc_seq):
+    def removeBc(self, bc_seq: str) -> None:
         '''Removes a barcode from the internal set
+
+        Args:
+            bc_seq: Barcode sequence to remove from internal set
         '''
         try:
             self.bcs.remove(bc_seq)
         except ValueError:  # No longer in list
             pass
 
-    def findHammingSet(self, min_hd=2, set_size=50, cutoff=1, raise_exc=True):
+    def findHammingSet(
+            self,
+            min_hd: int = 2,
+            set_size: int = 50,
+            cutoff: int = 1,
+            raise_exc: bool = True,
+    ) -> None:
         '''Find a subset of the current bc meeting the `min_hd` and `set_size`
 
         Args:
-            min_hd (int): min hamming distance between any two set members
-            set_size (int): min total set size
-            raise_exc (bool): whether or not to raise an exception on failure
+            min_hd: Minimum hamming distance between any two set members
+            set_size: Minimum total set size
+            cutoff: Number of permissible solutions to allow
+            raise_exc: If True, whether or not to raise an exception on failure
         '''
         self._min_hd = min_hd
-        cliques = _getCliques(self.bcs, set_size, min_hd, cutoff)
+        cliques = _getCliques(
+            self.bcs,
+            set_size,
+            min_hd,
+            cutoff,
+        )
         if len(cliques) < 1:
             if raise_exc:
-                raise RuntimeError('Could not find set of %d barcodes of '
-                                   'length %d with min hamming distance %d'
-                                   % (set_size, len(self.bcs[0]), min_hd))
+                raise RuntimeError(
+                    f'Could not find set of {set_size} barcodes of length '
+                    f'{len(self.bcs[0])} with min hamming distance {min_hd}',
+                )
             return None
         else:
             hset = [self.bcs[i] for i in cliques[0]]
             self.bcs = hset
 
-    def _genInitialBcs(self, bc_len):
+    def _genInitialBcs(self, bc_len: int) -> List[str]:
+        '''
+        Args:
+            bc_len: Desired length of a barcode sequence
+
+        Returns:
+            List of all {A, C, G, T} sequences of length ``bc_len`` post a
+            homopolymers and GC content exclusive filter
+        '''
         self.min_hd = 0
-        raw_bcs = [''.join(bc) for bc in itertools.product('ATGC',
-                                                           repeat=bc_len)]
+        raw_bcs = [
+            ''.join(bc) for bc in itertools.product(
+                'ATGC',
+                repeat=bc_len,
+            )
+        ]
         filtered_bcs = self._filterBcs(raw_bcs, bc_len)
         random.shuffle(filtered_bcs)
         return filtered_bcs
 
-    def _filterBcs(self, bcs, bc_len):
+    def _filterBcs(
+            self,
+            bcs: List[str],
+            bc_len: int,
+    ) -> List[str]:
         '''Remove homopolymers of 4 or more and high GC content bcs
+
+        Args:
+            bcs: List of barcodes to filter
+            bc_len: Desired length of a barcode sequence
+
+        Returns:
+            Filtered list of barcodes
         '''
         filtered_bcs = []
         homopols = ['AAAA', 'TTTT', 'GGGG', 'CCCC']

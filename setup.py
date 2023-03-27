@@ -1,26 +1,28 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
-test with:
-    python setup.py build_ext --inplace
+'''
+=========================================================================
+libnano: Low-level nucleic acid sequence manipulation tools
+=========================================================================
 
-create wheels with wheel installed:
+nucleic acid toolkit
 
-python setup.py bdist_wheel
-python setup.py sdist --formats=gztar
+'''
 
+import os
+import os.path as op
+import re
+import sys
 
-"""
-
-DESCRIPTION = ("Low-level nucleic acid sequence manipulation tools")
+DESCRIPTION = 'Low-level nucleic acid sequence manipulation tools'
 with open('README.rst') as fd:
     LONG_DESCRIPTION = fd.read()
 
 DISTNAME = 'libnano'
 LICENSE = 'GPLv2'
-AUTHORS = "Nick Conway, Ben Pruitt"
-EMAIL = "nick.conway@wyss.harvard.edu"
-URL = "https://github.com/libnano/libnano"
+AUTHORS = 'Nick Conway, Ben Pruitt'
+EMAIL = 'nick.conway@wyss.harvard.edu'
+URL = 'https://github.com/libnano/libnano'
 DOWNLOAD_URL = ''
 CLASSIFIERS = [
     'Development Status :: 4 - Beta',
@@ -28,236 +30,275 @@ CLASSIFIERS = [
     'Intended Audience :: Science/Research',
     'Programming Language :: Python',
     'Programming Language :: Python :: 3',
-    'Programming Language :: Python :: 3.6',
+    'Programming Language :: Python :: 3.8',
+    'Programming Language :: Python :: 3.9',
+    'Programming Language :: Python :: 3.10',
+    'Programming Language :: Python :: 3.11',
     'Programming Language :: Cython',
     'Topic :: Scientific/Engineering',
-    'License :: OSI Approved :: GNU General Public License v2 (GPLv2)'
+    'License :: OSI Approved :: GNU General Public License v2 (GPLv2)',
 ]
 
+
+from setuptools import (
+    Extension,
+    setup,
+)
+
 try:
-    from setuptools import (
-        setup,
-        Extension
-    )
+    import numpy as np  # type: ignore
+    NUMPY_INCLUDE = [np.get_include()]
 except ImportError:
-    from distutils.core import (
-        setup,
-        Extension
+    NUMPY_INCLUDE = [np.get_include()]
+
+
+def try_cythonize(extension_list, *args, **kwargs):
+    '''
+    Light cythonize wrapper
+    '''
+    try:
+        from Cython.Build import cythonize  # type: ignore
+    except (ImportError, ModuleNotFoundError):
+        def cythonize(x, **kwargs):
+            return x
+
+    cython_compiler_directives = dict(
+        language_level='3',
+        c_string_encoding='utf-8',
+        # embedsignature=True,
+        binding=True,
     )
-from Cython.Build import cythonize
-import numpy.distutils.misc_util
-import os
-import re
-import sys
-import ast
-import shutil
 
-pjoin = os.path.join
-rpath = os.path.relpath
+    return cythonize(
+        extension_list,
+        compiler_directives=cython_compiler_directives,
+    )
 
-# Begin modified code from Flask's version getter
-# BSD license
-# Copyright (c) 2015 by Armin Ronacher and contributors.
-# https://github.com/pallets/flask
-# _version_re = re.compile(r'__version__\s+=\s+(.*)')
-_version_re = re.compile(r'__version__\: str\s+=\s+(.*)')
-with open('libnano/__init__.py', 'rb') as initfile:
-    version = str(ast.literal_eval(_version_re.search(
-                                   initfile.read().decode('utf-8')).group(1)))
-# end Flask derived code
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ platform info ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 if sys.platform == 'win32':
-    extra_compile_args = ['']
+    EXTRA_COMPILE_ARGS = ['']
 else:
-    extra_compile_args = ['-Wno-unused-function']
+    EXTRA_COMPILE_ARGS = ['-Wno-unused-function']
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~ package / module paths ~~~~~~~~~~~~~~~~~~~~~~~~~ #
-PACKAGE_PATH = os.path.abspath(os.path.dirname(__file__))
-MODULE_PATH = pjoin(PACKAGE_PATH, 'libnano')
-# unused for now
-# DATASETS_PATH =     pjoin(MODULE_PATH, 'datasets')
+PACKAGE_PATH = op.abspath(op.dirname(__file__))
+MODULE_PATH = op.join(PACKAGE_PATH, 'libnano')
+
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ include dirs ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
-common_include = ['libnano/src', 'libnano/helpers']
-numpy_include = [numpy.get_include()]
+COMMON_INCLUDE = ['libnano/src', 'libnano/helpers']
 # Non-python files to include in the installation
-libnano_files = []
-
-# ~~~~~~~~~~~~~~~~~~~~ configure normal c api extensions ~~~~~~~~~~~~~~~~~~~~ #
-normal_extensions = []
+LIBNANO_FILES = []
 
 # ~~~~~~~~~~~~~~~~~~~~~~~ configure cython extensions ~~~~~~~~~~~~~~~~~~~~~~~ #
-cython_extensions = []
+CYTHON_EXTENSIONS = []
 
 # ~~~~~~~~~~~~~~~~~~~ add helpers pyx, pxd, and py filess ~~~~~~~~~~~~~~~~~~~ #
-helpers_fp = pjoin(MODULE_PATH, 'helpers')
+HELPERS_FP = op.join(MODULE_PATH, 'helpers')
 
-libnano_files += [rpath(pjoin(helpers_fp, f)) for f in
-                  os.listdir(helpers_fp) if ('.py' in f or '.pyx' in f or '.pxd' in f)]
+LIBNANO_FILES += [
+    op.relpath(op.join(HELPERS_FP, f)) for f in
+    os.listdir(HELPERS_FP) if ('.py' in f or '.pyx' in f or '.pxd' in f)
+]
 
-def addExtension(*ext_args, **ext_kwargs):
-    global libnano_files
-    libnano_files += ext_kwargs['sources']
-    cython_extensions.append(Extension(*ext_args, **ext_kwargs))
 
-addExtension(
+def add_extension(
+        *ext_args,
+        **ext_kwargs,
+):
+    global LIBNANO_FILES
+    LIBNANO_FILES += ext_kwargs['sources']
+    CYTHON_EXTENSIONS.append(
+        Extension(*ext_args, **ext_kwargs),
+    )
+
+
+add_extension(
     'libnano.metric.seqrepeat',
     depends=[],
-    sources=['libnano/src/si_seqint.c',
-             'libnano/src/sr_seqrepeat.c',
-             'libnano/metric/seqrepeat.pyx'],
-    include_dirs=common_include + numpy_include,
-    extra_compile_args=extra_compile_args
+    sources=[
+        'libnano/src/si_seqint.c',
+        'libnano/src/sr_seqrepeat.c',
+        'libnano/metric/seqrepeat.pyx',
+    ],
+    include_dirs=COMMON_INCLUDE + NUMPY_INCLUDE,
+    extra_compile_args=EXTRA_COMPILE_ARGS,
 )
 
-addExtension(
+add_extension(
     'libnano.search.seedfinder',
     sources=['libnano/search/seedfinder.pyx'],
-    extra_compile_args=extra_compile_args
+    extra_compile_args=EXTRA_COMPILE_ARGS,
 )
 
-addExtension(
+add_extension(
     'libnano.cymem.cymem',
     sources=['libnano/cymem/cymem.pyx'],
-    extra_compile_args=extra_compile_args
+    extra_compile_args=EXTRA_COMPILE_ARGS,
 )
 
-addExtension(
+add_extension(
     'libnano.search.seedmatch',
-    sources=['libnano/search/seedmatch.pyx',
-             'libnano/src/shl_seedhashlist.c',
-             'libnano/src/ss_seqstr.c'],
-    include_dirs=common_include,
-    extra_compile_args=extra_compile_args
+    sources=[
+        'libnano/search/seedmatch.pyx',
+        'libnano/src/shl_seedhashlist.c',
+        'libnano/src/ss_seqstr.c',
+    ],
+    include_dirs=COMMON_INCLUDE,
+    extra_compile_args=EXTRA_COMPILE_ARGS,
 )
 
-addExtension(
+add_extension(
     'libnano.search.submerpool',
     sources=['libnano/search/submerpool.pyx'],
-    include_dirs=common_include,
-    extra_compile_args=extra_compile_args
+    include_dirs=COMMON_INCLUDE,
+    extra_compile_args=EXTRA_COMPILE_ARGS,
 )
 
-addExtension(
+add_extension(
     'libnano.seqint',
     depends=[],
-    sources=[   'libnano/seqint.pyx',
-                'libnano/src/si_seqint.c'],
-    include_dirs=common_include,
-    extra_compile_args=extra_compile_args
+    sources=[
+        'libnano/seqint.pyx',
+        'libnano/src/si_seqint.c',
+    ],
+    include_dirs=COMMON_INCLUDE,
+    extra_compile_args=EXTRA_COMPILE_ARGS,
 )
-libnano_files.append('libnano/seqint.pxd')
-libnano_files.append('libnano/list_bisect.pxd')
+LIBNANO_FILES.append('libnano/seqint.pxd')
+LIBNANO_FILES.append('libnano/list_bisect.pxd')
 
-addExtension(
+add_extension(
     'libnano.seqstr',
     depends=[],
-    sources=['libnano/seqstr.pyx',
-             'libnano/src/ss_seqstr.c'],
-    include_dirs=common_include + numpy_include,
-    extra_compile_args=extra_compile_args
+    sources=[
+        'libnano/seqstr.pyx',
+        'libnano/src/ss_seqstr.c',
+    ],
+    include_dirs=COMMON_INCLUDE + NUMPY_INCLUDE,
+    extra_compile_args=EXTRA_COMPILE_ARGS,
 )
-libnano_files.append('libnano/seqstr.pxd')
+LIBNANO_FILES.append('libnano/seqstr.pxd')
 
-addExtension(
+add_extension(
     'libnano.seqgraph',
     depends=[],
-    sources=['libnano/seqgraph.pyx',
-             'libnano/src/ss_seqstr.c'],
-    include_dirs=common_include + numpy_include,
-    extra_compile_args=extra_compile_args
+    sources=[
+        'libnano/seqgraph.pyx',
+        'libnano/src/ss_seqstr.c',
+    ],
+    include_dirs=COMMON_INCLUDE + NUMPY_INCLUDE,
+    extra_compile_args=EXTRA_COMPILE_ARGS,
 )
 
-addExtension(
+add_extension(
     'libnano.metric.seqscreen',
     depends=[],
-    sources=['libnano/src/si_seqint.c',
-             'libnano/src/sf_seqscreen.c',
-             'libnano/metric/seqscreen.pyx'],
-    include_dirs=common_include,
-    extra_compile_args=extra_compile_args
+    sources=[
+        'libnano/src/si_seqint.c',
+        'libnano/src/sf_seqscreen.c',
+        'libnano/metric/seqscreen.pyx',
+    ],
+    include_dirs=COMMON_INCLUDE,
+    extra_compile_args=EXTRA_COMPILE_ARGS,
 )
 
-addExtension(
+add_extension(
     'libnano.metric.seqmetric',
     depends=[],
-    sources=['libnano/src/sm_seqmetric.c',
-             'libnano/metric/seqmetric.pyx'],
-    include_dirs=common_include,
-    extra_compile_args=extra_compile_args
+    sources=[
+        'libnano/src/sm_seqmetric.c',
+        'libnano/metric/seqmetric.pyx',
+    ],
+    include_dirs=COMMON_INCLUDE,
+    extra_compile_args=EXTRA_COMPILE_ARGS,
 )
 
-addExtension(
+add_extension(
     'libnano.search.restriction',
     depends=[],
     sources=['libnano/search/restriction.pyx'],
-    include_dirs=common_include,
-    extra_compile_args=extra_compile_args
+    include_dirs=COMMON_INCLUDE,
+    extra_compile_args=EXTRA_COMPILE_ARGS,
 )
 # Restriction dataset(s)
-res_data_fp = pjoin(MODULE_PATH, 'datasets')
-libnano_files += [rpath(pjoin(root, f), MODULE_PATH) for root, _, files in
-                  os.walk(res_data_fp) for f in files if ('.json' in f or '.yaml' in f)]
+res_data_fp = op.join(MODULE_PATH, 'datasets')
+LIBNANO_FILES += [
+    op.relpath(op.join(root, f), MODULE_PATH) for root, _, files in
+    os.walk(res_data_fp) for f in files if ('.json' in f or '.yaml' in f)
+]
 
-addExtension(
+add_extension(
     'libnano.seqrecord.feature',
     depends=[],
     sources=['libnano/seqrecord/feature.pyx'],
-    include_dirs=common_include,
-    extra_compile_args=extra_compile_args
+    include_dirs=COMMON_INCLUDE,
+    extra_compile_args=EXTRA_COMPILE_ARGS,
 )
 
-addExtension(
+add_extension(
     'libnano.seqrecord.seqrecordbase',
     depends=[],
     sources=['libnano/seqrecord/seqrecordbase.pyx'],
-    include_dirs=common_include,
-    extra_compile_args=extra_compile_args,
+    include_dirs=COMMON_INCLUDE,
+    extra_compile_args=EXTRA_COMPILE_ARGS,
 )
 
-addExtension(
+add_extension(
     'libnano.simplethermo',
     depends=[],
     sources=['libnano/simplethermo.pyx'],
-    include_dirs=common_include,
-    extra_compile_args=extra_compile_args,
+    include_dirs=COMMON_INCLUDE,
+    extra_compile_args=EXTRA_COMPILE_ARGS,
 )
 
-# addExtension(
+# add_extension(
 #     'libnano.dseq2',
 #     depends=[],
 #     sources=[   'libnano/dseq2.pyx'],
 #                 # 'libnano/src/ss_seqstr.c'],
-#     include_dirs=common_include + numpy_include,
-#     extra_compile_args=extra_compile_args,
+#     include_dirs=COMMON_INCLUDE + NUMPY_INCLUDE,
+#     extra_compile_args=EXTRA_COMPILE_ARGS,
 # )
 
 # add header files or extra c files
-for path in common_include:
-    libnano_files += [rpath(pjoin(path, f)) for f in
-                  os.listdir(path) if ('.h' in f or '.c' in f)]
+for path in COMMON_INCLUDE:
+    LIBNANO_FILES += [
+        op.relpath(op.join(path, f)) for f in
+        os.listdir(path) if ('.h' in f or '.c' in f)
+    ]
 
 # ~~~~~~~~~~~~~~~~~~~~~ Strip `libnano/` for package data ~~~~~~~~~~~~~~~~~~~~ #
 check_libnano = 'libnano/'
 lcl = len(check_libnano)
-for i, f in enumerate(libnano_files):
+for i, f in enumerate(LIBNANO_FILES):
     if f.startswith(check_libnano):
-        libnano_files[i] = f[lcl:]
-# unique the list
-libnano_files = list(set(libnano_files))
+        LIBNANO_FILES[i] = f[lcl:]
 
-packages = ['libnano', 'libnano.fileio',
-            'libnano.helpers', 'libnano.cymem', 'libnano.search',
-            'libnano.seqrecord', 'libnano.scripts',
-            'libnano.datasets', 'libnano.metric']
+# Unique the list
+LIBNANO_FILES = list(set(LIBNANO_FILES))
+
+PACKAGES_LIST = [
+    'libnano',
+    'libnano.fileio',
+    'libnano.helpers',
+    'libnano.cymem',
+    'libnano.search',
+    'libnano.seqrecord',
+    'libnano.scripts',
+    'libnano.datasets',
+    'libnano.metric',
+]
 
 # Commented out by NC 2018.01.05 since we are rolling towards PyPi
-script_args = sys.argv[1:]
+SCRIPT_ARGS = sys.argv[1:]
 
 # ~~~~~~~~~~~~~~~~~~~ remove old built files if specified ~~~~~~~~~~~~~~~~~~~ #
-def removeBuiltFiles():
-    ''' Remove any existing *.c or *.so files from a previous build process
+
+
+def remove_built_files():
+    '''Remove any existing *.c or *.so files from a previous build process
     '''
     print('Removing previously built files...')
     avoid_dirs = ['src', '.git', 'build', 'klib', 'scratch']
@@ -266,39 +307,48 @@ def removeBuiltFiles():
         if not re.search(ads, root):
             for f in files:
                 if f.endswith('.c') or f.endswith('.so') or f.endswith('.pyd'):
-                    print('Removing %s' % pjoin(MODULE_PATH, root, f))
-                    os.remove(pjoin(MODULE_PATH, root, f))
+                    print('Removing %s' % op.join(MODULE_PATH, root, f))
+                    os.remove(op.join(MODULE_PATH, root, f))
 
-if '--rmbuilt' in script_args:
-    removeBuiltFiles()
-    script_args.remove('--rmbuilt')
+
+if '--rmbuilt' in SCRIPT_ARGS:
+    remove_built_files()
+    SCRIPT_ARGS.remove('--rmbuilt')
 
 # ~~~~~~~~~~~~~~~~~~~~~~~ cythonize cython extensions ~~~~~~~~~~~~~~~~~~~~~~~ #
-cython_ext_list = cythonize(cython_extensions, include_path=common_include)
+CYTHON_EXT_LIST, NP_INCLUDE_PATH = try_cythonize(
+    CYTHON_EXTENSIONS,
+    include_path=COMMON_INCLUDE,
+)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ rock and roll ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
-install_requires = ['six>=1.11.0',
-                    'cython>=0.28.3',
-                    'numpy>=1.14.3',
-                    'PyYAML>=3.12',
-                    'requests>=2.18.4',
-                    'primer3-py>=0.5.5',
-                    'click>=6.7',
-                    'ssw-py>=0.2.6',
-                    'pygments',
-                    'pandas'
-                    ]
+INSTALL_REQUIRES = [
+    'six>=1.11.0',
+    'cython>=0.28.3',
+    'numpy>=1.14.3',
+    'PyYAML>=3.12',
+    'requests>=2.18.4',
+    'primer3-py>=1.0.0',
+    'click>=6.7',
+    'ssw-py>=1.0.0',
+    'pygments',
+    'pandas',
+]
 if sys.platform == 'win32':
-    install_requires.append('colorama')
+    INSTALL_REQUIRES.append('colorama')
+
+import libnano
 
 setup(
     name=DISTNAME,
-    version=version,
+    version=libnano.__version__,
     maintainer=AUTHORS,
-    packages=packages,
-    ext_modules=normal_extensions + cython_ext_list,
-    include_dirs=numpy.distutils.misc_util.get_numpy_include_dirs()+common_include,
-    package_data={'libnano': libnano_files},
+    packages=PACKAGES_LIST,
+    ext_modules=CYTHON_EXT_LIST,
+    include_dirs=(
+        NP_INCLUDE_PATH + COMMON_INCLUDE
+    ),
+    package_data={'libnano': LIBNANO_FILES},
     maintainer_email=EMAIL,
     description=DESCRIPTION,
     license=LICENSE,
@@ -306,11 +356,11 @@ setup(
     download_url=DOWNLOAD_URL,
     long_description=LONG_DESCRIPTION,
     classifiers=CLASSIFIERS,
-    script_args=script_args,
+    SCRIPT_ARGS=SCRIPT_ARGS,
     zip_safe=False,
-    install_requires=install_requires,
+    INSTALL_REQUIRES=INSTALL_REQUIRES,
     entry_points='''
         [console_scripts]
         geneprober=libnano.scripts.geneprober:cli
-    '''
+    ''',
 )

@@ -1,36 +1,57 @@
-# -*- coding: utf-8 -*-
-import sys
-import io
-import os.path
+# Copyright (C) 2014-2018. Nick Conway & Ben Pruitt; Wyss Institute
+# Copyright (C) 2023 Nick Conway & Ben Pruitt;
+# See LICENSE.TXT for full GPLv2 license.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+'''
+libnano.ensemblrest
+~~~~~~~~~~~~~~~~~~~
+'''
 import atexit
-from pathlib import Path
-from typing import (
-    List,
-    Tuple,
-    Set,
-    Any,
-    Union,
-    NamedTuple
-)
-from pprint import pprint
-import json
-import pickle
 import copy
+import io
+import json
+import os.path as op
+import pickle
+import sys
+from pathlib import Path
+from pprint import pprint
+from typing import (
+    Any,
+    Dict,
+    List,
+    NamedTuple,
+    Optional,
+    Set,
+    Tuple,
+    Union,
+)
 
-import requests
 import pandas as pd
+import requests
 
-from libnano.seqstr import reverseComplement
-
-DataFrameGroupBy_T = pd.core.groupby.groupby.DataFrameGroupBy
+from libnano.seqstr import reverseComplement  # type: ignore
 
 USE_CACHE: bool = True
 DO_PRINT_CACHE: bool = False
 TIMEOUT_FAST: float = 2.0
 TIMEOUT_SLOW: float = 6.0
-TIMEOUT_REQU: float = 5*TIMEOUT_SLOW
+TIMEOUT_REQU: float = 5 * TIMEOUT_SLOW
 
-SERVER: str = "https://rest.ensembl.org"
+SERVER: str = 'https://rest.ensembl.org'
+
 EXON_KEYS: List[str] = [
     'assembly_name',
     'db_type',
@@ -41,7 +62,7 @@ EXON_KEYS: List[str] = [
     'species',
     'start',
     'strand',
-    'version'
+    'version',
 ]
 TRANSLATION_KEYS: List[str] = [
     'Parent',
@@ -51,7 +72,7 @@ TRANSLATION_KEYS: List[str] = [
     'length',
     'object_type',
     'species',
-    'start'
+    'start',
 ]
 UTR_KEYS: List[str] = ['Parent'] + EXON_KEYS
 TRANSCRIPT_KEYS: List[str] = [
@@ -73,7 +94,7 @@ TRANSCRIPT_KEYS: List[str] = [
     'species',
     'start',
     'strand',
-    'version'
+    'version',
 ]
 LOOKUP_KEYS: List[str] = [
     'Transcript',
@@ -91,35 +112,35 @@ LOOKUP_KEYS: List[str] = [
     'species',
     'start',
     'strand',
-    'version'
+    'version',
 ]
 
-Probe: NamedTuple = NamedTuple('Probe',
-    [
-        ('end', int),
-        ('feature_type', str),
-        ('microarray', str),
-        ('probe_length', int),
-        ('probe_name', str),
-        ('probe_set', str),
-        ('seq_region_name', str),
-        ('start', int),
-        ('strand', int)
-    ]
-)
-PROBE_KEYS: Tuple[str] = Probe._fields
 
-SPECIES_NAMES: dict = {'mouse': ['mus_musculus']}
-ASSEMBLY_NAMES: dict = {'mouse': ['GRCm38']}
+class Probe(NamedTuple):
+    end: int
+    feature_type: str
+    microarray: str
+    probe_length: int
+    probe_name: str
+    probe_set: str
+    seq_region_name: str
+    start: int
+    strand: int
+
+
+PROBE_KEYS: Tuple[Any, ...] = Probe._fields
+
+SPECIES_NAMES: Dict = {'mouse': ['mus_musculus']}
+ASSEMBLY_NAMES: Dict = {'mouse': ['GRCm38']}
 
 DB_NAMES: List[str] = ['EntrezGene', 'MGI', 'Uniprot_gn', 'WikiGene']
 
-OBJECT_TYPES: List[str]  = [
+OBJECT_TYPES: List[str] = [
     'Translation',
     'Exon',
     'five_prime_UTR',
     'three_prime_UTR',
-    'Transcript'
+    'Transcript',
 ]
 # From overlap(x, feature='variation') call
 CONSEQUENCE_TYPES: List[str] = [
@@ -128,42 +149,53 @@ CONSEQUENCE_TYPES: List[str] = [
     'synonymous_variant',
     'non_coding_transcript_exon_variant',
     'splice_region_variant',
-    '5_prime_UTR_variant'
+    '5_prime_UTR_variant',
 ]
-POST_JSON: dict = {
-    "Content-Type" : "application/json",
-    "Accept" : "application/json"
+POST_JSON: Dict = {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
 }
 
 home_path: str = str(Path.home())
-CACHE_FILE: str = os.path.join(home_path, '.ENSEMBLCACHE.pickle')
+CACHE_FILE: str = op.join(home_path, '.ENSEMBLCACHE.pickle')
 
 SPECIES_LIST: List[str] = ['mouse', 'human']
 _cache_dirty: bool
-ensembl_cache: dict
-THE_FILE: str = os.path.basename(__file__)
+ensembl_cache: Dict
+THE_FILE: str = op.basename(__file__)
 
-def makeCache(species_list: List[str] = SPECIES_LIST) -> dict:
+
+def makeCache(
+        species_list: Optional[List[str]] = None,
+) -> Dict[str, Any]:
     global _cache_dirty
     global SPECIES_LIST
-    d = { species: {} for species in species_list}
+    if species_list is None:
+        species_list = SPECIES_LIST
+    d: Dict[str, Any] = {
+        species: {}
+        for species in species_list
+    }
     d['species_list'] = species_list
     SPECIES_LIST = species_list
     _cache_dirty = False
     return d
-# end def
 
-def loadCache(filename: str) -> dict:
+
+def loadCache(filename: str) -> Dict:
     try:
         with io.open(filename, 'rb') as fd:
-            the_cache: dict = pickle.load(fd)
-    except:
+            the_cache: Dict = pickle.load(fd)
+    except OSError:
         if DO_PRINT_CACHE:
-            print("Couldn't load cache for {}: {}".format(THE_FILE, filename))
+            print(
+                f'Could not load cache for {THE_FILE}: {filename}',
+            )
         the_cache = makeCache()
     if DO_PRINT_CACHE:
-        print("LOADED cache for {}: {}".format(THE_FILE, CACHE_FILE))
+        print(f'LOADED cache for {THE_FILE}: {CACHE_FILE}')
     return the_cache
+
 
 if Path(CACHE_FILE).exists():
     ensembl_cache = loadCache(CACHE_FILE)
@@ -172,36 +204,49 @@ if Path(CACHE_FILE).exists():
 else:
     ensembl_cache = makeCache()
 
-def clearCache(species_list: List[str] = None):
+
+def clearCache(
+        species_list: Optional[List[str]] = None,
+):
     global _cache_dirty
     global ensembl_cache
     _cache_dirty = False
-    ensembl_cache = makeCache(species_list=species_list)
-# end def
+    ensembl_cache = makeCache(
+        species_list=species_list,
+    )
 
-def addSpecies(species: str):
+
+def addSpecies(
+        species: str,
+) -> None:
     global SPECIES_LIST
     global _cache_dirty
     if species not in SPECIES_LIST:
         SPECIES_LIST.append(species)
         ensembl_cache[species] = {}
         _cache_dirty = True
-# end def
 
-def _closeCache():
+
+def _closeCache(
+) -> None:
     global _cache_dirty
     global ensembl_cache
     if _cache_dirty:
         with io.open(CACHE_FILE, 'wb') as fd:
             pickle.dump(ensembl_cache, fd)
         if DO_PRINT_CACHE:
-            print("UPDATED {} cache".format(THE_FILE))
+            print(f'UPDATED {THE_FILE} cache')
+
+
 atexit.register(_closeCache)
 
-def getCache(   url: str,
-                arg: str,
-                cache: dict,
-                content_type: str = "application/json") -> Union[dict, str]:
+
+def getCache(
+        url: str,
+        arg: str,
+        cache: Dict[str, Any],
+        content_type: str = 'application/json',
+) -> Any:
     global _cache_dirty
     global USE_CACHE
 
@@ -212,33 +257,38 @@ def getCache(   url: str,
         cache[arg] = res
         _cache_dirty = True
     return res
-# end def
 
-def getCacheList(url: str, data: dict, arg_list: List[str], cache: dict) -> dict:
+
+def getCacheList(
+        url: str,
+        data: Dict,
+        arg_list: List[str],
+        cache: Dict[str, Any],
+) -> Dict[Any, Any]:
     global _cache_dirty
     global USE_CACHE
     do_post: bool = False
-    res: dict = {}
+    res: Dict[Any, Any] = {}
     if USE_CACHE:
         for x in arg_list:
             try:
                 res[x] = cache[x]
-            except:
+            except KeyError:
                 do_post = True
                 break
     else:
         do_post = True
     if do_post:
-        res: dict = postURL(url, data=data)
+        res = postURL(url, data=data)
         cache.update(res)
         _cache_dirty = True
     return res
-# end def
+
 
 class Base:
     key_list: List[str] = []
 
-    def __init__(self, d: dict):
+    def __init__(self, d: Dict):
         self.d = d
 
     def __getattr__(self, key: str) -> Any:
@@ -260,15 +310,15 @@ class Base:
     @property
     def chromosome(self) -> int:
         return int(self.d['seq_region_name'])
-# end class
+
 
 class Exon(Base):
     key_list: List[str] = EXON_KEYS
-# end class
+
 
 class Transcript(Base):
     key_list: List[str] = TRANSCRIPT_KEYS
-# end class
+
 
 class LookUp(Base):
     key_list: List[str] = LOOKUP_KEYS
@@ -276,13 +326,27 @@ class LookUp(Base):
     @property
     def transcripts(self) -> List[Transcript]:
         return self.d['Transcript']
-# end class
 
 
-def getURL(url: str, content_type="application/json") -> dict:
-    r = requests.get(url,
-                    headers={ "Content-Type" : content_type},
-                    timeout=TIMEOUT_REQU)
+def getURL(
+        url: str,
+        content_type='application/json',
+) -> Any:
+    '''GET request to the ``url`` and return the JSON response
+    Exits if response is not OK
+
+    Args:
+        url: URL to post to
+        headers: Headers to GET with
+
+    Returns:
+        JSON reposnse
+    '''
+    r = requests.get(
+        url,
+        headers={'Content-Type': content_type},
+        timeout=TIMEOUT_REQU,
+    )
     if not r.ok:
         r.raise_for_status()
         sys.exit()
@@ -290,87 +354,158 @@ def getURL(url: str, content_type="application/json") -> dict:
         return r.text
     else:
         return r.json()
-# end def
 
-def postURL(url: str, data: dict,
-            headers: dict = POST_JSON) -> dict:
+
+def postURL(
+        url: str, data: Dict,
+        headers: Dict = POST_JSON,
+) -> Dict:
+    '''Post request to the ``url`` and return the JSON response
+    Exits if response is not OK
+
+    Args:
+        url: URL to post to
+        headers: Headers to post with
+
+    Returns:
+        JSON reposnse
+    '''
     data_send = json.dumps(data)
-    r = requests.post(url,
-                        headers=headers,
-                        data=data_send,
-                        timeout=TIMEOUT_REQU)
+    r = requests.post(
+        url,
+        headers=headers,
+        data=data_send,
+        timeout=TIMEOUT_REQU,
+    )
     if not r.ok:
         r.raise_for_status()
         sys.exit()
     return r.json()
-# end def
 
-def archiveID(eid: str) -> dict:
+
+def archiveID(eid: str) -> Dict:
     '''Uses the given identifier to return the archived sequence
-    '''
-    url = SERVER + "/archive/id/%s?" % (eid)
-    return getURL(url)
-# end def
 
-def xRefName(species: str, name: str) -> List[dict]:
+    Args:
+        eid: Exon ID
+
+    Returns:
+        Dictionary of the archive ID given the Exon ID
+    '''
+    url = f'{SERVER}/archive/id/{eid}?'
+    return getURL(url)  # type: ignore
+
+
+def xRefName(species: str, name: str) -> List[Dict]:
     '''Performs a lookup based upon the primary accession or display label of an
      external reference and returning the information we hold about the entry
-    '''
-    url = SERVER + "/xrefs/name/%s/%s?" % (species, name)
-    return getURL(url)
-# end def
 
-def externalXRefs(species: str, name: str) -> dict:
-    res: List[dict] = xRefName(species, name)
-    out = {}
+    Args:
+        species: Species name
+        name: name of gene
+
+    Returns:
+        List of dictionaries from the ``SERVER`` url
+
+    '''
+    url = f'{SERVER}/xrefs/name/{species}/{name}?'
+    return getURL(url)  # type: ignore
+
+
+def externalXRefs(
+        species: str,
+        name: str,
+) -> Dict[str, List[Dict[str, Any]]]:
+    '''
+    Args:
+        species: Species name
+        name: name of gene
+
+    Returns:
+        Dictionary keyed by ``dbname`` of Lists of items with the format::
+
+            {
+                'description': ...,
+                'display_id': ...,
+                'info_type': ...,
+                'info_text': ...,
+                'primary_id': ...,
+                'synonyms': ...,
+                'version': ...,
+            }
+
+    '''
+    res: List[Dict] = xRefName(species, name)
+    out: Dict[str, List[Dict[str, Any]]] = {}
     for item in res:
         dbname = item['dbname']
-        description = item['description']
-        info_type = item['info_type']
-        primary_id: item['primary_id']
-        synonyms: item['synonyms']
-        version = item['version']
         if out.get(dbname) is None:
             out[dbname] = []
         out[dbname].append({
-            'description' : item['description'],
+            'description': item['description'],
             'display_id': item['display_id'],
-            'info_type' : item['info_type'],
-            'info_text' : item['info_text'],
+            'info_type': item['info_type'],
+            'info_text': item['info_text'],
             'primary_id': item['primary_id'],
             'synonyms': item['synonyms'],
-            'version' : item['version']
+            'version': item['version'],
         })
     return out
-# end def
 
-def xRefSymbol(species: str, name: str) -> List[dict]:
+
+def xRefSymbol(species: str, name: str) -> List[Dict]:
     '''Looks up an external symbol and returns all Ensembl objects linked to
     it. This can be a display name for a gene/transcript/translation, a synonym
      or an externally linked reference. If a gene's transcript is linked to the
     supplied symbol the service will return both gene and transcript (it
     supports transient links).
-    '''
-    url = SERVER + "/xrefs/symbol/%s/%s?" % (species, name)
-    return getURL(url)
-# end def
 
-def getBiotypes(species: str) -> dict:
+    Args:
+        species: Species name
+        name: name of gene
+
+    Retturns:
+        List of dictionaries satisying the ``species`` and ``name`` provided
+
+    '''
+    url = f'{SERVER}/xrefs/symbol/{species}/{name}?'
+    return getURL(url)  # type: ignore
+
+
+def getBiotypes(species: str) -> List[Dict]:
     '''List the functional classifications of gene models that Ensembl
     associates with a particular species. Useful for restricting the type of
-    genes/transcripts retrieved by other endpoints.'''
-    url = SERVER + "/info/biotypes/%s?" % (species)
-    return getURL(url)
-# end def
+    genes/transcripts retrieved by other endpoints.
 
-def lookUpID(   eid: str,
-                is_protein_coding: bool = True) -> dict:
+    Args:
+        species: Species name
+
+    Retturns:
+        List of dictionaries satisying the ``species`` provided
+
+    '''
+    url = f'{SERVER}/info/biotypes/{species}?'
+    return getURL(url)  # type: ignore
+
+
+def lookUpID(
+    eid: str,
+    is_protein_coding: bool = True,
+) -> Dict:
     '''Find the species and database for a single identifier e.g. gene,
     transcript, protein. DOES not work for an exon ID.
     Filter out non-protein coding exons optionally
+
+    Args:
+        eid: Exon ID
+        is_protein_coding: If True, look for Transcripts
+
+    Returns:
+        Dictionary given the Exon ID
+
     '''
     global ensembl_cache
-    url = SERVER + "/lookup/id/%s?expand=1;utr=1;phenotypes=1" % (eid)
+    url = SERVER + '/lookup/id/%s?expand=1;utr=1;phenotypes=1' % (eid)
     res = getCache(url, eid, ensembl_cache)
 
     # is it a gene?
@@ -381,39 +516,67 @@ def lookUpID(   eid: str,
                 out.append(item)
         res['Transcript'] = out
     return res
-# end def
 
-def lookUpIDList(id_list: List[str],
-                is_protein_coding: bool = True) -> dict:
+
+def lookUpIDList(
+    id_list: List[str],
+    species: str,
+    is_protein_coding: bool = True,
+) -> Dict[str, Dict]:
+    '''Get the list of dictionaries for the Exon ``id_list``
+
+    Args:
+        id_list: List of Exon IDs
+        species: Species name
+        is_protein_coding: If True, look for Transcripts
+
+    Returns:
+        Dictionary of dictionaries given the Exon IDs
+
+    '''
     global ensembl_cache
-    url: str  = SERVER + '/lookup/id/%s' % (species)
-    data: dict ={   'ids': id_list,
-                    'expand': 1,
-                    'utr': 1,
-                    'phenotypes': 1}
+
+    url = f'{SERVER}/lookup/id/{species}'
+
+    data: Dict = {
+        'ids': id_list,
+        'expand': 1,
+        'utr': 1,
+        'phenotypes': 1,
+    }
     res = getCacheList(url, data, id_list, ensembl_cache)
 
     if is_protein_coding:
         for eid, lookup in res.items():
-            if 'G' in eid: #not a transcript
+            if 'G' in eid:  # not a transcript
                 out = []
                 for item in lookup['Transcript']:
                     if item['biotype'] == 'protein_coding':
                         out.append(item)
                 lookup['Transcript'] = out
     return res
-# end def
 
 
-def lookUpSymbol(   species: str,
-                    symbol: str,
-                    is_protein_coding: bool = True) -> dict:
+def lookUpSymbol(
+    species: str,
+    symbol: str,
+    is_protein_coding: bool = True,
+) -> Dict:
     '''Find the species and database for a single identifier e.g. gene,
     transcript, protein. DOES not work for an exon ID.
     Filter out non-protein coding exons optionally
+
+    Args:
+        species: Species name
+        symbol: Symbol to reference
+        is_protein_coding: If True, look for Transcripts
+
+    Returns:
+        Dictionaries given the arguments
+
     '''
     global ensembl_cache
-    url = SERVER + "/lookup/symbol/%s/%s?expand=1" % (species, symbol)
+    url = f'{SERVER}/lookup/symbol/{species}/{symbol}?expand=1'
     res = getCache(url, symbol, ensembl_cache[species])
 
     if is_protein_coding:
@@ -423,144 +586,238 @@ def lookUpSymbol(   species: str,
                 out.append(item)
         res['Transcript'] = out
     return res
-# end def
 
-def lookUpSymbolList(   species: str,
-                        symbol_list: List[str],
-                        is_protein_coding: bool = True) -> dict:
+
+def lookUpSymbolList(
+    species: str,
+    symbol_list: List[str],
+    is_protein_coding: bool = True,
+) -> Dict[str, Any]:
+    '''Find the species and database for a single identifier e.g. gene,
+    transcript, protein. DOES not work for an exon ID.
+    Filter out non-protein coding exons optionally
+
+    Args:
+        species: Species name
+        symbol: Symbol to reference
+        is_protein_coding: If True, look for Transcripts
+
+    Returns:
+        Dictionary of dictionaries given the arguments
+
+    '''
     global ensembl_cache
-    url: str = SERVER + '/lookup/symbol/%s' % (species)
-    data: dict = {  'symbols': symbol_list,
-                    'expand': 1,
-                    'utr': 1,
-                    'phenotypes': 1 }
-    res = getCacheList(url, data, symbol_list, ensembl_cache[species])
+    url = f'{SERVER}/lookup/symbol/{species}'
+    data = {
+        'symbols': symbol_list,
+        'expand': 1,
+        'utr': 1,
+        'phenotypes': 1,
+    }
+    res = getCacheList(
+        url,
+        data,
+        symbol_list,
+        ensembl_cache[species],
+    )
 
     if is_protein_coding:
-        for symbol, lookup in res.items():
+        for _, lookup in res.items():
             out = []
             for item in lookup['Transcript']:
                 if item['biotype'] == 'protein_coding':
                     out.append(item)
             lookup['Transcript'] = out
     return res
-# end def
 
-TranscriptAndUTR = NamedTuple('TranscriptAndUTR', [('transcript_id', str), ('utr_id', str)])
-def getThreePrimeUTRs(  species: str,
-                        symbols: List[str]) -> List[TranscriptAndUTR]:
+
+class TranscriptAndUTR(NamedTuple):
+    transcript_id: str
+    utr_id: str
+
+
+def getThreePrimeUTRs(
+    species: str,
+    symbols: List[str],
+) -> List[TranscriptAndUTR]:
     '''
+    Args:
+        species: Species name
+        symbol: Symbol to reference
+
     Returns:
         List of Tuples of the form::
 
             <canonical transcript ID>, <three prime UTR ID>
+
+    Raises:
+        ValueError: Could not find canonical transcript for symbol
+
     '''
 
-    res: dict = lookUpSymbolList(species, symbols)
-    out: List[str] =  []
+    res: Dict = lookUpSymbolList(species, symbols)
+    out: List[TranscriptAndUTR] = []
     for symbol in symbols:
         try:
-            item: dict = res[symbol]
-        except:
+            item_dict = res[symbol]
+        except KeyError:
             print(res)
             raise
         found_utr: bool = False
-        for transcript in item['Transcript']:
+        for transcript in item_dict['Transcript']:
             if transcript['is_canonical'] == 1:
                 three_prime_utr_id: str = transcript['Exon'][-1]['id']
-                out.append(TranscriptAndUTR(transcript['id'], three_prime_utr_id))
+                out.append(
+                    TranscriptAndUTR(
+                        transcript['id'],
+                        three_prime_utr_id,
+                    ),
+                )
                 found_utr = True
         if not found_utr:
-            raise ValueError("couldn't find canonical transcript for %s" % (symbol))
+            raise ValueError(
+                f'Could not find canonical transcript for {symbol}',
+            )
     return out
-# end def
 
-def convertCDNA2Genome(transcript_id:str, idxs: Tuple[int, int]) -> dict:
-    '''indices are relevant to the start of the transript
+
+def convertCDNA2Genome(
+        transcript_id: str,
+        idxs: Tuple[int, int],
+) -> Dict:
+    '''Indices are relevant to the start of the transript
     i.e. idx 1 is the first base of the transcipt and would be 15881264
     for CALB1
+
+    Args:
+        transcript_id: Transcript ID
+        idxs:  Indexes to search between
+
+    Returns:
+        Dictionary given the arguments
+
     '''
-    url = SERVER + "/map/cdna/%s/%d..%d?" % (transcript_id, idxs[0], idxs[1])
+    url = f'{SERVER}/map/cdna/{transcript_id}/{idxs[0]}..{idxs[1]}?'
     res = getURL(url)
     return res
-# end def
 
-def convertCDS2Genome(transcript_id: str, idxs: Tuple[int, int]) -> dict:
-    '''indices are relevant to the start of the transript
+
+def convertCDS2Genome(
+        transcript_id: str,
+        idxs: Tuple[int, int],
+) -> Dict:
+    '''Indices are relevant to the start of the transript
     i.e. idx 1 is the first base of the transcipt and would be 15881264
     for CALB1
+
+    Args:
+        transcript_id: Transcript ID
+        idxs:  Indexes to search between
+
+    Returns:
+        Dictionary given the arguments
+
     '''
-    url = SERVER + "/map/cdna/%s/%d..%d?" % (transcript_id, idxs[0], idxs[1])
+    url = f'{SERVER}/map/cds/{transcript_id}/{idxs[0]}..{idxs[1]}?'
     res = getURL(url)
     return res
-# end def
 
-def getSequence(eid: str, seq_type: str='cdna') -> str:
+
+def getSequence(
+        eid: str,
+        seq_type: str = 'cdna',
+) -> str:
     '''
     Args:
         eid: An Ensembl stable ID
         seq_type: Enum(genomic,cds,cdna,protein), default is cdna
+
+    Returns:
+        Sequence string matching Ensembl stable ID and type
+
     '''
     global ensembl_cache
-    query: str = "/sequence/id/%s?;type=%s" % (eid, seq_type)
-    url: str = SERVER + query
-    return getCache(url, query, ensembl_cache, content_type="text/plain")
-# end def
+    query = f'/sequence/id/{eid}?;type={seq_type}'
+    url = f'{SERVER}{query}'
+    return getCache(
+        url,
+        query,
+        ensembl_cache,
+        content_type='text/plain',
+    )
 
-def getRegionSequence(  species: str,
-                        chromosome: str,
-                        start_idx: int,
-                        end_idx: int,
-                        strand: int = None,
-                        is_rev: bool = None
-                        ) -> str:
+
+def getRegionSequence(
+        species: str,
+        chromosome: str,
+        start_idx: int,
+        end_idx: int,
+        strand: Optional[int] = None,
+        is_rev: Optional[bool] = None,
+) -> str:
     '''
     Args:
-        species:
-        chromosome:
-        start_idx:
-        end_idx:
-        strand:
-        is_rev:
+        species: Species name
+        chromosome: Chromosome name
+        start_idx: Start index
+        end_idx: End index
+        strand: -1 or 1 strand
+        is_rev: Optional selection of strand using a boolean
 
     Returns:
         sequence string matching query
+
+    Raises:
+        ValueError: strand and is_rev arguments cannot both be None
+        ValueError: strand argument needs to be -1 or 1
+
     '''
     global ensembl_cache
     if strand is None:
         if is_rev is None:
-            raise ValueError("strand and is_rev arguments can't both be None")
+            raise ValueError(
+                'strand and is_rev arguments cannot both be None',
+            )
         strand = -1 if is_rev else 1
     elif strand not in (-1, 1):
-        raise ValueError("strand argument needs to be -1 or 1")
-    region: str = "%s:%d..%d:%d" % (chromosome, start_idx, end_idx, strand)
-    query: str = "/sequence/region/%s/%s" % (species, region)
-    url: str = SERVER + query
-    res: str = getCache(url, query, ensembl_cache, content_type="text/plain")
-    assert(len(res) == (end_idx - start_idx + 1))
-    return res
-# end def
+        raise ValueError('strand argument needs to be -1 or 1')
 
-def filterRegionSequence(   query_seq: str,
-                            query_strand: int,
-                            transcript_id: str,
-                            transcript: dict = None,
-                            reference_seq: str = None) -> Tuple[str, bool]:
+    region = '%s:%d..%d:%d' % (chromosome, start_idx, end_idx, strand)
+    query = f'/sequence/region/{species}/{region}'
+    url = f'{SERVER}{query}'
+
+    res = getCache(
+        url,
+        query,
+        ensembl_cache,
+        content_type='text/plain',
+    )
+    assert (len(res) == (end_idx - start_idx + 1))
+    return res
+
+
+def filterRegionSequence(
+        query_seq: str,
+        query_strand: int,
+        transcript_id: str,
+        transcript: Optional[Dict] = None,
+        reference_seq: Optional[str] = None,
+) -> Tuple[str, bool]:
     '''Confirm sequence exists in the transcript and return the aligned to the
     strand direction of the transcript sequence.  NOTE: Sometimes there are
     errors in probes so be sure to validate all sequence lookups!!!
 
     Args:
-        query_seq:
-        query_strand:
-        transcript_id:
-        transcript_dict: Default is None.  If provided omit lookUp call
-        reference_seq: Default is None.  If provided omit getSequence call
+        query_seq: Query sequence
+        query_strand: Query strand -1 or 1
+        transcript_id: Transcript ID
+        transcript_dict: Default is None.  If provided omit `lookUp` call
+        reference_seq: Default is None.  If provided omit `getSequence` call
 
     Returns:
-        Tuple of the form
+        Tuple of the form::
 
-        sequence, was_rc
+            sequence, was_rc
 
         sequence corresponding to the query.  If transcript_id is provided
         the sequence will exist in the transcript and get reverse complemented
@@ -568,6 +825,7 @@ def filterRegionSequence(   query_seq: str,
 
     Raises:
         ValueError on sequence not found in the target reference sequence
+
     '''
     was_rc: bool = False
     query_seq_out: str = query_seq
@@ -576,15 +834,20 @@ def filterRegionSequence(   query_seq: str,
     if reference_seq is None:
         reference_seq = getSequence(transcript_id)
     if transcript['strand'] != query_strand:
-        query_seq_out: str = reverseComplement(query_seq)
+        query_seq_out = reverseComplement(query_seq)
         was_rc = True
     if query_seq_out not in reference_seq:
-        err: str = "Region sequence not in transcript_id: %s: %d, rc: %s"
-        raise ValueError(err % (transcript_id, query_strand, was_rc))
+        raise ValueError(
+            f'Region sequence not in transcript_id: {transcript_id}: '
+            f'{query_strand}, rc: {was_rc}',
+        )
     return query_seq_out, was_rc
-# end def
 
-def overlap(eid: str, feature: str = 'variation') -> dict:
+
+def overlap(
+        eid: str,
+        feature: str = 'variation',
+) -> List[Dict[str, Any]]:
     '''
     Args:
         eid: An Ensembl stable ID
@@ -592,12 +855,16 @@ def overlap(eid: str, feature: str = 'variation') -> dict:
             variation, somatic_variation, structural_variation,
             somatic_structural_variation, constrained, regulatory, motif,
             chipseq, array_probe)
-    '''
-    url: str = SERVER + "/overlap/id/%s?;feature=%s" % (eid, feature)
-    return getCache(url, eid+feature, ensembl_cache)
-# end def
 
-def excludeVariantsRegion(region: Base) -> List[Tuple[int,int]]:
+    Returns:
+        Overlap dictionary given the feature
+
+    '''
+    url = f'{SERVER}/overlap/id/{eid}?;feature={feature}'
+    return getCache(url, eid + feature, ensembl_cache)
+
+
+def excludeVariantsRegion(region: Base) -> List[Tuple[int, int]]:
     '''
     Args:
         region: the region (e.g. an Exon) Ensembl ID
@@ -606,8 +873,12 @@ def excludeVariantsRegion(region: Base) -> List[Tuple[int,int]]:
         list of non-variant slices of the region of the transcript.  the second
         index in the tuple is non-inclusive so (1, 10) means every index from 1
         to 9 is included.  Good for python slicing
+
     '''
-    res = overlap(region.id, feature='variation')
+    res = overlap(
+        region.id,
+        feature='variation',
+    )
     next_idx, last = region.idxs
     out = []
     for item in res:
@@ -619,51 +890,77 @@ def excludeVariantsRegion(region: Base) -> List[Tuple[int,int]]:
     if next_idx != last:
         out.append((next_idx, last))
     return out
-# end def
 
-def excludeVariantsAllRegions(transcript: Transcript) -> List[List[Tuple[int, int]]]:
-    '''exons are sorted by index in a transcript
+
+def excludeVariantsAllRegions(
+        transcript: Transcript,
+) -> List[List[Tuple[int, int]]]:
+    '''Exons are sorted by index in a transcript
     must look only in exons
     could get all regions at once by scanning transcript but then I would need
     to write a parser.  Might as well just deal with the hit.
     Could write an async version to speed it up
+
+    Args:
+        transcript: :class:`Transcript` to perfeorm exclusion
+
+    Returns:
+        List of lists of region tuple pairs
+
     '''
     regions = []
     for item in transcript.Exon:
         regions.append(excludeVariantsRegion(Exon(item)))
     return regions
-# end def
 
-def idxLo2Hi(item):
-    '''sometimes start and end are reversed see rs214083637 in
+
+def idxLo2Hi(item: Dict) -> Tuple[int, int]:
+    '''Sometimes start and end are reversed see rs214083637 in
     ENSMUSE00000339485 whereby start is 15881352 and end is 15881351
     despite strand being 1
+
+    Args:
+        item: Item dictionary
+
+    Returns:
+        Tuple for the item of the form:
+
+            <start index>, <end index>
+
     '''
     start, end = item['start'], item['end']
     if end < start:
         start, end = end, start
     return start, end
-# end def
 
-def excludeVariantsSet(region: Base) -> Set[int]:
+
+def excludeVariantsSet(
+        region: Base,
+) -> Set[int]:
     '''
     Args:
         region: the region (e.g. an Exon) Ensembl ID
 
     Returns:
-        list of non-variant slices of the region of the transcript.  the second
+        List of non-variant slices of the region of the transcript.  the second
         index in the tuple is non-inclusive so (1, 10) means every index from 1
         to 9 is included.  Good for python slicing
+
     '''
-    res = overlap(region.id, feature='variation')
+    res = overlap(
+        region.id,
+        feature='variation',
+    )
     out = set()
     for item in res:
         start, end = idxLo2Hi(item)
         out |= set(range(start, end + 1))
     return out
-# end def
 
-def permittedRegions(transcript: Transcript) -> List[List[Tuple[int, int]]]:
+
+def permittedRegions(
+        transcript: Transcript,
+) -> List[List[Tuple[int, int]]]:
     '''
     Args:
         transcript:  :class:`Transcript` as calculated through a call to
@@ -671,12 +968,13 @@ def permittedRegions(transcript: Transcript) -> List[List[Tuple[int, int]]]:
 
     Returns:
         List of Lists of permitted non-variant regions per exon
+
     '''
     # capture a set to make sure we exclude all the right indices
     excluded_indices_set = excludeVariantsSet(transcript)
     out = []
     for item in transcript.Exon:
-         # assume Exon indices go from low to high and are NOT reversed
+        # assume Exon indices go from low to high and are NOT reversed
         idx_l, idx_h = idxLo2Hi(item)
         exon_set = set(range(idx_l, idx_h + 1))
 
@@ -687,18 +985,20 @@ def permittedRegions(transcript: Transcript) -> List[List[Tuple[int, int]]]:
         slice_list = []
         for j in indices[1:]:
             if j > k + 1:
-                slice_list.append((i, k + 1)) # k + 1 because python slicing
+                slice_list.append((i, k + 1))  # k + 1 because python slicing
                 i = j
             k = j
         slice_list.append((i, k + 1))
         out.append(slice_list)
     return out
-# end def
 
-def slicedSequence( exon_id: str,
-                    offset: int,
-                    is_rev: bool,
-                    regions: List[Tuple[int, int]]) -> List[Tuple[int, str]]:
+
+def slicedSequence(
+    exon_id: str,
+    offset: int,
+    is_rev: bool,
+    regions: List[Tuple[int, int]],
+) -> List[Tuple[int, str]]:
     '''For reverse strands we must rc the strand.  All indices store are in
     terms of the forward strand and reversing things only matters when dealing
     with sequence.  Exons are listed in reverse order by index for reverse
@@ -726,6 +1026,7 @@ def slicedSequence( exon_id: str,
             Keep in mind for the reverse strand that this index is the end
             of the the mRNA sequence, and for the forward strand it is the
             beginning
+
     '''
     seq_total = getSequence(exon_id)
     if is_rev:
@@ -734,98 +1035,131 @@ def slicedSequence( exon_id: str,
     # base_count = 0
     for region in regions:
         # print(region[0] - offset, region[1] - offset)
-        segment = seq_total[region[0] - offset:region[1] - offset]
+        segment = seq_total[
+            region[0] - offset:
+            region[1] - offset
+        ]
         # base_count += len(segment)
-        if is_rev: # reverse the segment back
+        if is_rev:  # reverse the segment back
             segment = segment[::-1]
-        out.append( (region[0], segment) )
+        out.append((region[0], segment))
     if is_rev:
         return out[::-1]
     else:
         return out
-# end def
 
-def getArrayProbes(eid: str) -> List[dict]:
+
+def getArrayProbes(eid: str) -> List[Dict]:
     '''
     Args:
-        eid:  ensymbl ID
+        eid:  ensembl ID
 
     Returns:
         Uniquified list of probes from a call to the `overlap` REST request
-    '''
-    res: list = overlap(eid, feature='array_probe')
-    return _uniqueProbes(res)
-# end def
 
-def _probe_dict_2_str(probe: dict) -> str:
+    '''
+    res = overlap(
+        eid,
+        feature='array_probe',
+    )
+    return _uniqueProbes(res)
+
+
+def _probe_dict_2_str(probe: Dict) -> str:
+    '''
+    Args:
+        probe: probe dictionary to create string from
+
+    Returns:
+        string form of a probe dictionary given ``PROBE_KEYS``
+
+    '''
     global PROBE_KEYS
     return ''.join(str(probe[x]) for x in PROBE_KEYS)
-# end def
 
-def _uniqueProbes(probe_list: List[dict]) -> List[dict]:
+
+def _uniqueProbes(probe_list: List[Dict]) -> List[Dict]:
+    '''
+    Args:
+        probe_list: List of probe dictionaries to create string for
+
+    Returns:
+        List of dictionaries string form of a probe dictionary given
+        ``PROBE_KEYS``
+
+    '''
     probe_cache: Set[str] = set()
-    out: List[dict] = []
+    out: List[Dict] = []
     for probe in probe_list:
         probe_hash: str = _probe_dict_2_str(probe)
         if probe_hash not in probe_cache:
             out.append(probe)
             probe_cache.add(probe_hash)
     return out
-# end def
 
-def probeListGroupByProbeName(probe_list: List[dict]) -> List[dict]:
+
+def probeListGroupByProbeName(
+        probe_list: List[Dict],
+) -> List[Dict]:
     '''Get a dict per probe with a List of microarrays that the probe is in
 
     Args:
         probe_list: result from a call to :func:`getArrayProbes`
 
     Returns:
-        lists of probes with only one entry per `probe_name` key
+        Lists of probes with only one entry per `probe_name` key
+
     '''
     probe_name_idx_dict: Dict[str, int] = {}
     idx: int = 0
-    out: List[dict] = []
+    out: List[Dict] = []
     for probe in probe_list:
         probe_name: str = probe['probe_name']
         if probe_name not in probe_name_idx_dict:
             probe_copy = copy.copy(probe)
-            probe_copy['microarrays'] = [ probe_copy['microarray'] ]
+            probe_copy['microarrays'] = [probe_copy['microarray']]
             del probe_copy['microarray']
             out.append(probe_copy)
 
-            # store the lookup
+            # Store the lookup
             probe_name_idx_dict[probe_name] = idx
             idx += 1
         else:
             j: int = probe_name_idx_dict[probe_name]
-            ref_probe: dict = out[j]
+            ref_probe: Dict = out[j]
             ref_probe['microarrays'].append(probe['microarray'])
-    # end for
     return out
-# end def
 
-def getProbeFromList(probe_name: str, probe_list: List[dict]) -> dict:
+
+def getProbeFromList(
+        probe_name: str,
+        probe_list: List[Dict],
+) -> Dict:
     '''Look up a probe dictionary in a `probe_list` which was a result from
     a call to  :func:`getArrayProbes`
 
     Args:
-        probe_name:
-        probe_list:
+        probe_name: Probe name
+        probe_list: Probe list to look up item in
 
     Returns:
-        dictionary of the probe
+        Dictionary of the probe
 
     Raises:
-        ValueError
+        ValueError: probe_name not found in list
+
     '''
     for x in probe_list:
         if x['probe_name'] == probe_name:
             return x
-    raise ValueError("probe: %s not found in list" % (probe_name))
-# end def
+    raise ValueError(f'probe: {probe_name} not found in list')
 
-def getProbesForID(eid: str, keep_n: int = 0) -> pd.DataFrame:
-    '''get a dataframe of overlapping probes for a given ensembl ID
+
+def getProbesForID(
+        eid: str,
+        keep_n: int = 0,
+) -> pd.DataFrame:
+    '''Fet a dataframe of overlapping probes for a given ensembl ID
 
     Args:
         eid: ensembl ID of the item (Transcript, Exon, etc)
@@ -835,15 +1169,16 @@ def getProbesForID(eid: str, keep_n: int = 0) -> pd.DataFrame:
         Dataframe of the probes with columns::
 
             [
-            'probe_name',
-            'start',
-            'end',
-            'strand',
-            'probe_length',
-            'seq_region_name'
+                'probe_name',
+                'start',
+                'end',
+                'strand',
+                'probe_length',
+                'seq_region_name'
             ]
+
     '''
-    out_list: List[dict] = getArrayProbes(eid)
+    out_list: List[Dict] = getArrayProbes(eid)
     if len(out_list) == 0:
         raise ValueError
 
@@ -856,7 +1191,7 @@ def getProbesForID(eid: str, keep_n: int = 0) -> pd.DataFrame:
         'probe_set',
         'seq_region_name',
         'strand',
-        'microarray'
+        'microarray',
     ]
     df: pd.DataFrame = pd.DataFrame(out_list, columns=COLUMNS)
     probe_name_series: pd.Series = df['probe_name']
@@ -864,9 +1199,14 @@ def getProbesForID(eid: str, keep_n: int = 0) -> pd.DataFrame:
 
     if keep_n > 0:
         largest = count_of_probe_use[:keep_n]
-        filtered_probes: pd.DataFrame = df[probe_name_series.isin(largest.index.values)]
+        # TODO: Fix the typing of this line
+        filtered_probes = df[     # type: ignore
+            probe_name_series.isin(
+                largest.index.values,
+            )
+        ]
     else:
-        filtered_probes: pd.DataFrame = df
+        filtered_probes = df    # type: ignore
 
     columns_to_keep: List[str] = [
         'probe_name',
@@ -874,23 +1214,31 @@ def getProbesForID(eid: str, keep_n: int = 0) -> pd.DataFrame:
         'end',
         'strand',
         'probe_length',
-        'seq_region_name'
+        'seq_region_name',
     ]
     filtered_probes = filtered_probes.loc[:, columns_to_keep].drop_duplicates()
 
     # Filter out probes where the length doesn't match the index delta
-    filtered_probes = filtered_probes[filtered_probes.end - filtered_probes.start + 1 == filtered_probes.probe_length]
+    filtered_probes = filtered_probes[
+        filtered_probes.end -
+        filtered_probes.start + 1 == filtered_probes.probe_length
+    ]
 
     # Add an array frequency column
-    array_freq: List[int] = [ count_of_probe_use.loc[filtered_probes['probe_name'].iloc[i]] for i in range(len(filtered_probes)) ]
+    array_freq: List[int] = [
+        count_of_probe_use.loc[filtered_probes['probe_name'].iloc[i]]
+        for i in range(len(filtered_probes))
+    ]
     filtered_probes = filtered_probes.assign(array_freq=array_freq)
 
-    return filtered_probes.reset_index(drop=True)
-# end def
+    return filtered_probes.reset_index(drop=True)  # type: ignore
 
-def permittedSequences( transcript: Transcript,
-                        exon_id: str = None) -> List[List[Tuple[int, str]]]:
-    '''get a list of start indices and their associated Exon dictionary
+
+def permittedSequences(
+        transcript: Transcript,
+        exon_id: Optional[str] = None,
+) -> List[List[Tuple[int, str]]]:
+    '''Get a list of start indices and their associated Exon dictionary
 
     Args:
         transcript:  :class:`Transcript` as calculated through a call to
@@ -900,6 +1248,7 @@ def permittedSequences( transcript: Transcript,
     Returns:
         List of list of the genomic start indices and the permitted
             sequences of the exons
+
     '''
     slices: List[List[Tuple[int, int]]] = permittedRegions(transcript)
     is_rev: bool = transcript.strand == -1
@@ -913,7 +1262,7 @@ def permittedSequences( transcript: Transcript,
             idx_l, idx_h = idxLo2Hi(item)
             return [slicedSequence(exon_id, idx_l, is_rev, regions)]
         else:
-            raise ValueError("exon_id {} not there".format(exon_id))
+            raise ValueError('exon_id {} not there'.format(exon_id))
     else:
         out = []
         for item, regions in zip(transcript.Exon, slices):
@@ -921,7 +1270,7 @@ def permittedSequences( transcript: Transcript,
             # print(idx_h - idx_l)
             out.append(slicedSequence(item['id'], idx_l, is_rev, regions))
         return out
-# end def
+
 
 if __name__ == '__main__':
     CALB1 = 'ENSMUSG00000028222'

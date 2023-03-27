@@ -1,7 +1,6 @@
-libnano styling and coding conventions
-=====================================
+# `libnano` styling and coding conventions
 
-#### Common argument names
+## Common argument names
 
     seq                             single DNA / RNA / amino acid sequence
     seq_length                      single DNA / RNA / amino acid sequence length
@@ -12,12 +11,12 @@ libnano styling and coding conventions
     word_size                       sequence word size
     seq_int                         a seqint representation of a dna sequence
 
-#### Common variable names
+## Common variable names
 
     i, j, k, l                      reserved as index variables for loops
     il, jl, kl, ll                  upper limit variables for loops
 
-#### Common argument/variable prefixes / suffixes
+## Common argument/variable prefixes / suffixes
 
     min_                            minimum value (e.g., min_temp_c)
     max_                            maximum value (e.g., max_temp_c)
@@ -27,8 +26,8 @@ libnano styling and coding conventions
     _npy_arr                        numpy array (PyArrayObject)
     _frac                           fractional percent (e.g., .30 for 30%)
     _percent                        integer percent (e.g., 30 for 30%)
-    
-#### General coding conventions
+
+## General coding conventions
 
     - We can get sequence lengths more or less for free from PyArg_ParseTuple
       so we will typically pass lengths around as integers to avoid having to

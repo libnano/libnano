@@ -1,60 +1,105 @@
-# -*- coding: utf-8 -*-
-import unittest
-import os
-import json
-from tempfile import NamedTemporaryFile
+# Copyright (C) 2014-2018. Nick Conway & Ben Pruitt; Wyss Institute
+# Copyright (C) 2023 Nick Conway & Ben Pruitt;
+# See LICENSE.TXT for full GPLv2 license.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+'''
+tests.gb_writer_b_test
+~~~~~~~~~~~~~~~~~~~~~~
+
+'''
 import filecmp
-from os.path import (
-    join,
-    abspath,
-    dirname
+# import json
+import os
+import os.path as op
+import unittest
+from tempfile import NamedTemporaryFile
+
+from libnano.fileio import (
+    gb_reader_b,
+    gb_writer_b,
 )
 
-import conftest
-from libnano.fileio import gb_reader_b
-from libnano.fileio import gb_writer_b
+# import conftest
 
-LOCAL_DIR: str = abspath(dirname(__file__))
+
+LOCAL_DIR: str = op.abspath(op.dirname(__file__))
 
 
 class TestGBWriter(unittest.TestCase):
 
     def setUp(self):
-        self.good_files = [ 'sample.gb',
-                        'mds42_full.gb',
-                        'mds42_recode.gb',
-                        'sample_complex.gb'
+        self.good_files = [
+            'sample.gb',
+            'mds42_full.gb',
+            'mds42_recode.gb',
+            'sample_complex.gb',
         ]
-        self.bad_files = ['failed.gb', # fails due to ApE double COMMENT key
-                            'mds42_recode_biopython.gb' # biopython has 80 character lines and we do 79
-                        ]
+        self.bad_files = [
+            'failed.gb',  # fails due to ApE double COMMENT key
+            # biopython has 80 character lines and we do 79
+            'mds42_recode_biopython.gb',
+        ]
         self.maxDiff = None     # assertEquals will print out whole diff
-    # end def
 
-    def checkFile(self, fn, should_be_true):
-        fn_gb = join(LOCAL_DIR, 'test_data', fn)
-        d_gb = gb_reader_b.parse(fn_gb, is_ordered=True)
+    def check_file(
+            self,
+            fn,
+            should_be_true,
+    ):
+        fn_gb = op.join(
+            LOCAL_DIR,
+            'test_data',
+            fn,
+        )
+        d_gb = gb_reader_b.parse(
+            fn_gb,
+            is_ordered=True,
+        )
 
-        f_temp = NamedTemporaryFile(mode='w', encoding='utf-8', delete=False)
+        f_temp = NamedTemporaryFile(
+            mode='w',
+            encoding='utf-8',
+            delete=False,
+        )
 
         f_temp.close()
-        gb_writer_b.write_file(f_temp.name, d_gb)
+        gb_writer_b.write_file(
+            f_temp.name,
+            d_gb,
+        )
         if should_be_true:
-            self.assertTrue(filecmp.cmp(fn_gb, f_temp.name))
+            self.assertTrue(
+                filecmp.cmp(fn_gb, f_temp.name),
+            )
         else:
-            self.assertFalse(filecmp.cmp(fn_gb, f_temp.name))
+            self.assertFalse(
+                filecmp.cmp(fn_gb, f_temp.name),
+            )
         os.unlink(f_temp.name)
-        self.assertFalse(os.path.exists(f_temp.name))
-    # end def
+        self.assertFalse(
+            op.exists(f_temp.name),
+        )
 
-    def test_goodFiles(self):
+    def test_good_files(self):
         for fn in self.good_files:
-            self.checkFile(fn, True)
+            self.check_file(fn, True)
 
     def test_badFiles(self):
         for fn in self.bad_files:
-            self.checkFile(fn, False)
-# end class
+            self.check_file(fn, False)
 
 
 if __name__ == '__main__':

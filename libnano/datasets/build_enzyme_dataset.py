@@ -1,5 +1,22 @@
-# -*- coding: utf-8 -*-
-'''libnano.datasets.build_enzyme_dataset
+# Copyright (C) 2023. Nick Conway;
+# See LICENSE.TXT for full GPLv2 license.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+'''
+libnano.datasets.build_enzyme_dataset
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Includes methods for parsing and visualizing restriction enzyme cut sites
 from the NEB Rebase list found at:
@@ -57,31 +74,32 @@ Here are some notes on NEB Rebase cutsite/shorthand formatting:
 from __future__ import print_function
 
 import json
-import re
 import os
+# import pprint
+import re
 import sys
 import urllib.request as urllib2
 from typing import (
+    Any,
     Dict,
     List,
-    Tuple
+    Tuple,
 )
-import pprint
+
+import _sre  # type: ignore
 
 try:
-    from libnano.helpers.jsonbytes import base_decode_dict
-    from libnano.seqstr import reverseComplement
-except:
-    from os.path import (
-        abspath,
-        dirname
+    import libnano
+except (ImportError, ModuleNotFoundError):
+    import os.path as op
+    LIBNANO_PATH = op.dirname(
+        op.dirname(
+            op.dirname(op.abspath(__file__)),
+        ),
     )
-    from os.path import join as pjoin
-    LIBNANO_PATH = pjoin(dirname(abspath(__file__)), '..', '..')
-    print(LIBNANO_PATH)
     sys.path = [LIBNANO_PATH] + sys.path
-    from libnano.helpers.jsonbytes import base_decode_dict
-    from libnano.seqstr import reverseComplement
+from libnano.helpers.jsonbytes import base_decode_dict
+from libnano.seqstr import reverseComplement  # type: ignore
 
 LOCAL_DIR: str = os.path.dirname(os.path.realpath(__file__))
 
@@ -100,24 +118,40 @@ REGEX_BASE_LUT: Dict[str, str] = {
     'D': '[GAT]',   # all but C
     'H': '[ACT]',   # all but G
     'V': '[GCA]',   # all but T
-    'N': 'N'        # leave N's put
+    'N': 'N',       # leave N's put
 }
 
 NEB_ALPHABET: str = ''.join(REGEX_BASE_LUT.keys())
 
 # Checks for symmetric + internal cutsite annotation
-NEB_I_SHORTHAND_RE: '_sre.SRE_Pattern' = re.compile('^[\^' + NEB_ALPHABET + ']+$')
+NEB_I_SHORTHAND_RE: _sre.SRE_Pattern = re.compile(
+    r'^[\^' + NEB_ALPHABET + ']+$',
+)
 
 # Pulls out indices and sequence from a parenthetical cutsite annotation
-NEB_P_SHORTHAND_RE: '_sre.SRE_Pattern'  = re.compile(
+NEB_P_SHORTHAND_RE: _sre.SRE_Pattern = re.compile(
     r'^(?:\((?P<startidx>[\d|-]+)/(?P<startrevidx>[\d|-]+)\))?'
-     '(?P<seq>[' + NEB_ALPHABET + ']+)'
-    r'(?:\((?P<endidx>[\d|-]+)/(?P<endrevidx>[\d|-]+)\))?$')
+    '(?P<seq>[' + NEB_ALPHABET + ']+)'
+    r'(?:\((?P<endidx>[\d|-]+)/(?P<endrevidx>[\d|-]+)\))?$',
+)
 
-rc = reverseComplement
-condInt = lambda i: int(i) if i is not None else None
+# Create a short hand to keep lines short
+_rc = reverseComplement
+
+
+def condInt(i):
+    return int(i) if i is not None else None
+
 
 def seqToRegex(seq: str) -> str:
+    '''Convert sequence to regex
+
+    Args:
+        seq: Sequence to Convert
+
+    Returns:
+        Regex expression to match the sequence against
+    '''
     if seq is None:
         return None
     regex_str = ''
@@ -140,13 +174,9 @@ def seqToRegex(seq: str) -> str:
 
 
 def getRebaseList() -> Tuple[int, List, List]:
-    ''' Get the latest list of restriction enzymes from NEB Rebase.
+    '''Get the latest list of restriction enzymes from NEB Rebase.
 
-    Returns:
-        Database version, a list of restriction enzymes, and
-        the respective references.
-
-    The enzyme list is a list of tuples with the following fields as
+        The enzyme list is a list of tuples with the following fields as
     desribed on NEB Rebase:
 
     <ENZYME NAME>
@@ -161,41 +191,56 @@ def getRebaseList() -> Tuple[int, List, List]:
     The reference list is indexed by reference number (i.e., reference 1 can
     be found at index 1)
 
+    Returns:
+        Tuple of the form::
+            (
+                <Database version>,
+                <a list of restriction enzymes>,
+                <the respective references>,
+            )
+
     '''
     ENZYME_LIST_URL = 'http://rebase.neb.com/rebase/link_allenz'
-    ENZYME_LIST_RE = r''.join(r'<%d>(.*)\n' % n for n in range(1,9))
+    ENZYME_LIST_RE = r''.join(r'<%d>(.*)\n' % n for n in range(1, 9))
     REFERENCE_LIST_RE = r'(\d+)[.][ \t]+(.*)\n'
     REQUEST_HEADERS = {
-        'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.11 ' + \
+        'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.11 ' +
                       '(KHTML, like Gecko) Chrome/23.0.1271.64 Safari/537.11',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,' + \
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,' +
                   '*/*;q=0.8',
         'Accept-Charset': 'ISO-8859-1,utf-8;q=0.7,*;q=0.3',
         'Accept-Encoding': 'none',
         'Accept-Language': 'en-US,en;q=0.8',
-        'Connection': 'keep-alive'
+        'Connection': 'keep-alive',
     }
 
     req = urllib2.Request(ENZYME_LIST_URL, headers=REQUEST_HEADERS)
     res = urllib2.urlopen(req)
     raw_data = res.read().decode('utf8')
-    reference_section = re.search(r'References:(.*)', raw_data,
-                                  flags=re.S).group(1)
-    database_version = int(re.search(r'allenz\.(\d+)', raw_data).group(1))
+    reference_section = re.search(      # type: ignore
+        r'References:(.*)', raw_data,
+        flags=re.S,
+    ).group(1)
+    database_version = int(      # type: ignore
+        re.search(r'allenz\.(\d+)', raw_data).group(1),  # type: ignore
+    )
     enzyme_data = re.findall(ENZYME_LIST_RE, raw_data)
-    references = [None] + [ref for ref_num, ref in re.findall(
-                           REFERENCE_LIST_RE, reference_section)]
+    references = [None] + [
+        ref for ref_num, ref in re.findall(
+            REFERENCE_LIST_RE, reference_section,
+        )
+    ]
     return database_version, enzyme_data, references
 
 
-def processNebShorthand(neb_shorthand: str) -> dict:
-    ''' Process NEB shorthand for an enzyme cutsite.
+def processNebShorthand(neb_shorthand: str) -> Dict[str, Any]:
+    '''Process NEB shorthand for an enzyme cutsite.
 
     Args:
-        neb_shorthand (str): a single cutsite represented by NEB shorthand
+        neb_shorthand: a single cutsite represented by NEB shorthand
 
     Returns:
-        dictionary of the form::
+        Dictionary of the form::
 
             {
                 'core_seq': [fwd, revcomp],
@@ -218,11 +263,11 @@ def processNebShorthand(neb_shorthand: str) -> dict:
     Raises:
         ValueError (if the neb_shorthand is not in the proper format)
     '''
-    neb_shorthand: str =    neb_shorthand.strip()
-    core_seq: List[str] =   [None, None]
-    full_seq: List[str] =   [None, None]
-    core_regex: List[str] = [None, None]
-    full_regex: List[str] = [None, None]
+    neb_shorthand = neb_shorthand.strip()
+    core_seq: List[str] = ['', '']
+    full_seq: List[str] = ['', '']
+    core_regex: List[str] = ['', '']
+    full_regex: List[str] = ['', '']
     cutsite_idxs: List[List[int]] = [[], []]
     # Unknown / uncharacterized recognition sequence
     if neb_shorthand == '?':
@@ -231,24 +276,31 @@ def processNebShorthand(neb_shorthand: str) -> dict:
     elif re.match(NEB_I_SHORTHAND_RE, neb_shorthand):
         if '^' in neb_shorthand:
             caret_idx = neb_shorthand.index('^')
-            cutsite_idxs = [[caret_idx],
-                            [len(neb_shorthand) - caret_idx - 1]]
+            cutsite_idxs = [
+                [caret_idx],
+                [len(neb_shorthand) - caret_idx - 1],
+            ]
         else:
             # NOTE skip this? Consider raising an Exception?
             pass
         b_seq = neb_shorthand.replace('^', '')
-        core_seq = [b_seq, rc(b_seq)]
+        core_seq = [b_seq, _rc(b_seq)]
         full_seq = core_seq
     else:
-        match = re.match(NEB_P_SHORTHAND_RE, neb_shorthand)
+        match = re.match(
+            NEB_P_SHORTHAND_RE,
+            neb_shorthand,
+        )
         # Asymmetric cutsite or cutsite outside of recognition sequence
         if match is not None:
-            si, sri, ei, eri = (condInt(match.group('startidx')),
-                                condInt(match.group('startrevidx')),
-                                condInt(match.group('endidx')),
-                                condInt(match.group('endrevidx')))
+            si, sri, ei, eri = (
+                condInt(match.group('startidx')),
+                condInt(match.group('startrevidx')),
+                condInt(match.group('endidx')),
+                condInt(match.group('endrevidx')),
+            )
             seq = match.group('seq')
-            core_seq = [seq, rc(seq)]
+            core_seq = [seq, _rc(seq)]
             # Assymetric internal cutsite
 
             # max(si, sri) is None doesn't work in Python 3
@@ -263,8 +315,8 @@ def processNebShorthand(neb_shorthand: str) -> dict:
                 sri_temp: int = 0 if sri is None else sri
 
                 front_offset: int = max(si_temp, sri_temp, 0)
-                ex_seq: str = 'N' * front_offset + seq + 'N' * max(ei, eri, 0)
-                full_seq: List[str] = [ex_seq, rc(ex_seq)]
+                ex_seq = 'N' * front_offset + seq + 'N' * max(ei, eri, 0)
+                full_seq = [ex_seq, _rc(ex_seq)]
                 if si is not None and sri is not None:
                     cutsite_idxs[0].append(front_offset - si)
                     cutsite_idxs[1].append(front_offset - sri)
@@ -272,8 +324,10 @@ def processNebShorthand(neb_shorthand: str) -> dict:
                     cutsite_idxs[0].append(ei + front_offset + len(seq))
                     cutsite_idxs[1].append(eri + front_offset + len(seq))
         else:
-            raise ValueError('Improperly formatted NEB shorthand: %s' %
-                             neb_shorthand)
+            raise ValueError(
+                'Improperly formatted NEB shorthand: %s' %
+                neb_shorthand,
+            )
     # Build regular expressions
     if core_seq is not None:
         core_regex = [seqToRegex(core_seq[0]), seqToRegex(core_seq[1])]
@@ -284,12 +338,12 @@ def processNebShorthand(neb_shorthand: str) -> dict:
         'core_regex': core_regex,
         'full_regex': full_regex,
         'cutsite_idxs': cutsite_idxs,
-        'shorthand': neb_shorthand
+        'shorthand': neb_shorthand,
     }
     return output_dict
 
 
-def processEnzymeRecord(record_tuple: tuple) -> dict:
+def processEnzymeRecord(record_tuple: Tuple) -> Dict:
     '''Process a raw record tuple from NEB Rebase.
 
     Recall the raw record tuple indexing is as follows::
@@ -335,76 +389,93 @@ def processEnzymeRecord(record_tuple: tuple) -> dict:
     enzyme_rec = {
         'name': name,
         'cutsites': cutsites,
-        'availability:': record_tuple[6]
+        'availability:': record_tuple[6],
     }
     return enzyme_rec
 
 
-def qcEnzymeDataset(enzyme_dataset_by_name: dict):
+def qcEnzymeDataset(enzyme_dataset_by_name: Dict) -> None:
     '''Quick QC of an enzyme dataset, against expected records for common
     enzymes.
+
+    Args:
+        enzyme_dataset_by_name: Expected dataset dictionary to check
+
+    Raises:
+        ValueError: Mismatch between expected value
     '''
     expected_records = {
-    'EcoRI': {
-        'cutsites': [
-            {
-                'shorthand': 'G^AATTC',
-                'core_seq': ['GAATTC', 'GAATTC'],
-                'full_regex': ['GAATTC', 'GAATTC'],
-                'cutsite_idxs': [[1], [5]],
-                'core_regex': ['GAATTC', 'GAATTC'],
-                'full_seq': ['GAATTC', 'GAATTC']
-            }
-        ],
-        'availability:': 'BCFIJKMNOQRSUVXY',
-        'name': 'EcoRI'
-    },
-    'BsaI': {
-        'cutsites': [
-            {
-                'shorthand': 'GGTCTC(1/5)',
-                'core_seq': ['GGTCTC', 'GAGACC'],
-                'full_regex': ['GGTCTC[ATGC]{5}', '[ATGC]{5}GAGACC'],
-                'cutsite_idxs': [[7], [11]],
-                'core_regex': ['GGTCTC', 'GAGACC'],
-                'full_seq': ['GGTCTCNNNNN', 'NNNNNGAGACC']
-            }
-        ],
-        'availability:': 'N',
-        'name': 'BsaI'
-    },
-    'BaeI': {
-        'cutsites': [
-            {
-                'shorthand': '(10/15)ACNNNNGTAYC(12/7)',
-                'core_seq': ['ACNNNNGTAYC', 'GRTACNNNNGT'],
-                'full_regex': ['[ATGC]{15}AC[ATGC]{4}GTA[CG]C[ATGC]{12}',
-                                   '[ATGC]{12}G[AG]TAC[ATGC]{4}GT[ATGC]{15}'],
-                'cutsite_idxs': [[5, 38], [0, 33]],
-                'core_regex': ['AC[ATGC]{4}GTA[CG]C', 'G[AG]TAC[ATGC]{4}GT'],
-                'full_seq': ['NNNNNNNNNNNNNNNACNNNNGTAYCNNNNNNNNNNNN',
-                             'NNNNNNNNNNNNGRTACNNNNGTNNNNNNNNNNNNNNN']
-            }
-        ],
-    'availability:': 'N',
-    'name': 'BaeI'
-    }
+        'EcoRI': {
+            'cutsites': [
+                {
+                    'shorthand': 'G^AATTC',
+                    'core_seq': ['GAATTC', 'GAATTC'],
+                    'full_regex': ['GAATTC', 'GAATTC'],
+                    'cutsite_idxs': [[1], [5]],
+                    'core_regex': ['GAATTC', 'GAATTC'],
+                    'full_seq': ['GAATTC', 'GAATTC'],
+                },
+            ],
+            'availability:': 'BCFIJKMNOQRSUVXY',
+            'name': 'EcoRI',
+        },
+        'BsaI': {
+            'cutsites': [
+                {
+                    'shorthand': 'GGTCTC(1/5)',
+                    'core_seq': ['GGTCTC', 'GAGACC'],
+                    'full_regex': ['GGTCTC[ATGC]{5}', '[ATGC]{5}GAGACC'],
+                    'cutsite_idxs': [[7], [11]],
+                    'core_regex': ['GGTCTC', 'GAGACC'],
+                    'full_seq': ['GGTCTCNNNNN', 'NNNNNGAGACC'],
+                },
+            ],
+            'availability:': 'N',
+            'name': 'BsaI',
+        },
+        'BaeI': {
+            'cutsites': [
+                {
+                    'shorthand': '(10/15)ACNNNNGTAYC(12/7)',
+                    'core_seq': ['ACNNNNGTAYC', 'GRTACNNNNGT'],
+                    'full_regex': [
+                        '[ATGC]{15}AC[ATGC]{4}GTA[CG]C[ATGC]{12}',
+                        '[ATGC]{12}G[AG]TAC[ATGC]{4}GT[ATGC]{15}',
+                    ],
+                    'cutsite_idxs': [[5, 38], [0, 33]],
+                    'core_regex': [
+                        'AC[ATGC]{4}GTA[CG]C',
+                        'G[AG]TAC[ATGC]{4}GT',
+                    ],
+                    'full_seq': [
+                        'NNNNNNNNNNNNNNNACNNNNGTAYCNNNNNNNNNNNN',
+                        'NNNNNNNNNNNNGRTACNNNNGTNNNNNNNNNNNNNNN',
+                    ],
+                },
+            ],
+            'availability:': 'N',
+            'name': 'BaeI',
+        },
     }
     if isinstance(list(enzyme_dataset_by_name.keys())[0], str):
-        coerce_b = lambda s: s
+        def coerce_b(s):
+            return s
     else:
-        coerce_b = lambda s: s.encode('utf-8')
+        def coerce_b(s):
+            return s.encode('utf-8')
         expected_records = base_decode_dict(expected_records)
     for name, rec in expected_records.items():
         new_rec = enzyme_dataset_by_name[name]
         for i, cutsite in enumerate(rec[coerce_b('cutsites')]):
-            for k, v in cutsite.items():
+            for k, v in cutsite.items():    # type: ignore
                 new_value = new_rec[coerce_b('cutsites')][i][k]
                 if not new_value == v:
-                    raise ValueError('Mismatch between expected value (%s) '
-                                     'and value (%s) for key %s for enzyme '
-                                     '%s' % (v, new_value, k, name))
-# end def
+                    raise ValueError(
+                        'Mismatch between expected value (%s) '
+                        'and value (%s) for key %s for enzyme '
+                        '%s' % (v, new_value, k, name),
+                    )
+
 
 def updateEnzymeDataset():
     '''Update the enzyme dataset if a new version is available.
@@ -435,15 +506,25 @@ def updateEnzymeDataset():
         enzyme_recs = list(map(processEnzymeRecord, enzyme_data))
         enzyme_data_by_name = {rec['name']: rec for rec in enzyme_recs}
         qcEnzymeDataset(enzyme_data_by_name)
-        print('New NEB Rebase version %d supercedes verion %d, dataset '
-              'loaded and validated: %s' % (latest_version, current_version,
-                                            dataset_fp))
+        print(
+            'New NEB Rebase version %d supercedes verion %d, dataset '
+            'loaded and validated: %s' % (
+                latest_version, current_version,
+                dataset_fp,
+            ),
+        )
         with open(dataset_fp, 'w') as fd:
-            json.dump({'rebase_version': latest_version,
-                       'enzyme_data': enzyme_data_by_name}, fd)
+            json.dump(
+                {
+                    'rebase_version': latest_version,
+                    'enzyme_data': enzyme_data_by_name,
+                }, fd,
+            )
     else:
-        print('Latest NEB Rebase version (%d) matches latest dataset, no '
-              'update necessary' % current_version)
+        print(
+            'Latest NEB Rebase version (%d) matches latest dataset, no '
+            'update necessary' % current_version,
+        )
 
 
 if __name__ == '__main__':

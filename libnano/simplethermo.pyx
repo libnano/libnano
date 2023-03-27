@@ -1,24 +1,55 @@
-from libnano.seqstr import reverseComplement as _rc
+# cython: language_level=3, boundscheck=False, wraparound=False
+# Copyright (C) 2014-2018. Nick Conway & Ben Pruitt; Wyss Institute
+# Copyright (C) 2023 Nick Conway & Ben Pruitt;
+# See LICENSE.TXT for full GPLv2 license.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+'''
+libnano.simplethermo
+~~~~~~~~~~~~~~~~~~~~
+
+Basic thermodynamic calculations
+
+'''
+
 import math as _math
+from typing import Tuple
+
+from libnano.seqstr import reverseComplement as _rc  # type: ignore
+
 # ~~~~~~~~~~~~~~~~~~~~ GENERAL CONSTANTS AND CALCULATIONS ~~~~~~~~~~~~~~~~~~~ #
 
-cdef float R = 1.9872e-3  # Gas constant (1 / kcal * mol)
-cdef float KELVIN = 273.15
+cdef:
+    double R = 1.9872e-3  # Gas constant (1 / kcal * mol)
+    double KELVIN = 273.15
 
 
-def cToK(deg_c):
-    ''' Convert degrees Celsius to degrees Kelvin
+def cToK(deg_c: float) -> float:
+    '''Convert degrees Celsius to degrees Kelvin
 
     Args:
         deg_c (float): temperature in [Celsius]
 
     Returns:
         float: temperature in [Kelvin]
+
     '''
     return deg_c + KELVIN
 
 
-def kToC(deg_k):
+def kToC(deg_k: float) -> float:
     ''' Convert degrees Kelvin to degrees Celsius
 
     Args:
@@ -26,12 +57,16 @@ def kToC(deg_k):
 
     Returns:
         float: temperature in [Celsius]
+
     '''
     return deg_k - KELVIN
 
 
-cdef calcKa(dg, deg_c):
-    ''' Return the association constant at a given temperature
+cdef double calcKa(
+        double dg,
+        double deg_c,
+):
+    '''Return the association constant at a given temperature
 
     Args:
         dg (float): the free energy in [kcal/mol]
@@ -39,12 +74,17 @@ cdef calcKa(dg, deg_c):
 
     Returns:
         float: the association constant at a given temperature
+
     '''
     return _math.exp**(-dg/(R * cToK(deg_c)))
 
 
-def calcDg(ds, dh, deg_c):
-    ''' Return the dg at a given temp using the provided ds and dh
+def calcDg(
+        ds: float,
+        dh: float,
+        deg_c: float,
+) -> float:
+    '''Return the dg at a given temp using the provided ds and dh
 
     Args:
         ds (float): the entropy in [kcal/mol]
@@ -53,11 +93,15 @@ def calcDg(ds, dh, deg_c):
 
     Returns:
         float: the dg at a given temp using the provided ds and dh
+
     '''
     return dh - ds * cToK(deg_c)
 
 
-def calcRandCoil(dg, deg_c):
+def calcRandCoil(
+        dg: float,
+        deg_c: float,
+) -> float:
     ''' Return the percent of randomly coiled oligo with dg at deg_c degrees
 
     Args:
@@ -67,18 +111,21 @@ def calcRandCoil(dg, deg_c):
     Returns:
         float: the percent of randomly coiled oligo with dg at deg_c degrees
     '''
-    return 1/(calcKa(dg, deg_c) + 1)
+    return 1 / (calcKa(dg, deg_c) + 1)
 
 
 # ~~~~~~~~~~~~~~~~~ PYTHON EQUIVALENT OF PRIMER3 OLIGOTM  ~~~~~~~~~~~~~~~~ #
 
-cdef float divalentToMonovalent(float divalent, float dntp):
-    ''' Calculate equivalent monovalent effect for a given
+cdef float divalentToMonovalent(
+        float divalent,
+        float dntp,
+):
+    '''Calculate equivalent monovalent effect for a given
     divalent parameters
 
     Args:
-        divalent (float):
-        dntp (float):
+        divalent (float): Divalent concentration
+        dntp (float): DNTP concetration
 
     Returns:
         float: equivalent monovalent concentration percent
@@ -89,7 +136,13 @@ cdef float divalentToMonovalent(float divalent, float dntp):
         divalent = dntp
     return 120. * _math.sqrt(divalent - dntp)
 
-def calcThermo(seq, conc_nm=50, monovalent=50, divalent=0.01, dntp=0.0):
+def calcThermo(
+        seq: str,
+        conc_nm: float = 50,
+        monovalent: float = 50,
+        divalent: float = 0.01,
+        dntp: float = 0.0,
+) -> Tuple[float, float, float]:
     ''' Return the thermo parameters for DNA under specified salt cond.
         Data is from referenced from PRIMER3
 
@@ -153,10 +206,28 @@ def calcThermo(seq, conc_nm=50, monovalent=50, divalent=0.01, dntp=0.0):
         tm = dH / (dS + 1.987 * _math.log(conc_nm/4.0e9)) - KELVIN
     return dH, dS, tm
 
-def calcTm(seq, conc_nm=50, monovalent=50, divalent=0.01, dntp=0.0):
-    _, _, tm = calcThermo(seq, conc_nm=conc_nm, monovalent=monovalent,
-            divalent=divalent, dntp=dntp)
-    ''' same as `calcThermo` but returns just the melting temperature
+def calcTm(
+        seq: str,
+        conc_nm: float = 50,
+        monovalent: float = 50,
+        divalent: float = 0.01,
+        dntp: float = 0.0,
+):
+    _, _, tm = calcThermo(
+        seq,
+        conc_nm=conc_nm,
+        monovalent=monovalent,
+        divalent=divalent,
+        dntp=dntp,
+    )
+    '''Same as `calcThermo` but returns just the melting temperature
+
+    Args:
+        seq (str): the sequence to analyze
+        conc_nm (Optional[int]): percent concentration
+        monovalent (Optional[int]): percent concentration
+        divalent (Optional[float]): fractional concentration of Mg2+
+        dntp (Optional[float]): fractional concentration dntp
 
     Returns:
         float: Melting temperature in [Celcius]

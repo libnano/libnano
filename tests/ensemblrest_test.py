@@ -1,211 +1,291 @@
-# -*- coding: utf-8 -*-
-import unittest
+# Copyright (C) 2014-2018. Nick Conway & Ben Pruitt; Wyss Institute
+# Copyright (C) 2023 Nick Conway & Ben Pruitt;
+# See LICENSE.TXT for full GPLv2 license.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+'''
+tests.ensemblrest_test
+~~~~~~~~~~~~~~~~~~~~~~
+
+'''
 import os
-from typing import (
-    Set,
-    List,
-    NamedTuple
-)
 import time
+import unittest
+from typing import (
+    List,
+    NamedTuple,
+    Set,
+)
 
+# import conftest
 import pandas as pd
+import pytest
 
-import conftest
 import libnano.ensemblrest as er
 
-if os.environ.get('IS_TRAVIS') is None:
-    class TestEnsembleRest(unittest.TestCase):
-        def test_getProbes(self):
-            GENE: str = 'SLC17A8'
-            TRANSCRIPT: str = 'ENST00000323346.9'
-            PROBE_NAME: str = 'ILMN_1767842'
-            GENE_EID: str = 'ENSG00000179520'
 
-            out_list: list = er.getArrayProbes(TRANSCRIPT)
-            self.assertIsInstance(out_list, list)
-            self.assertTrue(len(out_list) > 0)
-            self.assertIsInstance(out_list[0], dict)
-            out_unique: Set[str] = set()
-            for x in out_list:
-                p_hash: str = er._probe_dict_2_str(x)
-                if p_hash in out_unique:
-                    raise ValueError("non-unique_hash: %s" % (p_hash))
-                out_unique.add(p_hash)
-            grouped_out_list: list = er.probeListGroupByProbeName(out_list)
-            self.assertTrue(len(grouped_out_list) > 0)
+@pytest.mark.skipif(os.environ.get('IS_TRAVIS') is None)
+class TestEnsembleRest(unittest.TestCase):
+    def test_get_probes(self):
+        # gene = 'SLC17A8'
+        transcript = 'ENST00000323346.9'
+        probe_name = 'ILMN_1767842'
+        # gene_eid = 'ENSG00000179520'
 
-            probe: dict = er.getProbeFromList(PROBE_NAME, grouped_out_list)
-            self.assertIsInstance(probe, dict)
+        out_list = er.getArrayProbes(transcript)
+        self.assertIsInstance(
+            out_list,
+            list,
+        )
+        self.assertTrue(
+            len(out_list) > 0,
+        )
+        self.assertIsInstance(
+            out_list[0],
+            dict,
+        )
+        out_unique: Set[str] = set()
 
-        def test_getRegionSequence(self):
-            REF_SEQ: str = 'ATCCATGCAAGCCCCATAAAACAGTTCCTAGCATGCAGAAAATGCCCACG'
-            SPECIES: str = 'human'
-            GENE: str = 'SLC17A8'
-            GENE_EID: str = 'ENSG00000179520'
-            TRANSCRIPT: str = 'ENST00000323346.9'
-            THREE_P_EXON: str = 'ENSE00001244923'
+        for x in out_list:
+            p_hash = er._probe_dict_2_str(x)
+            if p_hash in out_unique:
+                raise ValueError(
+                    f'non-unique_hash: {p_hash}',
+                )
+            out_unique.add(p_hash)
+        grouped_out_list = er.probeListGroupByProbeName(
+            out_list,
+        )
+        self.assertTrue(
+            len(grouped_out_list) > 0,
+        )
 
-            PROBE: dict = {
-                'probe_length': 50,
-                'probe_set': '',
-                'feature_type': 'array_probe',
-                'end': 100421903,
-                'seq_region_name': '12',
-                'strand': 1,
-                'probe_name': 'ILMN_1767842',
-                'start': 100421854,
-                'microarrays': ['HumanWG_6_V2', 'HumanWG_6_V3', 'HumanHT-12_V3', 'HumanHT-12_V4', 'HumanRef-8_V3']
-            }
-            # 1. Get the probe sequence
-            seq: str = er.getRegionSequence(SPECIES,
-                                chromosome=PROBE['seq_region_name'],
-                                start_idx=PROBE['start'],
-                                end_idx=PROBE['end'],
-                                strand=PROBE['strand']
-                                )
-            self.assertEqual(REF_SEQ, seq)
+        probe_dict = er.getProbeFromList(
+            probe_name,
+            grouped_out_list,
+        )
+        self.assertIsInstance(
+            probe_dict,
+            dict,
+        )
 
-            # 2. confirm that getRegionSequence matches slicing the whole gene
-            # for a forward strand (strand == 1) (no reverse complement check)
-            lookup: dict = er.lookUpID(GENE_EID)
-            gene_start_idx: int = lookup['start']
-            full_gene_seq: str = er.getSequence(GENE_EID, seq_type='genomic')
-            sl: slice = slice(          PROBE['start'] - gene_start_idx,
-                                        PROBE['end'] - gene_start_idx + 1)
-            slice_seq: str = full_gene_seq[sl]
+    def test_getRegionSequence(self):
+        ref_seq = 'ATCCATGCAAGCCCCATAAAACAGTTCCTAGCATGCAGAAAATGCCCACG'
+        species = 'human'
+        # gene = 'SLC17A8'
+        gene_eid = 'ENSG00000179520'
+        # transcript = 'ENST00000323346.9'
+        three_p_exon = 'ENSE00001244923'
 
-            self.assertEqual(slice_seq, REF_SEQ)
+        probe_dict = {
+            'probe_length': 50,
+            'probe_set': '',
+            'feature_type': 'array_probe',
+            'end': 100421903,
+            'seq_region_name': '12',
+            'strand': 1,
+            'probe_name': 'ILMN_1767842',
+            'start': 100421854,
+            'microarrays': [
+                'HumanWG_6_V2',
+                'HumanWG_6_V3',
+                'HumanHT-12_V3',
+                'HumanHT-12_V4',
+                'HumanRef-8_V3',
+            ],
+        }
+        # 1. Get the probe sequence
+        seq = er.getRegionSequence(
+            species,
+            chromosome=probe_dict['seq_region_name'],
+            start_idx=probe_dict['start'],
+            end_idx=probe_dict['end'],
+            strand=probe_dict['strand'],
+        )
+        self.assertEqual(ref_seq, seq)
 
-            # 3. Check that the sequence exists in the 3' exon
-            three_p_seq: str = er.getSequence(THREE_P_EXON)
-            self.assertTrue(len(three_p_seq) > 0)
-            self.assertIn(REF_SEQ, three_p_seq)
-        # end def
+        # 2. confirm that getRegionSequence matches slicing the whole gene
+        # for a forward strand (strand == 1) (no reverse complement check)
+        lookup: dict = er.lookUpID(gene_eid)
+        gene_start_idx: int = lookup['start']
+        full_gene_seq = er.getSequence(gene_eid, seq_type='genomic')
+        slc = slice(
+            probe_dict['start'] - gene_start_idx,
+            probe_dict['end'] - gene_start_idx + 1,
+        )
+        slice_seq = full_gene_seq[slc]
 
-        def test_getProbesForID(self):
-            SPECIES: str = 'human'
-            GeneInfo = NamedTuple('GeneInfo', [
-                ('symbol', str),
-                ('barcode', str),
-                ('gene_id', str),
-                ('transcript_id', str), # canonical id
-                ('utr_id', str)  #
-                ]
+        self.assertEqual(
+            slice_seq,
+            ref_seq,
+        )
+
+        # 3. Check that the sequence exists in the 3' exon
+        three_p_seq = er.getSequence(
+            three_p_exon,
+        )
+        self.assertTrue(
+            len(three_p_seq) > 0,
+        )
+        self.assertIn(
+            ref_seq,
+            three_p_seq,
+        )
+
+    def test_get_probes_for_id(self):
+        species = 'human'
+
+        class GeneInfo(NamedTuple):
+            symbol: str
+            barcode: str
+            gene_id: str
+            transcript_id: str
+            utr_id: str
+
+        genes_and_barcodes_list = [
+            GeneInfo(
+                symbol='SLC17A8',
+                barcode='ACAGC',
+                gene_id='ENSG00000179520',
+                transcript_id='ENST00000323346',
+                utr_id='ENSE00001244923',
+            ),
+            GeneInfo(
+                symbol='GFAP',
+                barcode='TACAT',
+                gene_id='ENSG00000131095',
+                transcript_id='ENST00000638281',
+                utr_id='ENSE00003806990',
+            ),
+        ]
+        number_probes_per_gene = 5
+        sleep_time = 0.1
+
+        probe_cutoff_length = 36
+
+        out_columns: List[str] = [
+            'symbol',
+            'gene_id',
+            'exon_id',
+            'probe_name',
+            'probe_seq',
+            'probe_start',
+            'probe_end',
+            'probe_strand',
+            'probe_length',
+            'barcode',
+            'array_freq',
+        ]
+        df_out: pd.DataFrame = pd.DataFrame(
+            columns=out_columns,
+        )
+
+        def todfdict(x):
+            return {a: b for a, b in zip(out_columns, x)}
+
+        for item in genes_and_barcodes_list:
+            three_p_exon_id = item.utr_id
+            transcript_id = item.transcript_id
+            filtered_probes: pd.DataFrame = er.getProbesForID(
+                three_p_exon_id,
+                keep_n=number_probes_per_gene,
             )
-            GENES_AND_BARCODES: List[GeneInfo] = [
-                GeneInfo('SLC17A8', 'ACAGC', 'ENSG00000179520',
-                    'ENST00000323346', 'ENSE00001244923'),
-                GeneInfo('GFAP', 'TACAT', 'ENSG00000131095',
-                    'ENST00000638281', 'ENSE00003806990')
-            ]
-            NUMBER_PROBES_PER_GENE: int = 5
-            SLEEP_TIME: float = 0.1
+            self.assertTrue(len(filtered_probes) > 0)
+            barcode = item.barcode
+            exon_seq = er.getSequence(three_p_exon_id)
+            transcript: dict = er.lookUpID(transcript_id)
 
-            PROBE_CUTOFF_LENGTH: int = 36
+            for exon in transcript['Exon']:
+                if exon['id'] == three_p_exon_id:
+                    exon_start_idx: int = exon['start']
+                    # exon_end_idx: int = exon['end']
 
-            out_columns: List[str] = [
-                'symbol',
-                'gene_id',
-                'exon_id',
-                'probe_name',
-                'probe_seq',
-                'probe_start',
-                'probe_end',
-                'probe_strand',
-                'probe_length',
-                'barcode',
-                'array_freq'
-            ]
-            df_out: pd.DataFrame = pd.DataFrame(columns=out_columns)
+            for i in range(len(filtered_probes)):
+                probe = filtered_probes.iloc[i]
+                p_start: int = probe['start']
+                p_end: int = probe['end']
+                p_strand: int = probe['strand']
+                p_length: int = probe['probe_length']
 
-            todfdict = lambda x: {a: b for a, b in zip(out_columns, x)}
-
-            for item in GENES_AND_BARCODES:
-                three_p_exon_id: str = item.utr_id
-                transcript_id: str = item.transcript_id
-                filtered_probes: pd.DataFrame = er.getProbesForID(three_p_exon_id,
-                    keep_n=NUMBER_PROBES_PER_GENE)
-                self.assertTrue(len(filtered_probes) > 0)
-                barcode: str = item.barcode
-                exon_seq: str = er.getSequence(three_p_exon_id)
-                transcript: dict = er.lookUpID(transcript_id)
-
-                for exon in transcript['Exon']:
-                    if exon['id'] == three_p_exon_id:
-                        exon_start_idx: int  = exon['start']
-                        exon_end_idx: int  = exon['end']
-
-
-                for i in range(len(filtered_probes)):
-                    probe = filtered_probes.iloc[i]
-                    p_start: int =  probe['start']
-                    p_end: int =    probe['end']
-                    p_strand: int = probe['strand']
-                    p_length: int = probe['probe_length']
-
-                    # sometimes p_length doesn't match start and end indices so let's filter those out
-                    if (p_end - p_start + 1) > p_length:
-                        continue
-                    elif p_length < PROBE_CUTOFF_LENGTH:
-                        # Try extending from the 5' end of the sequences
-                        delta: int = PROBE_CUTOFF_LENGTH - p_length
-                        if p_strand == 1:
-                            if (p_start > exon_start_idx and
-                                (p_start - exon_start_idx) > delta):
-                                p_start -= delta
-                            else:
-                                continue
+                # Sometimes p_length doesn't match start and end indices
+                # so let us filter those out
+                if (p_end - p_start + 1) > p_length:
+                    continue
+                elif p_length < probe_cutoff_length:
+                    # Try extending from the 5' end of the sequences
+                    delta: int = probe_cutoff_length - p_length
+                    if p_strand == 1:
+                        if (
+                            p_start > exon_start_idx and
+                            (p_start - exon_start_idx) > delta
+                        ):
+                            p_start -= delta
                         else:
-                            if (p_start < exon_start_idx and
-                                (exon_start_idx - p_start) > delta):
-                                p_start += delta # increase the index
-                            else:
-                                continue
+                            continue
+                    else:
+                        if (
+                            p_start < exon_start_idx and
+                            (exon_start_idx - p_start) > delta
+                        ):
+                            p_start += delta  # Increase the index
+                        else:
+                            continue
 
-                    try:
-                        seq: str = er.getRegionSequence(
-                            SPECIES,
-                            chromosome=probe['seq_region_name'],
-                            start_idx=p_start,
-                            end_idx=p_end,
-                            strand=p_strand
-                        )
-                    except:
-                        raise
-                    try:
-                        was_rc: bool
-                        seq, was_rc = er.filterRegionSequence(
-                                seq,
-                                p_strand,
-                                transcript_id,
-                                transcript,
-                                exon_seq
-                        )
-                    except ValueError as ex:
-                        continue # skip this probe
-                    row: list = [
-                        item.symbol,
-                        item.gene_id,
-                        item.utr_id,
-                        probe['probe_name'],
+                try:
+                    seq = er.getRegionSequence(
+                        species,
+                        chromosome=probe['seq_region_name'],
+                        start_idx=p_start,
+                        end_idx=p_end,
+                        strand=p_strand,
+                    )
+                except ValueError:
+                    raise
+                try:
+                    seq, _ = er.filterRegionSequence(
                         seq,
-                        p_start,
-                        p_end,
                         p_strand,
-                        probe['probe_length'],
-                        barcode,
-                        probe['array_freq']
-                    ]
-                    df_out = df_out.append(todfdict(row), ignore_index=True)
-                    time.sleep(SLEEP_TIME)  # sleep such that requests don't time out
-                # end for
-            # end for
-            self.assertTrue(len(df_out) > 0)
-        # end def
-    # end class
+                        transcript_id,
+                        transcript,
+                        exon_seq,
+                    )
+                except ValueError:
+                    continue  # Skip this probe
+                row = [
+                    item.symbol,
+                    item.gene_id,
+                    item.utr_id,
+                    probe['probe_name'],
+                    seq,
+                    p_start,
+                    p_end,
+                    p_strand,
+                    probe['probe_length'],
+                    barcode,
+                    probe['array_freq'],
+                ]
+                df_out = df_out.append(
+                    todfdict(row),
+                    ignore_index=True,
+                )
+                # Sleep such that requests don't time out
+                time.sleep(sleep_time)
+
+        self.assertTrue(len(df_out) > 0)
+
 
 if __name__ == '__main__':
     tr = TestEnsembleRest()
     tr.test_getRegionSequence()
-
-

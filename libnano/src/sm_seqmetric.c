@@ -50,4 +50,3 @@ float sm_gcContent(char* seq, int seq_length) {
     }
     return (1.0 * gc_count) / seq_length;
 }
-

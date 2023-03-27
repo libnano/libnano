@@ -74,4 +74,3 @@ int sf_gcWindow(char* seq, int length, int gc_min_percent, int gc_max_percent,
     }
     return 1;
 }
-

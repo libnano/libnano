@@ -93,8 +93,8 @@ int ss_hamming(const char *s1, const char *s2, int len) {
     return hamming_distance;
 }
 
-int ss_rollingHamming(const char *s1, const char *s2, 
-                        int len1, int len2, 
+int ss_rollingHamming(const char *s1, const char *s2,
+                        int len1, int len2,
                         int overlap,
                         int* hamming_arr_ptr) {
     /*
@@ -105,7 +105,7 @@ int ss_rollingHamming(const char *s1, const char *s2,
     Internal
     XXXXXXX          to           XXXXXXX
     YYYYYYYYYYYYY           YYYYYYYYYYYYY
-    
+
     5' overlap
     XXXXXXX
       YYYYYYYYYYYYY
@@ -122,10 +122,10 @@ int ss_rollingHamming(const char *s1, const char *s2,
     char *s2_start_ptr = (char *) s2;
     int i;
     // check internal
-    for (ham_ptr = hamming_arr_ptr + overlap; 
+    for (ham_ptr = hamming_arr_ptr + overlap;
         ham_ptr < hamming_arr_ptr_lim;
         ham_ptr++) {
-        
+
         s1_ptr = (char *) s1;
         s2_ptr = s2_start_ptr++;
         const char *s2_ptr_lim = s2_ptr + len1;
@@ -198,7 +198,7 @@ int ss_minHamming(const char *s1, const char *s2, int len1, int len2) {
     return min_hd;
 }
 
-int ss_minHammingThreshold(const char *s1, const char *s2, 
+int ss_minHammingThreshold(const char *s1, const char *s2,
                                 int len1, int len2, int threshold) {
 
     const int num_positions = len2 - len1 + 1;
@@ -231,16 +231,16 @@ int ss_minHammingThreshold(const char *s1, const char *s2,
 }
 
 #define MISMATCH_LENGTH 3
-unsigned char ss_hammingAnd3pMismatchCheck(const char *s1, const char *s2, 
+unsigned char ss_hammingAnd3pMismatchCheck(const char *s1, const char *s2,
                  const int len, const int min_dist) {
     /* do hamming checks of s1 versus s2 in the following four (4) ways
      1. full s1, full s2
-     2. MISMATCH_LENGTH 3p (right most) bases looking for a mismatch of s1, 
+     2. MISMATCH_LENGTH 3p (right most) bases looking for a mismatch of s1,
         and s2
      3. full s1, full reverse s2 (not the complement)
-     4. MISMATCH_LENGTH 3p (right most) bases looking for a mismatch of s1, 
+     4. MISMATCH_LENGTH 3p (right most) bases looking for a mismatch of s1,
         and rev s2
-     5. MISMATCH_LENGTH 3p (right most) bases looking for a mismatch of rev s1, 
+     5. MISMATCH_LENGTH 3p (right most) bases looking for a mismatch of rev s1,
         and s2.  This is needed for symmetry
     */
     int hamming_distance = 0;
@@ -255,8 +255,8 @@ unsigned char ss_hammingAnd3pMismatchCheck(const char *s1, const char *s2,
     const char * s1_ptr_lim_3p = s1_ptr_lim - MISMATCH_LENGTH;
     const char * s1_ptr_lim_5p = s1_ptr + MISMATCH_LENGTH;
 
-    // note:  due to operator precedence 
-    // *++x increments and then derefereces, *x++ dereferences x and 
+    // note:  due to operator precedence
+    // *++x increments and then derefereces, *x++ dereferences x and
     // increments x after using *x
 
     // 1. get the hamming distance
@@ -297,13 +297,13 @@ unsigned char ss_hammingAnd3pMismatchCheck(const char *s1, const char *s2,
         }
     }
 
-    
+
     // now check the
 
     // check this out.
-    if ((hamming_distance > min_dist) && 
-        (mismatch_distance) && 
-        (hamming_distance_rev > min_dist) && 
+    if ((hamming_distance > min_dist) &&
+        (mismatch_distance) &&
+        (hamming_distance_rev > min_dist) &&
         (mismatch_distance_revA) &&
         (mismatch_distance_revB)
         ) {
@@ -316,7 +316,7 @@ unsigned char ss_hammingAnd3pMismatchCheck(const char *s1, const char *s2,
 int ss_hamming2XCheck(const char *s1, const char *s2, int len, const int min_dist) {
     int hamming_distance = 0;
     int hamming_distance_rev = 0;
-    
+
     char *s1_ptr = (char *) s1;
     char *s2_ptr = (char *) s2;
     const char * s1_ptr_lim = s1_ptr + len;
@@ -337,7 +337,7 @@ int ss_hamming2XCheck(const char *s1, const char *s2, int len, const int min_dis
     }
 
     // check this out.
-    if ((hamming_distance > min_dist) && 
+    if ((hamming_distance > min_dist) &&
         (hamming_distance_rev > min_dist)
         ) {
         return 1;

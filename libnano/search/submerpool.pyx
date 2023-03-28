@@ -28,8 +28,7 @@ from typing import (
     Union,
 )
 
-from seedmatch import SeedMatcher
-
+from libnano.search.seedmatch import SeedMatcher
 from libnano.seqstr import thresholdRollingHammingList
 
 # Computed using seedfinder.pyx

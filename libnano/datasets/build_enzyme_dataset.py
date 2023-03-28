@@ -124,12 +124,12 @@ REGEX_BASE_LUT: Dict[str, str] = {
 NEB_ALPHABET: str = ''.join(REGEX_BASE_LUT.keys())
 
 # Checks for symmetric + internal cutsite annotation
-NEB_I_SHORTHAND_RE: _sre.SRE_Pattern = re.compile(
+NEB_I_SHORTHAND_RE = re.compile(
     r'^[\^' + NEB_ALPHABET + ']+$',
 )
 
 # Pulls out indices and sequence from a parenthetical cutsite annotation
-NEB_P_SHORTHAND_RE: _sre.SRE_Pattern = re.compile(
+NEB_P_SHORTHAND_RE = re.compile(
     r'^(?:\((?P<startidx>[\d|-]+)/(?P<startrevidx>[\d|-]+)\))?'
     '(?P<seq>[' + NEB_ALPHABET + ']+)'
     r'(?:\((?P<endidx>[\d|-]+)/(?P<endrevidx>[\d|-]+)\))?$',

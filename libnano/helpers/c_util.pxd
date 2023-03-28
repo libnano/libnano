@@ -46,7 +46,7 @@ cdef extern from 'Python.h':
     object PyBytes_FromStringAndSize(const char *, Py_ssize_t)
     char* PyBytes_AsString(object)
 
-    char* PyUnicode_AsUTF8AndSize(object, Py_ssize_t *)
+    const char* PyUnicode_AsUTF8AndSize(object, Py_ssize_t *)
     object PyUnicode_FromString(const char *)
     object PyUnicode_FromStringAndSize(const char *, Py_ssize_t)
     char* PyUnicode_AsUTF8(object)
@@ -84,12 +84,12 @@ cdef inline object copy_obj_to_cstr_unsafe(
         o2 = PyBytes_FromStringAndSize(c_str1, b_length)
         c_str2[0] = PyBytes_AsString(o2)
     else:
-        c_str1 = PyUnicode_AsUTF8AndSize(o1, length)
+        c_str1 = <char*> PyUnicode_AsUTF8AndSize(o1, length)
         if c_str1 == NULL:
             raise OSError('copy_obj_to_cstr:')
         b_length = length[0]
         o2 = PyUnicode_FromStringAndSize(<const char *>c_str1, b_length)
-        c_str2[0] = PyUnicode_AsUTF8(o2)
+        c_str2[0] = <char*> PyUnicode_AsUTF8(o2)
 
     return o2
 
@@ -130,7 +130,7 @@ cdef inline int copy_obj_to_cstr(
         obj_type = 1
     else:
         obj_type = 0
-        c_str1 = PyUnicode_AsUTF8AndSize(
+        c_str1 = <char*> PyUnicode_AsUTF8AndSize(
             o1,
             length,
         )
@@ -227,8 +227,10 @@ cdef inline char* obj_to_cstr(
         c_str1: string pointer to the internal string of the o1
 
     '''
-    cdef char* c_str1
-    cdef Py_ssize_t length
+    cdef:
+        char* c_str1
+        Py_ssize_t length
+
     if PyBytes_Check(o1):
         if PyBytes_AsStringAndSize(
             o1,
@@ -238,7 +240,7 @@ cdef inline char* obj_to_cstr(
             raise OSError('obj_to_cstr: bytes error')
         return c_str1
     else:
-        c_str1 = PyUnicode_AsUTF8AndSize(
+        c_str1 = <char*> PyUnicode_AsUTF8AndSize(
             o1,
             &length,
         )
@@ -254,7 +256,9 @@ cdef inline char* obj_to_cstr_len(
     '''
     Same as above but fetches the string length too
     '''
-    cdef char* c_str1
+    cdef:
+        char* c_str1
+
     if PyBytes_Check(o1):
         if PyBytes_AsStringAndSize(
             o1,
@@ -264,7 +268,7 @@ cdef inline char* obj_to_cstr_len(
             raise OSError('obj_to_cstr_len: bytes error')
         return c_str1
     else:
-        c_str1 = PyUnicode_AsUTF8AndSize(
+        c_str1 = <char*> PyUnicode_AsUTF8AndSize(
             o1,
             length,
         )

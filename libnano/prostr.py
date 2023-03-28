@@ -159,7 +159,7 @@ class WeightedReverseTranslator(ReverseTranslator):
             freq_lut = dataset_container.CODON_FREQ_DATASET_U[
                 coerce_type(
                     organism,
-                ),
+                )
             ]
         else:
             def coerce_type(s):
@@ -167,7 +167,7 @@ class WeightedReverseTranslator(ReverseTranslator):
             freq_lut = dataset_container.CODON_FREQ_DATASET[
                 coerce_type(
                     organism,
-                ),
+                )
             ]
         self.h_freq_codon_lut = self._findHighestFreqCodons(freq_lut)
         freq_lut = self._applyFreqThreshold(freq_lut, freq_threshold)

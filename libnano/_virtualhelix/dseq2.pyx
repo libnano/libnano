@@ -19,10 +19,9 @@
 libnano._virtualhelix.dseq2
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 '''
-cimport c_util
-
 # cimport libnano.seqstr
 from libnano.cymem.cymem cimport Pool
+from libnano.helpers cimport c_util
 
 
 cdef class DSeq2:

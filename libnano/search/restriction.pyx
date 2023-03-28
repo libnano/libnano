@@ -27,38 +27,29 @@ from enum import IntEnum
 from typing import (
     Iterable,
     List,
-    NamedTuple,
     Tuple,
     Union,
 )
 
 from libnano.datasets import dataset_container  # DatasetContainer,
+from libnano.search.restrictionmatch import (
+    CUT_IDXS_T,
+    RestrictionMatch,
+)
 from libnano.seqstr import complement  # type: ignore
 
 # import pprint
 
-
 STR_T = Union[str, bytes]
-CUT_IDXS_T = Tuple[Tuple[int, int], ...]
-REGEX_PAIR_T = Tuple[STR_T, STR_T]
-REGEX_PAIR_COMP_T = Tuple['SRE_Pattern', 'SRE_Pattern']
+
 
 class StrandDirEnum(IntEnum):
     Forward = 1
     Reverse = -1
-cdef int FORWARD = 1
-cdef int REVERSE = -1
 
-
-class RestrictionMatch(NamedTuple):
-    strand_dir: int
-    start_idx: int
-    end_idx: int
-    enzyme: str
-    cutside_number: int  # Index into the list of cutsites for the enzyme
-    cut_idxs: CUT_IDXS_T
-    pair_regex: str
-
+cdef:
+    int FORWARD = 1
+    int REVERSE = -1
 
 # import pprint
 # pprint.pprint(dataset_container.ENZYME_DATASET_U['M.BceSV'])
@@ -92,10 +83,10 @@ cdef class RestrictionSearcher:
         full_regexs == Includes ambiguous bases outside of core.  Usually we want this!
         '''
         cdef:
-            list core_regexs = []          # type: List[REGEX_PAIR_T]
-            list core_regexs_compiled = [] # type List[REGEX_PAIR_COMP_T]
-            list full_regexs = []          # type: List[REGEX_PAIR_T]
-            list full_regexs_compiled = [] # List[REGEX_PAIR_COMP_T]
+            list core_regexs = []
+            list core_regexs_compiled = []
+            list full_regexs = []
+            list full_regexs_compiled = []
             list cutsite_idxs_list = []    # type: List[CUT_IDXS_T]
 
         if isinstance(enzyme_names[0], str):

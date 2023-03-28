@@ -43,7 +43,7 @@ import numpy as np
 cimport numpy as cnp
 
 cnp.import_array()
-cimport c_util  # ignore: type
+from libnano.helpers cimport c_util  # ignore: type
 
 # from cpython.mem cimport (
 #     PyMem_Free,

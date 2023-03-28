@@ -76,12 +76,12 @@ class DSeq:
     '''
 
     def __init__(
-        self,
-        fwd: str,
-        rev: str = '',
-        overhang: Optional[int] = None,
-        is_circular: bool = False,
-        alphabet: int = AlphaEnum.DNA,
+            self,
+            fwd: str,
+            rev: str = '',
+            overhang: Optional[int] = None,
+            is_circular: bool = False,
+            alphabet: int = AlphaEnum.DNA,
     ):
         '''
         Args:
@@ -184,6 +184,7 @@ class DSeq:
                 reference_end_idx,
                 read_start_idx,
                 read_end_idx,
+                cigar_pair_list=[],
             )
             self.rc_rev_str = reverseComplement(rev)
         self.the_length = the_length
@@ -327,8 +328,8 @@ class DSeq:
     def __eq__(self, other) -> bool:
         elements = (
             'the_length',
-            'fwd',
-            'rev',
+            'fwd_str',
+            'rev_str',
             'overhang',
             'is_circular',
         )

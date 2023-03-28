@@ -60,8 +60,8 @@ from primer3 import (  # type: ignore
 )
 
 from libnano import DATASET_DIR
-from libnano.metric.seqmetric import gcContent  # type: ignore
-from libnano.seqstr import reverseComplement as rc  # type: ignore
+from libnano.metric.seqmetric import gc_content  # type: ignore
+from libnano.seqstr import reverse_complement as rc  # type: ignore
 
 with io.open(op.join(DATASET_DIR, 'padlock.yaml'), 'r') as fd:
     PADLOCK_SEQS: dict = yaml.safe_load(
@@ -134,7 +134,7 @@ def DEFAULT_PADLOCK_CONFIG() -> Dict[str, Any]:
 P_PARAMS: dict = DEFAULT_PADLOCK_CONFIG()
 
 
-def createScaffold(
+def create_scaffold(
         barcode: str,
         scaf_type: str = 'solid',
 ) -> str:
@@ -168,7 +168,7 @@ def createScaffold(
     )
 
 
-def screenPadlockArms(
+def screen_padlock_arms(
         p_l_seq: str,
         p_r_seq: str,
         loop_seq: str,
@@ -207,8 +207,8 @@ def screenPadlockArms(
     }
 
     # 1. GC content checks
-    p_l_gc_content = gcContent(p_l_seq)
-    p_r_gc_content = gcContent(p_r_seq)
+    p_l_gc_content = gc_content(p_l_seq)
+    p_r_gc_content = gc_content(p_r_seq)
     if p_l_gc_content < p_params['arm_gc_min']:
         if do_print:
             print('\tgc content L min fail %0.3f' % p_l_gc_content)
@@ -231,7 +231,7 @@ def screenPadlockArms(
     report['arm_gc_max_r'] = p_r_gc_content
 
     # 2. GC clamp checks
-    l_3p_check = padlockLeftArmGCClamp(p_l_seq)
+    l_3p_check = padlock_left_arm_gc_clamp(p_l_seq)
     if l_3p_check > 3:
         if do_print:
             print('\tl clamp fail')
@@ -287,7 +287,7 @@ def screenPadlockArms(
     return is_good, report
 
 
-def splitHitList(
+def split_hit_list(
         items: List[Tuple[int, dict]],
         arm_length: int,
         spacing: int,
@@ -322,7 +322,7 @@ def splitHitList(
         return []
 
 
-def sortHitList(
+def sort_hit_list(
         items: List[Tuple[int, dict]],
 ) -> List[Tuple[int, dict]]:
     '''Sort max sum of arm Tms
@@ -337,7 +337,7 @@ def sortHitList(
     )
 
 
-def writePadlocksToCSV(
+def write_padlocks_to_csv(
         padlock_results: Dict[str, List[PadHit]],
         filename: str,
 ):
@@ -359,7 +359,7 @@ def writePadlocksToCSV(
     print('Wrote padlocks to %s' % filename)
 
 
-def generatePadlocks(
+def generate_padlocks(
         seq: str,
         name0: str,
         name1: str,
@@ -407,7 +407,7 @@ def generatePadlocks(
     if len(barcodes) == 0 or not isinstance(barcodes, (tuple, list)):
         raise ValueError('barcodes length must be non-zero')
     for barcode in barcodes:
-        candidate_scaffold = createScaffold(
+        candidate_scaffold = create_scaffold(
             barcode,
             scaf_type='hybrid',
         )
@@ -427,7 +427,7 @@ def generatePadlocks(
                 i + arm_length +
                 gap_size:i + arm_length2 + gap_size
             ]
-            is_good, report = screenPadlockArms(
+            is_good, report = screen_padlock_arms(
                 l_primer,
                 r_primer,
                 scaffold,
@@ -440,12 +440,12 @@ def generatePadlocks(
             # elif do_print:
             #     print("FAILURE")
             #     pprint(report)
-    hit_lists = splitHitList(
+    hit_lists = split_hit_list(
         items,
         arm_length=arm_length,
         spacing=spacing,
     )
-    hit_lists = [sortHitList(x) for x in hit_lists]
+    hit_lists = [sort_hit_list(x) for x in hit_lists]
 
     if do_print:
         print(f'The number of hits: {len(hit_lists)}')
@@ -486,7 +486,7 @@ def generatePadlocks(
     return sequences_list
 
 
-def padlockRightArmGCClamp(
+def padlock_right_arm_gc_clamp(
         p: str,
 ) -> int:
     '''
@@ -502,7 +502,7 @@ def padlockRightArmGCClamp(
     return r_3p_check
 
 
-def padlockLeftArmGCClamp(
+def padlock_left_arm_gc_clamp(
         p: str,
 ) -> int:
     '''

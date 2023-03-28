@@ -93,7 +93,7 @@ cdef class SeedMatcher:
             seed: STR_T,
             reference_list: List[STR_T],
             debug: bool = False,
-        ):
+    ):
         self.mem = None
         self.reference_list = None
         self.reference_list_length = 0
@@ -128,7 +128,7 @@ cdef class SeedMatcher:
             debug:  If True, priner debug messages
         '''
         cdef:
-            Py_ssize_t i, j, k
+            Py_ssize_t i, k
             Py_ssize_t reference_list_length, total_seq_length
             Py_ssize_t seed_len
             int offset_last, check
@@ -242,7 +242,7 @@ cdef class SeedMatcher:
         shl_free_hash_obj(self.search_obj)
 
 
-    cdef list toList(self, tuple_t* matches, int repeat_count):
+    cdef list to_list(self, tuple_t* matches, int repeat_count):
         cdef:
             Py_ssize_t i
             list outlist = [None] * repeat_count
@@ -295,7 +295,7 @@ cdef class SeedMatcher:
                 repeat_count,
                 sizeof(tuple_t),
             )
-            outlist = self.toList(
+            outlist = self.to_list(
                 matches,
                 repeat_count,
             )

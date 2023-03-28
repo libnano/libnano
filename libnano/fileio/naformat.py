@@ -38,8 +38,8 @@ from ssw import (  # type: ignore
 )
 
 from libnano.seqstr import (  # type: ignore
-    reverse,
-    reverseComplement,
+    reverse_complement,
+    reverse_seq,
 )
 
 IS_WINDOWS: bool = sys.platform == 'win32'
@@ -124,7 +124,7 @@ def align_complement(
             <Alignment instance>, <reverse strand reverse complement>
 
     '''
-    rc_rev: str = reverseComplement(rev)
+    rc_rev = reverse_complement(rev)
     alignment: Alignment = force_align(rc_rev, fwd)
     return alignment, rc_rev
 
@@ -150,7 +150,7 @@ def five_prime_type(
     if fwd_idx0 > rev_idx0:
         return PrimeEnum.FIVE, fwd[:fwd_idx0]
     elif fwd_idx0 < rev_idx0:
-        return PrimeEnum.THREE, reverse(reverse(rev)[:rev_idx0])
+        return PrimeEnum.THREE, reverse_seq(reverse_seq(rev)[:rev_idx0])
     else:
         return PrimeEnum.BLUNT, ''
 
@@ -179,7 +179,7 @@ def three_prime_type(
     if fwd_idx1 < max_idx_fwd:
         return PrimeEnum.THREE, fwd[fwd_idx1 + 1:]
     elif rev_idx1 < max_idx_rev:
-        return PrimeEnum.FIVE, reverse(reverse(rev)[rev_idx1 + 1:])
+        return PrimeEnum.FIVE, reverse_seq(reverse_seq(rev)[rev_idx1 + 1:])
     else:
         return PrimeEnum.BLUNT, ''
 
@@ -209,8 +209,8 @@ def string_align_complement(
     if alignment is None:
         alignment, rc_rev = align_complement(fwd, rev)
     if not rc_rev:
-        rc_rev = reverseComplement(rev)
-    reverse_rev: str = reverse(rev)
+        rc_rev = reverse_complement(rev)
+    reverse_rev: str = reverse_seq(rev)
 
     fwd_idx0: int = alignment.reference_start
     # fwd_idx1: int = alignment.reference_end

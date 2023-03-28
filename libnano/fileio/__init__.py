@@ -45,7 +45,7 @@ def getSeqFromFile(seq_fp: str) -> str:
     elif ext in ('.fa', '.fasta'):
         # Just returns the first sequence in the file for now --
         # this may be undesirable as a general behavior
-        return fasta.parseFasta(seq_fp)[0][1]
+        return fasta.parse_fasta(seq_fp)[0][1]
     return ''
 
 

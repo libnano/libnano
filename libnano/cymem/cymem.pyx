@@ -48,11 +48,13 @@ cdef class Pool:
         remember its address. The block will be freed when the Pool is garbage
         collected.
         '''
-        cdef void* p = NULL
-        cdef size_t block_size = number*elem_size
+        cdef:
+            void* p = NULL
+            size_t block_size = number * elem_size
+
         p = PyMem_Malloc(block_size)
         if p == NULL:
-            raise MemoryError("Couldn't allocate")
+            raise OSError('Could not allocate')
         self.addresses[<size_t>p] = block_size
         self.size += block_size
         return p
@@ -62,11 +64,13 @@ cdef class Pool:
         remember its address. The block will be freed when the Pool is garbage
         collected.
         '''
-        cdef void* p = NULL
-        cdef size_t block_size = number*elem_size
+        cdef:
+            void* p = NULL
+            size_t block_size = number*elem_size
+
         p = PyMem_Malloc(block_size)
         if p == NULL:
-            raise MemoryError("Couldn't allocate")
+            raise OSError("Could not allocate")
         memset(p, 0, block_size)
         self.addresses[<size_t>p] = block_size
         self.size += block_size
@@ -77,35 +81,38 @@ cdef class Pool:
         a non-NULL pointer to the new block. new_size must be larger than the
         original.
 
-        If p is not in the Pool or new_size is 0, a MemoryError is raised.
+        If p is not in the Pool or new_size is 0, a OSError is raised.
 
         This differs from normal Cymem in that it doesn't always memcpy when
         resizing
         '''
-        cdef void* new = NULL
-        cdef size_t old_size
+        cdef:
+            void* new_ptr = NULL
+            size_t old_size
 
         if <size_t>p not in self.addresses:
-            raise MemoryError("Pointer %d not found in Pool %s" % (<size_t>p, self.addresses))
+            raise OSError(
+                'Pointer %d not found in Pool %s' % (<size_t>p, self.addresses)
+            )
         if new_size == 0:
-            raise MemoryError("Realloc requires new_size != 0")
+            raise OSError('Realloc requires new_size != 0')
 
         old_size = self.addresses[<size_t>p]
 
-        new = PyMem_Realloc(p, new_size)
-        if new == NULL:
+        new_ptr = PyMem_Realloc(p, new_size)
+        if new_ptr == NULL:
             # __dealloc__ should handle freeing the memory in p
-            raise MemoryError("Realloc failed")
+            raise OSError('Realloc failed')
 
         self.size -= old_size
         self.size += new_size
 
         # only need to pop address if there as a change
-        if new != p:
+        if new_ptr != p:
             self.addresses.pop(<size_t>p)
 
-        self.addresses[<size_t>new] = new_size
-        return new
+        self.addresses[<size_t> new_ptr] = new_size
+        return new_ptr
 
     cdef void free(self, void* p) except *:
         '''Frees the memory block pointed to by p, which must have been returned
@@ -122,24 +129,25 @@ cdef class Pool:
         ''' Take ownership of a pointer not allocated by Pool
         New to libnano's version of cymem
         '''
-        cdef size_t block_size = number*elem_size
+        cdef size_t block_size = number * elem_size
         if <size_t>p in self.addresses:
-            raise MemoryError("Pointer %d already owned" % (<size_t>p))
+            raise OSError('Pointer %d already owned' % (<size_t>p))
         elif p == NULL:
-            raise MemoryError("Can't own NULL")
+            raise OSError('Cannot own NULL')
         else:
             self.addresses[<size_t>p] = block_size
             self.size += block_size
-    # end def
 
     cdef void disown(self, void* p) except *:
         ''' Like free but no actually memory freeing, allows for a another
         item to take over the memory
         '''
         if <size_t>p not in self.addresses:
-            raise MemoryError("Pointer %d not found in Pool %s" % (<size_t>p, self.addresses))
+            raise OSError(
+                'Pointer %d not found in Pool %s' % (<size_t>p, self.addresses)
+            )
         self.size -= self.addresses.pop(<size_t>p)
-    # end def
+
 
 cdef class Address:
     '''A block of number * size-bytes of 0-initialized memory, tied to a Python
@@ -164,9 +172,9 @@ cdef class Address:
         self.ptr = PyMem_Malloc(number * elem_size)
         memset(self.ptr, 0, number * elem_size)
 
-    property addr:
-        def __get__(self):
-            return <size_t>self.ptr
+    @property
+    def addr(self):
+        return <size_t> self.ptr
 
     def __dealloc__(self):
         PyMem_Free(self.ptr)

@@ -145,10 +145,10 @@ cdef class RepeatCheck:
     cdef inline repeatcheck_t* data(RepeatCheck self):
         return self.rcheck
 
-    def wordSize(self):
+    def word_size(self):
         return self.rcheck.word_size
 
-    def indicesOf(
+    def indices_of(
             self,
             query_obj,
     ) -> List[int]:
@@ -187,7 +187,7 @@ cdef class RepeatCheck:
         else:
             return []
 
-    def screenEnds(
+    def screen_ends(
             self,
             num_bases: int,
     ) -> Tuple[bool, bool]:
@@ -224,7 +224,7 @@ cdef class RepeatCheck:
                 is_3prime = True
         return (is_5prime, is_3prime)
 
-    def gapCheck(
+    def gap_check(
             self,
             gap_length: int,
     ) -> List[Tuple[int, int, int]]:
@@ -265,7 +265,7 @@ cdef class RepeatCheck:
             i += 1
         return out
 
-    def allRepeats(self) -> Dict[str, List[int]]:
+    def all_repeats(self) -> Dict[str, List[int]]:
         '''For each root repeat, return a dictionary of indices
         of the all repeats for which the root is the 5' end.  Filters
         out overlapping repeats returning only the list of the longest repeat
@@ -348,7 +348,7 @@ cdef class RepeatCheck:
             del res[x]
         return res
 
-    def windowCheck(
+    def window_check(
             self,
             window_size: int,
             max_repeat_count: int,
@@ -413,7 +413,7 @@ cdef class RepeatCheck:
                 PyMem_Free(repeat_violation_idxs)
         return out, counts
 
-    def getRepeatWindow(
+    def get_repeat_window(
             self,
             idx: int,
             window_size: int,
@@ -458,7 +458,7 @@ cdef class RepeatCheck:
                 ilist.append(test_val)
         return out
 
-    def fractionRepeats(self) -> float:
+    def fraction_repeats(self) -> float:
         '''Compute the total fraction of bases participating in repeats
         over the entire sequence
 
@@ -495,7 +495,7 @@ cdef class RepeatCheck:
         out = count
         return out / seq_length
 
-    def windowFractionLimit(
+    def window_fraction_limit(
             self,
             window_size: int,
             cutoff: float,

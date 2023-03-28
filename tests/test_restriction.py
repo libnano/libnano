@@ -22,24 +22,22 @@ tests.test_restriction
 '''
 import unittest
 
-import conftest
-
 from libnano.datasets import (
     dataset_container,
-    qcEnzymeDataset,
+    qc_enzyme_dataset,
 )
-from libnano.search import restriction
+from libnano.search import restriction  # type: ignore
 
 
 class TestRestriction(unittest.TestCase):
 
-    def test_enzymeDataset(self):
+    def test_enzyme_dataset(self):
         ''' Test the integrity of the current dataset '''
-        qcEnzymeDataset(
+        qc_enzyme_dataset(
             dataset_container.ENZYME_DATASET,
         )
 
-    def test_bytesSupport(self):
+    def test_bytes_support(self):
         rs = restriction.RestrictionSearcher(
             'EcoRI',
             'BsaI',
@@ -47,7 +45,7 @@ class TestRestriction(unittest.TestCase):
         )
         self.assertRaises(
             TypeError,
-            rs.findSites,
+            rs.find_sites,
             (b'ATTTGGACCAG'),
         )
         rs = restriction.RestrictionSearcher(
@@ -57,12 +55,12 @@ class TestRestriction(unittest.TestCase):
         )
         self.assertRaises(
             TypeError,
-            rs.findSites,
+            rs.find_sites,
             ('ATTTGGACCAG'),
         )
 
-    def test_sitesPresent(self):
-        ''' Test RestrictionSearcher.sitesPresent '''
+    def test_sites_present(self):
+        ''' Test RestrictionSearcher.sites_present '''
         rs = restriction.RestrictionSearcher(
             'EcoRI',
             'BsaI',
@@ -71,10 +69,10 @@ class TestRestriction(unittest.TestCase):
         # Contains the full EcoRI site
         ecori_seq = 'GAATTC'
         self.assertTrue(
-            rs.sitesPresent(ecori_seq),
+            rs.sites_present(ecori_seq),
         )
         self.assertTrue(
-            rs.sitesPresent(
+            rs.sites_present(
                 ecori_seq,
                 full_sites=False,
             ),
@@ -82,10 +80,10 @@ class TestRestriction(unittest.TestCase):
         # Contains only the core BsaI site
         bsai_core_only_seq = 'GGTCTC'
         self.assertFalse(
-            rs.sitesPresent(bsai_core_only_seq),
+            rs.sites_present(bsai_core_only_seq),
         )
         self.assertTrue(
-            rs.sitesPresent(
+            rs.sites_present(
                 bsai_core_only_seq,
                 full_sites=False,
             ),
@@ -93,25 +91,25 @@ class TestRestriction(unittest.TestCase):
         # Contains both EcoRI and BsaI full sites, overlapping
         ecori_bsai_seq = 'GGTCTCGAATTC'
         self.assertTrue(
-            rs.sitesPresent(ecori_bsai_seq),
+            rs.sites_present(ecori_bsai_seq),
         )
         self.assertTrue(
-            rs.sitesPresent(
+            rs.sites_present(
                 ecori_bsai_seq,
                 full_sites=False,
             ),
         )
         # Compare instance method to function
         self.assertEqual(
-            rs.sitesPresent(ecori_bsai_seq),
-            restriction.sitesPresent(
+            rs.sites_present(ecori_bsai_seq),
+            restriction.sites_present(
                 ecori_bsai_seq,
                 ['EcoRI', 'BsaI', 'BaeI'],
             ),
         )
 
     def test_count_sites(self):
-        ''' Test RestrictionSearcher.countSites '''
+        ''' Test RestrictionSearcher.count_sites '''
         rs = restriction.RestrictionSearcher(
             'EcoRI',
             'BsaI',
@@ -119,7 +117,7 @@ class TestRestriction(unittest.TestCase):
         )
         # Contains one copy of the EcoRI site (palindromic, count should be 2)
         ecori_seq = 'GAATTC'
-        counts = rs.countSites(ecori_seq)
+        counts = rs.count_sites(ecori_seq)
         self.assertTrue(
             counts[0] == 2 and
             counts[1] == 0 and
@@ -128,14 +126,14 @@ class TestRestriction(unittest.TestCase):
         # Contains only the core BsaI site (not palindromic, count should be 1)
         bsai_core_only_seq = 'GGTCTC'
         # Looking for full sites so all counts should be 0
-        counts = rs.countSites(bsai_core_only_seq)
+        counts = rs.count_sites(bsai_core_only_seq)
         self.assertTrue(
             counts[0] == 0 and
             counts[1] == 0 and
             counts[2] == 0,
         )
         # Looking for core sites so BsaI count should be 1
-        counts = rs.countSites(
+        counts = rs.count_sites(
             bsai_core_only_seq,
             full_sites=False,
         )
@@ -146,7 +144,7 @@ class TestRestriction(unittest.TestCase):
         )
         # Contains both EcoRI and BsaI full sites, overlapping
         ecori_bsai_seq = 'GGTCTCGAATTC'
-        counts = rs.countSites(
+        counts = rs.count_sites(
             ecori_bsai_seq,
         )
         self.assertTrue(
@@ -154,7 +152,7 @@ class TestRestriction(unittest.TestCase):
             counts[1] == 1 and
             counts[2] == 0,
         )
-        counts = rs.countSites(
+        counts = rs.count_sites(
             ecori_bsai_seq,
             full_sites=False,
         )
@@ -165,15 +163,15 @@ class TestRestriction(unittest.TestCase):
         )
         # Compare instance method to function
         self.assertEqual(
-            rs.countSites(ecori_bsai_seq),
-            restriction.countSites(
+            rs.count_sites(ecori_bsai_seq),
+            restriction.count_sites(
                 ecori_bsai_seq,
                 ['EcoRI', 'BsaI', 'BaeI'],
             ),
         )
 
     def test_find_sites(self):
-        '''Test RestrictionSearcher.findSites
+        '''Test RestrictionSearcher.find_sites
 
         '''
         rs = restriction.RestrictionSearcher(
@@ -183,7 +181,7 @@ class TestRestriction(unittest.TestCase):
         )
         # Contains both EcoRI and BsaI full sites, overlapping
         ecori_bsai_seq = 'GGTCTCGAATTC'
-        sites = rs.findSites(ecori_bsai_seq)
+        sites = rs.find_sites(ecori_bsai_seq)
         self.assertTrue(
             len(sites[0]) == 2 and
             len(sites[1]) == 1 and
@@ -218,8 +216,8 @@ class TestRestriction(unittest.TestCase):
         )
         # Compare instance method to function
         self.assertEqual(
-            rs.findSites(ecori_bsai_seq),
-            restriction.findSites(
+            rs.find_sites(ecori_bsai_seq),
+            restriction.find_sites(
                 ecori_bsai_seq,
                 ['EcoRI', 'BsaI', 'BaeI'],
             ),

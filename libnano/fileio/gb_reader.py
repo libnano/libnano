@@ -59,24 +59,24 @@ def parse(
         'FEATURES             Location/Qualifiers\n',
     )
 
-    d_info.update(parseLocus(start))
-    d_info.update(parseDefinition(start))
-    d_info.update(parseAccession(start))
-    d_info.update(parseVersion(start))
-    d_info.update(parseDBLink(start))
-    d_info.update(parseKeywords(start))
-    d_info.update(parseSource(start))
-    d_info.update(parseOrganism(start))
+    d_info.update(parse_locus(start))
+    d_info.update(parse_definition(start))
+    d_info.update(parse_accession(start))
+    d_info.update(parse_version(start))
+    d_info.update(parse_db_link(start))
+    d_info.update(parse_keywords(start))
+    d_info.update(parse_source(start))
+    d_info.update(parse_organism(start))
 
-    d_info['references'] = parseReference(start)
+    d_info['references'] = parse_reference(start)
     _, _, comment = start.partition('COMMENT     ')
-    parseComment(d_info, comment)
-    d['features'] = parseFeatures(features, is_ordered)
-    d['seq'] = parseOrigin(origin)
+    parse_comment(d_info, comment)
+    d['features'] = parse_features(features, is_ordered)
+    d['seq'] = parse_origin(origin)
     return d
 
 
-def parseComment(
+def parse_comment(
         d: Dict,
         comment: str,
 ) -> None:
@@ -196,7 +196,7 @@ RE_COMP_LOCUS = re.compile(
 )
 
 
-def parseLocus(
+def parse_locus(
         raw: str,
 ) -> Dict[str, Any]:
     '''Parse locus into dictionary
@@ -216,7 +216,7 @@ def parseLocus(
 RE_COMP_DEFINITION = re.compile(RE_DEFINITION, flags=re.M)
 
 
-def parseDefinition(
+def parse_definition(
         raw: str,
 ) -> Dict:
     '''Parse definition into dictionary
@@ -238,7 +238,7 @@ def parseDefinition(
 RE_COMP_ACCESSION = re.compile(RE_ACCESSION, flags=re.M)
 
 
-def parseAccession(
+def parse_accession(
         raw: str,
 ) -> Dict:
     '''Parse accession into dictionary
@@ -256,7 +256,7 @@ def parseAccession(
 RE_COMP_VERSION = re.compile(RE_VERSION, flags=re.M)
 
 
-def parseVersion(
+def parse_version(
         raw: str,
 ) -> Dict:
     '''Parse version into dictionary
@@ -279,7 +279,7 @@ RE_COMP_DBLINK = re.compile(
 )
 
 
-def parseDBLink(
+def parse_db_link(
         raw: str,
 ) -> Dict:
     '''Parse DB Link into dictionary
@@ -300,7 +300,7 @@ RE_COMP_KEYWORDS = re.compile(
 )
 
 
-def parseKeywords(
+def parse_keywords(
         raw: str,
 ) -> Dict:
     '''Parse keywords into dictionary
@@ -321,7 +321,7 @@ RE_COMP_SOURCE = re.compile(
 )
 
 
-def parseSource(
+def parse_source(
         raw: str,
 ) -> Dict:
     '''Parse source into dictionary
@@ -342,7 +342,7 @@ RE_COMP_ORGANISM = re.compile(
 )
 
 
-def parseOrganism(
+def parse_organism(
         raw: str,
 ) -> Dict:
     '''Parse organism into dictionary
@@ -402,7 +402,7 @@ RE_COMP_REF = re.compile(
 )
 
 
-def parseReference(
+def parse_reference(
         raw: str,
 ) -> List[dict]:
     '''Parse reference into a list of dictionaries
@@ -436,7 +436,7 @@ def parseReference(
     return ref_list
 
 
-def addMultivalue(
+def add_multivalue(
         d: Dict,
         key: str,
         val: Any,
@@ -473,7 +473,7 @@ RE_COMP_FEATURE = re.compile(RE_FEATURE, flags=re.M)
 # Qualifers can have tags with /'s in the value so it's tough to escape them
 # for now we need to split on "                     /"
 
-def parseFeatures(
+def parse_features(
         raw: str,
         is_ordered: bool = False,
 ) -> List[dict]:
@@ -535,13 +535,13 @@ def parseFeatures(
                 value_to_add = None
             else:
                 value_to_add = temp if is_str else int(temp)
-            addMultivalue(qs, key, value_to_add)
+            add_multivalue(qs, key, value_to_add)
         features_list.append(d)
 
     return features_list
 
 
-def parseOrigin(raw: str) -> str:
+def parse_origin(raw: str) -> str:
     '''
     Parse origin into a string
 

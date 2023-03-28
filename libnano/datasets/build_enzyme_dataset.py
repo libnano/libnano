@@ -1,4 +1,5 @@
-# Copyright (C) 2023. Nick Conway;
+# Copyright (C) 2014-2018. Nick Conway & Ben Pruitt; Wyss Institute
+# Copyright (C) 2023 Nick Conway & Ben Pruitt;
 # See LICENSE.TXT for full GPLv2 license.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -74,24 +75,22 @@ Here are some notes on NEB Rebase cutsite/shorthand formatting:
 from __future__ import print_function
 
 import json
-import os
-# import pprint
+import os.path as op
 import re
 import sys
 import urllib.request as urllib2
-from typing import (
+from typing import (  # Union,
     Any,
     Dict,
     List,
+    NamedTuple,
+    Optional,
     Tuple,
 )
-
-import _sre  # type: ignore
 
 try:
     import libnano
 except (ImportError, ModuleNotFoundError):
-    import os.path as op
     LIBNANO_PATH = op.dirname(
         op.dirname(
             op.dirname(op.abspath(__file__)),
@@ -99,9 +98,11 @@ except (ImportError, ModuleNotFoundError):
     )
     sys.path = [LIBNANO_PATH] + sys.path
 from libnano.helpers.jsonbytes import base_decode_dict
-from libnano.seqstr import reverseComplement  # type: ignore
+from libnano.seqstr import reverse_complement as _rc  # type: ignore
 
-LOCAL_DIR: str = os.path.dirname(os.path.realpath(__file__))
+LOCAL_DIR: str = op.dirname(
+    op.realpath(__file__),
+)
 
 REGEX_BASE_LUT: Dict[str, str] = {
     'A': 'A',
@@ -121,7 +122,7 @@ REGEX_BASE_LUT: Dict[str, str] = {
     'N': 'N',       # leave N's put
 }
 
-NEB_ALPHABET: str = ''.join(REGEX_BASE_LUT.keys())
+NEB_ALPHABET = ''.join(REGEX_BASE_LUT.keys())
 
 # Checks for symmetric + internal cutsite annotation
 NEB_I_SHORTHAND_RE = re.compile(
@@ -135,15 +136,34 @@ NEB_P_SHORTHAND_RE = re.compile(
     r'(?:\((?P<endidx>[\d|-]+)/(?P<endrevidx>[\d|-]+)\))?$',
 )
 
-# Create a short hand to keep lines short
-_rc = reverseComplement
+
+class EnzymeTuple(NamedTuple):
+    name: str
+    prototype: str
+    microorganism: str
+    source: str
+    recognition_sequence: str
+    methylation_site: str
+    commercial_availability: str
+    references: List[int]
 
 
-def condInt(i):
+def conditional_int(
+        i: Optional[str],
+) -> Optional[int]:
+    '''
+    Args:
+        i: string or None
+
+    Returns:
+        integer version of the string or None
+    '''
     return int(i) if i is not None else None
 
 
-def seqToRegex(seq: str) -> str:
+def seq_to_regex(
+        seq: str,
+) -> str:
     '''Convert sequence to regex
 
     Args:
@@ -173,7 +193,8 @@ def seqToRegex(seq: str) -> str:
     return regex_str
 
 
-def getRebaseList() -> Tuple[int, List, List]:
+def get_rebase_list(
+) -> Tuple[int, List[EnzymeTuple], List[str]]:
     '''Get the latest list of restriction enzymes from NEB Rebase.
 
         The enzyme list is a list of tuples with the following fields as
@@ -200,10 +221,10 @@ def getRebaseList() -> Tuple[int, List, List]:
             )
 
     '''
-    ENZYME_LIST_URL = 'http://rebase.neb.com/rebase/link_allenz'
-    ENZYME_LIST_RE = r''.join(r'<%d>(.*)\n' % n for n in range(1, 9))
-    REFERENCE_LIST_RE = r'(\d+)[.][ \t]+(.*)\n'
-    REQUEST_HEADERS = {
+    enzyme_list_url = 'http://rebase.neb.com/rebase/link_allenz'
+    enzyme_list_re = r''.join(r'<%d>(.*)\n' % n for n in range(1, 9))
+    reference_list_re = r'(\d+)[.][ \t]+(.*)\n'
+    request_headers = {
         'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.11 ' +
                       '(KHTML, like Gecko) Chrome/23.0.1271.64 Safari/537.11',
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,' +
@@ -214,26 +235,49 @@ def getRebaseList() -> Tuple[int, List, List]:
         'Connection': 'keep-alive',
     }
 
-    req = urllib2.Request(ENZYME_LIST_URL, headers=REQUEST_HEADERS)
+    req = urllib2.Request(
+        enzyme_list_url,
+        headers=request_headers,
+    )
     res = urllib2.urlopen(req)
     raw_data = res.read().decode('utf8')
     reference_section = re.search(      # type: ignore
-        r'References:(.*)', raw_data,
+        r'References:(.*)',
+        raw_data,
         flags=re.S,
     ).group(1)
     database_version = int(      # type: ignore
         re.search(r'allenz\.(\d+)', raw_data).group(1),  # type: ignore
     )
-    enzyme_data = re.findall(ENZYME_LIST_RE, raw_data)
+    enzyme_data_raw = re.findall(
+        enzyme_list_re,
+        raw_data,
+    )
+    enzyme_data = [
+        EnzymeTuple(
+            name=ed[0],
+            prototype=ed[1],
+            microorganism=ed[2],
+            source=ed[3],
+            recognition_sequence=ed[4],
+            methylation_site=ed[5],
+            commercial_availability=ed[6],
+            references=ed[7].split(','),
+        )
+        for ed in enzyme_data_raw
+    ]
+
     references = [None] + [
-        ref for ref_num, ref in re.findall(
-            REFERENCE_LIST_RE, reference_section,
+        ref for _, ref in re.findall(
+            reference_list_re, reference_section,
         )
     ]
     return database_version, enzyme_data, references
 
 
-def processNebShorthand(neb_shorthand: str) -> Dict[str, Any]:
+def process_neb_shorthand(
+        neb_shorthand: str,
+) -> Dict[str, Any]:
     '''Process NEB shorthand for an enzyme cutsite.
 
     Args:
@@ -294,10 +338,10 @@ def processNebShorthand(neb_shorthand: str) -> Dict[str, Any]:
         # Asymmetric cutsite or cutsite outside of recognition sequence
         if match is not None:
             si, sri, ei, eri = (
-                condInt(match.group('startidx')),
-                condInt(match.group('startrevidx')),
-                condInt(match.group('endidx')),
-                condInt(match.group('endrevidx')),
+                conditional_int(match.group('startidx')),
+                conditional_int(match.group('startrevidx')),
+                conditional_int(match.group('endidx')),
+                conditional_int(match.group('endrevidx')),
             )
             seq = match.group('seq')
             core_seq = [seq, _rc(seq)]
@@ -305,24 +349,28 @@ def processNebShorthand(neb_shorthand: str) -> Dict[str, Any]:
 
             # max(si, sri) is None doesn't work in Python 3
             # not sure I am translating logic correctly
-            if (si is None and sri is None) and max(ei, eri) < 1:
-                full_seq = core_seq
-            # Cutsite outside of recognition sequence
-            else:
-                # IMPORTANT: Check if si and sri were found to be None by
-                # the regex to create the the sequence strings
-                si_temp: int = 0 if si is None else si
-                sri_temp: int = 0 if sri is None else sri
+            if ei is not None and eri is not None:
+                if (
+                    (si is None and sri is None) and
+                    max(ei, eri) < 1
+                ):
+                    full_seq = core_seq
+                # Cutsite outside of recognition sequence
+                else:
+                    # IMPORTANT: Check if si and sri were found to be None by
+                    # the regex to create the the sequence strings
+                    si_temp: int = 0 if si is None else si
+                    sri_temp: int = 0 if sri is None else sri
 
-                front_offset: int = max(si_temp, sri_temp, 0)
-                ex_seq = 'N' * front_offset + seq + 'N' * max(ei, eri, 0)
-                full_seq = [ex_seq, _rc(ex_seq)]
-                if si is not None and sri is not None:
-                    cutsite_idxs[0].append(front_offset - si)
-                    cutsite_idxs[1].append(front_offset - sri)
-                if ei is not None and eri is not None:
-                    cutsite_idxs[0].append(ei + front_offset + len(seq))
-                    cutsite_idxs[1].append(eri + front_offset + len(seq))
+                    front_offset: int = max(si_temp, sri_temp, 0)
+                    ex_seq = 'N' * front_offset + seq + 'N' * max(ei, eri, 0)
+                    full_seq = [ex_seq, _rc(ex_seq)]
+                    if si is not None and sri is not None:
+                        cutsite_idxs[0].append(front_offset - si)
+                        cutsite_idxs[1].append(front_offset - sri)
+                    if ei is not None and eri is not None:
+                        cutsite_idxs[0].append(ei + front_offset + len(seq))
+                        cutsite_idxs[1].append(eri + front_offset + len(seq))
         else:
             raise ValueError(
                 'Improperly formatted NEB shorthand: %s' %
@@ -330,8 +378,8 @@ def processNebShorthand(neb_shorthand: str) -> Dict[str, Any]:
             )
     # Build regular expressions
     if core_seq is not None:
-        core_regex = [seqToRegex(core_seq[0]), seqToRegex(core_seq[1])]
-        full_regex = [seqToRegex(full_seq[0]), seqToRegex(full_seq[1])]
+        core_regex = [seq_to_regex(core_seq[0]), seq_to_regex(core_seq[1])]
+        full_regex = [seq_to_regex(full_seq[0]), seq_to_regex(full_seq[1])]
     output_dict = {
         'core_seq': core_seq,
         'full_seq': full_seq,
@@ -343,7 +391,9 @@ def processNebShorthand(neb_shorthand: str) -> Dict[str, Any]:
     return output_dict
 
 
-def processEnzymeRecord(record_tuple: Tuple) -> Dict:
+def process_enzyme_record(
+        record_tuple: EnzymeTuple,
+) -> Dict[str, Any]:
     '''Process a raw record tuple from NEB Rebase.
 
     Recall the raw record tuple indexing is as follows::
@@ -383,9 +433,13 @@ def processEnzymeRecord(record_tuple: Tuple) -> Dict:
     if ',' in neb_shorthand:
         neb_shorthands = neb_shorthand.split(',')
         for ns in neb_shorthands:
-            cutsites.append(processNebShorthand(ns))
+            cutsites.append(
+                process_neb_shorthand(ns),
+            )
     else:
-        cutsites.append(processNebShorthand(neb_shorthand))
+        cutsites.append(
+            process_neb_shorthand(neb_shorthand),
+        )
     enzyme_rec = {
         'name': name,
         'cutsites': cutsites,
@@ -394,7 +448,9 @@ def processEnzymeRecord(record_tuple: Tuple) -> Dict:
     return enzyme_rec
 
 
-def qcEnzymeDataset(enzyme_dataset_by_name: Dict) -> None:
+def qc_enzyme_dataset(
+        enzyme_dataset_by_name: Dict,
+) -> None:
     '''Quick QC of an enzyme dataset, against expected records for common
     enzymes.
 
@@ -457,13 +513,19 @@ def qcEnzymeDataset(enzyme_dataset_by_name: Dict) -> None:
             'name': 'BaeI',
         },
     }
-    if isinstance(list(enzyme_dataset_by_name.keys())[0], str):
+    if isinstance(
+        list(enzyme_dataset_by_name.keys())[0],
+        str,
+    ):
         def coerce_b(s):
             return s
     else:
         def coerce_b(s):
             return s.encode('utf-8')
-        expected_records = base_decode_dict(expected_records)
+
+        expected_records = base_decode_dict(
+            expected_records,
+        )
     for name, rec in expected_records.items():
         new_rec = enzyme_dataset_by_name[name]
         for i, cutsite in enumerate(rec[coerce_b('cutsites')]):
@@ -471,13 +533,13 @@ def qcEnzymeDataset(enzyme_dataset_by_name: Dict) -> None:
                 new_value = new_rec[coerce_b('cutsites')][i][k]
                 if not new_value == v:
                     raise ValueError(
-                        'Mismatch between expected value (%s) '
-                        'and value (%s) for key %s for enzyme '
-                        '%s' % (v, new_value, k, name),
+                        f'Mismatch between expected value ({v}) '
+                        f'and value ({new_value}) for key {k} for enzyme '
+                        f'{name}',
                     )
 
 
-def updateEnzymeDataset():
+def update_enzyme_dataset():
     '''Update the enzyme dataset if a new version is available.
 
     The top-level JSON file structure is as follows::
@@ -489,9 +551,12 @@ def updateEnzymeDataset():
     '''
     needs_update = True
     current_version = -1
-    dataset_fp = os.path.join(LOCAL_DIR, 'enzyme_dataset.json')
+    dataset_fp = op.join(
+        LOCAL_DIR,
+        'enzyme_dataset.json',
+    )
     # Get the latest data from NEB Rebase
-    latest_version, enzyme_data, _ = getRebaseList()
+    latest_version, enzyme_data, _ = get_rebase_list()
     # Check the version of the current dataset
     try:
         with open(dataset_fp) as fd:
@@ -503,9 +568,19 @@ def updateEnzymeDataset():
     except (IOError, OSError):
         pass
     if needs_update:
-        enzyme_recs = list(map(processEnzymeRecord, enzyme_data))
-        enzyme_data_by_name = {rec['name']: rec for rec in enzyme_recs}
-        qcEnzymeDataset(enzyme_data_by_name)
+        enzyme_recs = list(
+            map(
+                process_enzyme_record,
+                enzyme_data,
+            ),
+        )
+        enzyme_data_by_name = {
+            rec['name']: rec
+            for rec in enzyme_recs
+        }
+        qc_enzyme_dataset(
+            enzyme_data_by_name,
+        )
         print(
             'New NEB Rebase version %d supercedes verion %d, dataset '
             'loaded and validated: %s' % (
@@ -528,10 +603,10 @@ def updateEnzymeDataset():
 
 
 if __name__ == '__main__':
-    updateEnzymeDataset()
-    # version, res, _ = getRebaseList()
+    update_enzyme_dataset()
+    # version, res, _ = get_rebase_list()
     # print(version)
-    # processed_recs = list(map(processEnzymeRecord, res))
+    # processed_recs = list(map(process_enzyme_record, res))
     # print(REGEX_BASE_LUT)
 
 
@@ -541,7 +616,7 @@ if __name__ == '__main__':
 
 # term = Terminal()
 
-# def visualizeCutSite(seq, cutsites, term_bg='black'):
+# def visualize_cut_site(seq, cutsites, term_bg='black'):
 #     if term_bg == 'black':
 #         colorA = term.black_on_white
 #         colorB = term.black_on_green
@@ -660,4 +735,3 @@ if __name__ == '__main__':
 #         print('3\'-' + \
 #                 colorA(compseq) + \
 #                 '-5\'')
-# # end def

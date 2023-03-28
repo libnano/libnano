@@ -40,7 +40,7 @@ from typing import (
 )
 
 
-def checkSeed(
+def check_seed(
         seed: str,
         m: int,
         k_min: int = 1,
@@ -75,7 +75,7 @@ def checkSeed(
     return best_k
 
 
-def checkSeedAtK(
+def check_seed_at_k(
         seed: str,
         m: int,
         perm_list: List[int],
@@ -127,7 +127,7 @@ def checkSeedAtK(
         return True, None
 
 
-def checkSeeds(
+def check_seeds(
         seeds: List[str],
         m: int,
         k_min: int = 1,
@@ -284,7 +284,7 @@ then the (im,(i + 1)k − 1)-problem is solved both by family
 F and by its i-regular expansion Fi = i ⊗ F.
 
 '''
-def findSeed(
+def find_seed(
         m: int,
         k: int,
         wmin: float = 0.4,
@@ -309,8 +309,8 @@ def findSeed(
 
             where `n` is the seed length and `w` is seed weight
     '''
-    n_min = int(nmin*m)   # seed length
-    n_max = int(nmax*m)
+    n_min = int(nmin * m)   # seed length
+    n_max = int(nmax * m)
     seed_list = []
     for n in range(n_min, n_max + 1):
         w_min = int(wmin*n)
@@ -318,9 +318,16 @@ def findSeed(
         # print(n, w_min, w_max)
         for w in range(w_min, w_max):
             for seed in seed_combo(n, w):
-                best_k = checkSeed(seed, m, k_min=k, k_max=k+1)
+                best_k = check_seed(
+                    seed,
+                    m,
+                    k_min=k,
+                    k_max=k+1,
+                )
                 if best_k == k:
-                    seed_list.append((m, k, seed, n, w))
+                    seed_list.append(
+                        (m, k, seed, n, w),
+                    )
                     break # onto the next weight
     return seed_list
 
@@ -328,7 +335,7 @@ def findSeed(
 SP_T = Tuple[str, str, int, float, float, int, float, float, int]
 
 
-def findSeedPairs(
+def find_seed_pairs(
         m: int,
         k: int,
         w_min_frac: float = 0.6,
@@ -345,8 +352,8 @@ def findSeedPairs(
     one answer for a given weight.  This needs a little cleaning up.
 
     Args:
-        m (int): length of the test mer to create
-        k (int): mismatch count
+        m: length of the test mer to create
+        k: mismatch count
 
     Returns:
         List[Tuple]: List of tuples of::
@@ -391,7 +398,7 @@ def findSeedPairs(
             if w > w_max_frac*n:
                 continue
             for seed in seed_combo(n, w):
-                did_pass, failed_perms = checkSeedAtK(
+                did_pass, failed_perms = check_seed_at_k(
                     seed,
                     m,
                     perm_list,
@@ -399,7 +406,7 @@ def findSeedPairs(
                 )
                 if did_pass and n > 0.6*m:
                     # see if the seed solves k+1
-                    if checkSeed(
+                    if check_seed(
                         seed,
                         m,
                         k_min=k+1,
@@ -430,7 +437,7 @@ def findSeedPairs(
                     # should be empty
                     if len(a[1].intersection(b[1])) == 0:
                         # see if the seeds solve k+1
-                        best_k = checkSeeds(
+                        best_k = check_seeds(
                             [a[0], b[0]],
                             m,
                             k_min=k+1,
@@ -468,8 +475,12 @@ def findSeedPairs(
 
 # def test25_2():
 #     perm_list = [p for p in combo(25, 2)]
-#     best_k1, failed_perms1 = checkSeedAtK("#####-##---#####-##", 25, 2, perm_list)
-#     best_k2, failed_perms2 = checkSeedAtK("#-##---#####-##---####", 25, 2, perm_list)
+#     best_k1, failed_perms1 = check_seed_at_k(
+#     "#####-##---#####-##", 25, 2, perm_list
+# )
+#     best_k2, failed_perms2 = check_seed_at_k(
+    # "#-##---#####-##---####", 25, 2, perm_list
+    # )
 #     if failed_perms1 is None:
 #         res1 = best_k1, "k"
 #     else:
@@ -484,16 +495,16 @@ def findSeedPairs(
 
 # if __name__ == '__main__':
 
-#     def test_checkSeed(seed, m):
-#         res = checkSeed(seed, m)
+#     def test_check_seed(seed, m):
+#         res = check_seed(seed, m)
 #         print("number of mismatches allowed: %d" %(res))
 #         return res
 
-#     assert(test_checkSeed("#-##--#-##", 15) == 2)
-#     assert(test_checkSeed("#-##-##-##", 15) == 1)
-#     assert(test_checkSeed("#######-##", 15) != 2)
+#     assert(test_check_seed("#-##--#-##", 15) == 2)
+#     assert(test_check_seed("#-##-##-##", 15) == 1)
+#     assert(test_check_seed("#######-##", 15) != 2)
 #     # Example 1         #-#-#---#--###-#--###-#
-#     assert(checkSeeds(["#-#-#---#-----#-#-#---#-----#-#-#---#",
+#     assert(check_seeds(["#-#-#---#-----#-#-#---#-----#-#-#---#",
 #         "###-#--###-#--###-#"], 50, k_min=4, k_max=6) == 5)
 # '###-###-##--'
 # '#-#-#---#-#-#---#-#----'

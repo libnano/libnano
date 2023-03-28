@@ -41,17 +41,17 @@ class TestSeqFilter(unittest.TestCase):
 
     def test_contains_run(self):
         self.assertTrue(
-            seqscreen.containsRun(
+            seqscreen.contains_run(
                 'AATGC', 2, 2, 2, 2, 3, 2,
             ),
         )
         self.assertFalse(
-            seqscreen.containsRun(
+            seqscreen.contains_run(
                 'AATGC', 1, 2, 2, 2, 3, 2,
             ),
         )
         self.assertFalse(
-            seqscreen.containsRun(
+            seqscreen.contains_run(
                 'AATGC', 2, 2, 2, 2, 2, 2,
             ),
         )
@@ -68,7 +68,7 @@ class TestSeqFilter(unittest.TestCase):
             window_size = random.randint(
                 4, len(seq),
             )
-            window_pass, window_start, gc_count = seqscreen.gcWindow(
+            window_pass, window_start, gc_count = seqscreen.gc_window(
                 seq,
                 gc_min,
                 gc_max,

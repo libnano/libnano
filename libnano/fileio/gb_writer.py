@@ -52,20 +52,20 @@ def write(
 
     '''
     d_info = d['info']
-    writeLocus(fd, d_info)
-    writeDefinition(fd, d_info)
-    writeAccession(fd, d_info)
-    writeVersion(fd, d_info)
-    writeDBLINK(fd, d_info)
-    writeKeywords(fd, d_info)
-    writeSource(fd, d_info)
+    write_locus(fd, d_info)
+    write_definition(fd, d_info)
+    write_accession(fd, d_info)
+    write_version(fd, d_info)
+    write_db_link(fd, d_info)
+    write_keywords(fd, d_info)
+    write_source(fd, d_info)
     i = 0
     for reference in d_info['references']:
         i += 1
-        writeReference(fd, reference, i)
-    writeComment(fd, d_info)
-    writeFeatures(fd, d, order_qualifiers)
-    writeOrigin(fd, d)
+        write_reference(fd, reference, i)
+    write_comment(fd, d_info)
+    write_features(fd, d, order_qualifiers)
+    write_origin(fd, d)
 
 
 def write_file(
@@ -124,7 +124,7 @@ def multiline_spaces(
     return indent_str.join(main_list)
 
 
-def writeLocus(
+def write_locus(
         fd: _io.TextIOWrapper,
         d: dict,
 ) -> None:
@@ -158,7 +158,7 @@ def writeLocus(
     fd.write(out_str)
 
 
-def writeDefinition(
+def write_definition(
         fd: _io.TextIOWrapper,
         d: dict,
 ) -> None:
@@ -178,7 +178,7 @@ def writeDefinition(
     fd.write(''.join(out_list))
 
 
-def writeAccession(
+def write_accession(
         fd: _io.TextIOWrapper,
         d: dict,
 ) -> None:
@@ -193,7 +193,7 @@ def writeAccession(
         fd.write(''.join([accession_str, d['accession'], '\n']))
 
 
-def writeVersion(
+def write_version(
         fd: _io.TextIOWrapper,
         d: dict,
 ) -> None:
@@ -210,7 +210,7 @@ def writeVersion(
         fd.write(''.join([version_str, '%s  GI:%s' % (version, gi), '\n']))
 
 
-def writeDBLINK(
+def write_db_link(
         fd: _io.TextIOWrapper,
         d: dict,
 ) -> None:
@@ -225,7 +225,7 @@ def writeDBLINK(
             fd.write('DBLINK      %s\n' % (d['dblink']))
 
 
-def writeKeywords(
+def write_keywords(
         fd: _io.TextIOWrapper,
         d: dict,
 ) -> None:
@@ -239,7 +239,7 @@ def writeKeywords(
     fd.write(''.join([keywords_str, d['keywords'], '\n']))
 
 
-def writeSource(
+def write_source(
         fd: _io.TextIOWrapper,
         d: dict,
 ) -> None:
@@ -267,7 +267,7 @@ def writeSource(
     fd.write(''.join(out_list))
 
 
-def writeReference(
+def write_reference(
         fd: _io.TextIOWrapper,
         ref: dict,
         i: int,
@@ -306,7 +306,7 @@ def writeReference(
     fd.write(''.join(out_list))
 
 
-def writeComment(
+def write_comment(
         fd: _io.TextIOWrapper,
         d: dict,
 ) -> None:
@@ -337,7 +337,7 @@ def writeComment(
         fd.write(''.join(out_list))
 
 
-def writeFeatures(
+def write_features(
         fd: _io.TextIOWrapper,
         d: dict,
         order_qualifiers: bool,
@@ -430,7 +430,7 @@ def writeFeatures(
         fd.write(''.join(out_list))
 
 
-def writeOrigin(
+def write_origin(
         fd: _io.TextIOWrapper,
         d: dict,
 ) -> None:

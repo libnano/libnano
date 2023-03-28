@@ -27,7 +27,7 @@ Basic thermodynamic calculations
 import math as _math
 from typing import Tuple
 
-from libnano.seqstr import reverseComplement as _rc  # type: ignore
+from libnano.seqstr import reverse_complement as _rc  # type: ignore
 
 # ~~~~~~~~~~~~~~~~~~~~ GENERAL CONSTANTS AND CALCULATIONS ~~~~~~~~~~~~~~~~~~~ #
 
@@ -36,7 +36,7 @@ cdef:
     double KELVIN = 273.15
 
 
-def cToK(deg_c: float) -> float:
+def c_to_k(deg_c: float) -> float:
     '''Convert degrees Celsius to degrees Kelvin
 
     Args:
@@ -49,7 +49,7 @@ def cToK(deg_c: float) -> float:
     return deg_c + KELVIN
 
 
-def kToC(deg_k: float) -> float:
+def k_to_c(deg_k: float) -> float:
     ''' Convert degrees Kelvin to degrees Celsius
 
     Args:
@@ -62,7 +62,7 @@ def kToC(deg_k: float) -> float:
     return deg_k - KELVIN
 
 
-cdef double calcKa(
+cdef double calc_ka(
         double dg,
         double deg_c,
 ):
@@ -76,10 +76,10 @@ cdef double calcKa(
         float: the association constant at a given temperature
 
     '''
-    return _math.exp**(-dg/(R * cToK(deg_c)))
+    return _math.exp**(-dg/(R * c_to_k(deg_c)))
 
 
-def calcDg(
+def calc_dg(
         ds: float,
         dh: float,
         deg_c: float,
@@ -95,10 +95,10 @@ def calcDg(
         float: the dg at a given temp using the provided ds and dh
 
     '''
-    return dh - ds * cToK(deg_c)
+    return dh - ds * c_to_k(deg_c)
 
 
-def calcRandCoil(
+def calc_rand_coil(
         dg: float,
         deg_c: float,
 ) -> float:
@@ -111,12 +111,12 @@ def calcRandCoil(
     Returns:
         float: the percent of randomly coiled oligo with dg at deg_c degrees
     '''
-    return 1 / (calcKa(dg, deg_c) + 1)
+    return 1 / (calc_ka(dg, deg_c) + 1)
 
 
 # ~~~~~~~~~~~~~~~~~ PYTHON EQUIVALENT OF PRIMER3 OLIGOTM  ~~~~~~~~~~~~~~~~ #
 
-cdef float divalentToMonovalent(
+cdef float divalent_to_monovalent(
         float divalent,
         float dntp,
 ):
@@ -136,7 +136,7 @@ cdef float divalentToMonovalent(
         divalent = dntp
     return 120. * _math.sqrt(divalent - dntp)
 
-def calcThermo(
+def calc_thermo(
         seq: str,
         conc_nm: float = 50,
         monovalent: float = 50,
@@ -156,12 +156,14 @@ def calcThermo(
     Returns:
         Tuple[float]: (dH, dS, Tm)
     '''
-    cdef float dH, dS
-    cdef float monovalent_use, tm
-    cdef Py_ssize_t idx
-    # Calculate oligo symmetry
-    cdef bint sym = seq == _rc(seq)
-    dH = dS = 0.
+    cdef:
+        float dH = 0.
+        float dS = 0.
+        float monovalent_use, tm
+        Py_ssize_t idx
+        # Calculate oligo symmetry
+        bint sym = seq == _rc(seq)
+
     monovalent_use = monovalent
     enthalpies = {
         'AA': 79, 'AT': 72, 'AG': 78, 'AC': 84,
@@ -197,7 +199,7 @@ def calcThermo(
     dH *= -100.0
     dS *= -0.1
     # Convert divalent salt and dntp conc. to monovalent equivalencies
-    monovalent_use += divalentToMonovalent(divalent, dntp)
+    monovalent_use += divalent_to_monovalent(divalent, dntp)
     dS = dS + 0.368 * (len(seq) - 1) * _math.log(monovalent / 1000.0)
     # Account for oligo symmetry and calculate tm
     if sym:
@@ -206,14 +208,14 @@ def calcThermo(
         tm = dH / (dS + 1.987 * _math.log(conc_nm/4.0e9)) - KELVIN
     return dH, dS, tm
 
-def calcTm(
+def calc_tm(
         seq: str,
         conc_nm: float = 50,
         monovalent: float = 50,
         divalent: float = 0.01,
         dntp: float = 0.0,
 ):
-    _, _, tm = calcThermo(
+    _, _, tm = calc_thermo(
         seq,
         conc_nm=conc_nm,
         monovalent=monovalent,

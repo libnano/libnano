@@ -30,4 +30,4 @@ be recompiled nor the associated headers included
 from libnano.helpers.inttypes cimport uint64_t
 
 
-cdef int2Seq_c(uint64_t, char*, int)
+cdef int_2_seq_c(uint64_t, char*, int)

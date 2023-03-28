@@ -41,7 +41,7 @@ cdef extern from 'sm_seqmetric.h':
     int sm_gcContent(char* seq, int length)
 # end cdef
 
-def maxRuns(object seq_obj):
+def max_runs(object seq_obj):
 
     cdef char*          seq
     cdef Py_ssize_t     length
@@ -58,7 +58,7 @@ def maxRuns(object seq_obj):
     return out
 # end def
 
-def gcContent(object seq_obj):
+def gc_content(object seq_obj):
 
     cdef char*          seq
     cdef Py_ssize_t     length

@@ -42,7 +42,7 @@ from libnano.datasets import dataset_container
 
 # Modified from http://eli.thegreenplace.net/2010/01/22/
 #                       weighted-random-generation-in-python
-class _WeightedRandomGenerator(object):
+class _WeightedRandomGenerator:
     '''_WeightedRandomGenerator class
     '''
 
@@ -70,7 +70,7 @@ class _WeightedRandomGenerator(object):
         return self.next()
 
 
-class ReverseTranslator(object):
+class ReverseTranslator:
     ''' Basic reverse translator that randomly assigns codons for each amino
     acid.
     '''
@@ -93,13 +93,13 @@ class ReverseTranslator(object):
         rng = random.Random(aa_seq)
 
         codon_lut = codon_lut or dataset_container.AA_TO_DNA
-        self.codon_gens = self._generateRandomCodonGens(
+        self.codon_gens = self._generate_random_codon_gens(
             codon_lut,
             na_type,
             rng,
         )
 
-    def _generateRandomCodonGens(
+    def _generate_random_codon_gens(
             self,
             codon_lut: Dict,
             na_type: str,
@@ -116,9 +116,8 @@ class ReverseTranslator(object):
             )
             codon_gens[aa] = _gen(codon_list)
         return codon_gens
-    # end def
 
-    def revTranslate(self) -> str:
+    def rev_translate(self) -> str:
         '''Generate a random reverse translation
 
         Returns:
@@ -126,12 +125,10 @@ class ReverseTranslator(object):
         '''
         trans = ''.join([self.codon_gens[aa]() for aa in self.aa_seq])
         return trans
-    # end def
-# end class
 
 
 class WeightedReverseTranslator(ReverseTranslator):
-    ''' Base class for providing reverse translations of amino acid sequences
+    '''Base class for providing reverse translations of amino acid sequences
     '''
 
     def __init__(
@@ -157,27 +154,28 @@ class WeightedReverseTranslator(ReverseTranslator):
             def coerce_type(s):
                 return s.decode('utf-8')
             freq_lut = dataset_container.CODON_FREQ_DATASET_U[
-                coerce_type(
-                    organism,
-                )
+                coerce_type(organism)
             ]
         else:
             def coerce_type(s):
                 return s.encode('utf-8')
             freq_lut = dataset_container.CODON_FREQ_DATASET[
-                coerce_type(
-                    organism,
-                )
+                coerce_type(organism)
             ]
-        self.h_freq_codon_lut = self._findHighestFreqCodons(freq_lut)
-        freq_lut = self._applyFreqThreshold(freq_lut, freq_threshold)
-        self.codon_gens = self._generateWeightedCodonGens(
+        self.h_freq_codon_lut = self._find_highest_frequency_codons(
+            freq_lut,
+        )
+        freq_lut = self._apply_frequency_threshold(
+            freq_lut,
+            freq_threshold,
+        )
+        self.codon_gens = self._generate_weighted_codon_generators(
             freq_lut,
             na_type,
             rng,
         )
 
-    def _applyFreqThreshold(
+    def _apply_frequency_threshold(
             self,
             freq_lut: Dict,
             freq_threshold: float,
@@ -189,6 +187,9 @@ class WeightedReverseTranslator(ReverseTranslator):
 
         Returns:
             Dictiorary of amino acids compiled by frequency threshold
+
+        Raises:
+            ValueError: Frequency threshold is too high
         '''
         n_freq_lut = dict()
         for aa, codon_dict in freq_lut.items():
@@ -198,40 +199,41 @@ class WeightedReverseTranslator(ReverseTranslator):
             }
             if len(t_codon_dict) == 0:
                 raise ValueError(
-                    'Frequency threshold is too high for '
-                    'amino acid %s' % aa,
+                    f'Frequency threshold is too high for amino acid {aa}',
                 )
             n_freq_lut[aa] = t_codon_dict
         return n_freq_lut
 
-    def _findHighestFreqCodons(
+    def _find_highest_frequency_codons(
             self,
-            freq_lut: Dict,
+            freq_lut: Dict[str, Dict[str, float]],
     ) -> Dict[str, str]:
         '''
         Args:
-            freq_lut (dict): Look up table for a an amino acid to get the codons
+            freq_lut: Look up table for an amino acid to get the codons
                 used by frequency for an organism
 
         Returns:
-            dict: Look up table keyed by amino acid sequence returning the
+            Look up table keyed by amino acid sequence returning the
                 highest frequency codon for that amino acid sequence based on
                 the `freq_lut`
 
         '''
         n_freq_lut = {}
         for aa, codon_dict in freq_lut.items():
-            h_codon = sorted(codon_dict.items(), key=lambda r: r[1])[-1][0]
+            h_codon = sorted(
+                codon_dict.items(),
+                key=lambda r: r[1],
+            )[-1][0]
             n_freq_lut[aa] = h_codon
         return n_freq_lut
-    # end def
 
-    def _generateWeightedCodonGens(
+    def _generate_weighted_codon_generators(
             self,
             freq_lut: dict,
             na_type: str,
             rng,  # random module type
-    ) -> Dict:
+    ) -> Dict[str, _WeightedRandomGenerator]:
         '''
         Args:
             freq_lut: Frequency LUT
@@ -240,19 +242,28 @@ class WeightedReverseTranslator(ReverseTranslator):
 
         Returns:
             Dictionary of generated codons
-
         '''
-        codon_gens = {}
+        codon_gens: Dict[str, _WeightedRandomGenerator] = {}
         for aa in set(list(self.aa_seq)):
             aa_codon_freqs = freq_lut[aa].items()
-            codons = [r[0] for r in aa_codon_freqs]
+            codons = [
+                r[0]
+                for r in aa_codon_freqs
+            ]
             if na_type == 'RNA':
-                codons = [c.replace('T', 'U') for c in codons]
+                codons = [
+                    c.replace('T', 'U')
+                    for c in codons
+                ]
             freqs = [r[1] for r in aa_codon_freqs]
-            codon_gens[aa] = _WeightedRandomGenerator(freqs, codons, rng)
+            codon_gens[aa] = _WeightedRandomGenerator(
+                freqs,
+                codons,
+                rng,
+            )
         return codon_gens
 
-    def revTranslate(
+    def rev_translate(
             self,
             highest_freq_only: bool = False,
     ) -> str:
@@ -274,11 +285,14 @@ class WeightedReverseTranslator(ReverseTranslator):
                 ),
             )
         else:
-            trans = ''.join([self.codon_gens[aa]() for aa in self.aa_seq])
+            trans = ''.join([
+                self.codon_gens[aa]()
+                for aa in self.aa_seq
+            ])
         return trans
 
 
-def dnaToAA(
+def dna_to_aa(
         seq: str,
 ) -> str:
     '''Translate a DNA sequence into a primary amino acid sequence.
@@ -300,7 +314,7 @@ def dnaToAA(
     ])
 
 
-def rnaToAA(
+def rna_to_aa(
         seq: str,
 ) -> str:
     '''Translate an RNA sequence into a primary amino acid sequence.

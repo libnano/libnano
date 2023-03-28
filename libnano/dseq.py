@@ -59,8 +59,8 @@ from libnano.seqrecord.seqrecordbase import (  # type: ignore
     AlphaEnum,
 )
 from libnano.seqstr import (  # type: ignore
-    reverse,
-    reverseComplement,
+    reverse_complement,
+    reverse_seq,
 )
 
 NEWLINE_STR: str = '\r\n' if sys.platform == 'win32' else '\n'
@@ -105,7 +105,7 @@ class DSeq:
                     "overhang can't be defined for without a reverse strand",
                 )
             else:
-                self.rev_str = reverseComplement(fwd)
+                self.rev_str = reverse_complement(fwd)
         else:
             self.rev_str = rev
 
@@ -186,7 +186,7 @@ class DSeq:
                 read_end_idx,
                 cigar_pair_list=[],
             )
-            self.rc_rev_str = reverseComplement(rev)
+            self.rc_rev_str = reverse_complement(rev)
         self.the_length = the_length
         if is_circular:
             type3, _ = self.three_prime_end()
@@ -242,7 +242,7 @@ class DSeq:
             type3, seq3 = self.three_prime_end()
             type5, seq5 = b.five_prime_end()
             if type3 == type5 and len(seq3) == len(seq5):
-                if seq3 != reverseComplement(seq5):
+                if seq3 != reverse_complement(seq5):
                     raise TypeError('Ends not complimentary')
                 fwd = self.fwd_str + b.fwd_str
                 rev = self.rev_str + b.rev_str
@@ -281,7 +281,7 @@ class DSeq:
                 slc.step,
             )
             fwd_out_str: str = fwd[fwd_slc]
-            rev_out_str: str = reverseComplement(rc_rev[slc])
+            rev_out_str: str = reverse_complement(rc_rev[slc])
             overhang_out: int = max(
                 overhang - start_idx,
                 0,
@@ -299,7 +299,7 @@ class DSeq:
                 rev_slc_stop,
                 slc.step,
             )
-            rev_out_str = reverseComplement(
+            rev_out_str = reverse_complement(
                 rc_rev[rev_slc],
             )
             fwd_out_str = fwd[slc]
@@ -392,7 +392,7 @@ class DSeq:
         else:
             type3, seq3 = self.three_prime_end()
             type5, seq5 = self.five_prime_end()
-            return type3 == type5 and seq3 == reverseComplement(seq5)
+            return type3 == type5 and seq3 == reverse_complement(seq5)
 
     def toLinear(self) -> DSeq:
         '''NOTE: you are not able to spcify the break point.  Uses internal
@@ -476,8 +476,8 @@ class DSeq:
         out: List['DSeq'] = []
         fwd: str = dseq.fwd_str
         rev: str = dseq.rev_str
-        reverse_rev: str = reverse(rev)
-        fwd_match_list: List[RestrictionMatch] = rs.findSites(fwd)[0]
+        reverse_rev: str = reverse_seq(rev)
+        fwd_match_list: List[RestrictionMatch] = rs.find_sites(fwd)[0]
         if len(fwd_match_list) == 0:
             return [dseq]
         else:
@@ -500,7 +500,7 @@ class DSeq:
 
                     # traverse through the cutsites in reverse
                     fwd = copy.copy(dseq.fwd_str)
-                    reverse_rev = reverse(dseq.rev_str)
+                    reverse_rev = reverse_seq(dseq.rev_str)
                     self_overhang = dseq.overhang
 
                     for fwd_cut, rev_cut in zip(
@@ -540,7 +540,7 @@ class DSeq:
                         out.append(
                             DSeq(
                                 fwd[fwd_slice_3p],
-                                reverse(reverse_rev[rev_slc_5p]),
+                                reverse_seq(reverse_rev[rev_slc_5p]),
                                 overhang=cut_overhang,
                             ),
                         )
@@ -551,7 +551,7 @@ class DSeq:
                     out.append(
                         DSeq(
                             fwd,
-                            reverse(reverse_rev),
+                            reverse_seq(reverse_rev),
                             dseq.overhang,
                         ),
                     )
@@ -674,7 +674,7 @@ if __name__ == '__main__':
 
     # fwd = fwd.replace('Y', 'C')
     # rev_rev = rev_rev.replace('R', 'G')
-    # rev = reverse(rev_rev)
+    # rev = reverse_seq(rev_rev)
 
     # baei_ds = DSeq(fwd, rev, overhang=5)
     # print('BaeI')

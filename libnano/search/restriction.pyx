@@ -20,9 +20,7 @@ libnano.search.restriction
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 '''
-# import itertools
 import re
-# import sys
 from enum import IntEnum
 from typing import (
     Iterable,
@@ -38,8 +36,6 @@ from libnano.search.restrictionmatch import (
 )
 from libnano.seqstr import complement  # type: ignore
 
-# import pprint
-
 STR_T = Union[str, bytes]
 
 
@@ -51,8 +47,6 @@ cdef:
     int FORWARD = 1
     int REVERSE = -1
 
-# import pprint
-# pprint.pprint(dataset_container.ENZYME_DATASET_U['M.BceSV'])
 
 # ~~~~~~~~~~~~~~~ Restriction site search functions / classes ~~~~~~~~~~~~~~~ #
 
@@ -96,23 +90,33 @@ cdef class RestrictionSearcher:
             coerce_type = lambda s: s.encode('utf-8')
             enzyme_dataset: dict = dataset_container.ENZYME_DATASET
 
-        key_cutsites: STR_T = coerce_type('cutsites')
-        key_core_regex: STR_T = coerce_type('core_regex')
-        key_full_regex: STR_T = coerce_type('full_regex')
-        key_cutsite_idxs: STR_T = coerce_type('cutsite_idxs')
+        key_cutsites = coerce_type('cutsites')
+        key_core_regex = coerce_type('core_regex')
+        key_full_regex = coerce_type('full_regex')
+        key_cutsite_idxs = coerce_type('cutsite_idxs')
 
         for en in enzyme_names:
             try:
                 cutsites: List[dict] = enzyme_dataset[en][key_cutsites]
                 for cs in cutsites:
                     # convert lists to tuples
-                    str_temp = tuple(x for x in cs[key_core_regex])
+                    str_temp = tuple(
+                        x for x in cs[key_core_regex]
+                    )
                     core_regexs.append(str_temp)
-                    core_regexs_compiled.append(tuple(re.compile(x) for x in str_temp))
-                    str_temp = tuple(x for x in cs[key_full_regex])
+                    core_regexs_compiled.append(
+                        tuple(re.compile(x) for x in str_temp)
+                    )
+                    str_temp = tuple(
+                        x for x in cs[key_full_regex]
+                    )
                     full_regexs.append(str_temp)
-                    full_regexs_compiled.append(tuple(re.compile(x) for x in str_temp))
-                    cutsite_idxs_list.append(tuple(tuple(x) for x in cs[key_cutsite_idxs]))
+                    full_regexs_compiled.append(
+                        tuple(re.compile(x) for x in str_temp)
+                    )
+                    cutsite_idxs_list.append(
+                        tuple(tuple(x) for x in cs[key_cutsite_idxs])
+                    )
             except KeyError:
                 raise ValueError('%s is not a valid enzyme or is not present '
                                  'in the NEB Rebase database v.%d' % (en,
@@ -124,37 +128,58 @@ cdef class RestrictionSearcher:
         self._cutsite_idxs_list: List[List[List[int]]] = cutsite_idxs_list
 
     @property
-    def str_type(self):
-        '''Check str_type of searcher, for testing purposes
+    def str_type(self) -> type:
+        '''
+        Returns:
+            Check str_type of searcher, for testing purposes
         '''
         return self._str_type
 
     @property
     def enzyme_names(self) -> Tuple[STR_T, ...]:
-        '''Tuple of enzyme names provided at instantiation
+        '''
+        Returns:
+            Tuple of enzyme names provided at instantiation
 
         '''
         return self._enzyme_names
 
     @enzyme_names.setter
-    def enzyme_names(self, name_iterable: Iterable):
+    def enzyme_names(
+            self,
+            name_iterable: Iterable,
+    ):
+        '''
+        Args:
+            name_iterable: Set enzyme_names and count from iterable
+
+        '''
         self._num_enzymes = len(name_iterable)
         self._enzyme_names = tuple(name_iterable)
 
     @property
     def num_enzymes(self) -> int:
-        '''Number of enzyme names provided at instantiation
+        '''
+        Returns:
+            Number of enzyme names provided at instantiation
 
         '''
         return self._num_enzymes
 
-    def getCutSite(
+    def get_cutsite(
             self,
             match,
     ) -> CUT_IDXS_T:
+        '''
+        Args:
+            match: :class:`restrictionmatch.RestrictionMatch` instance
+
+        Returns:
+            CUT_IDXS_T given the match cutsite number
+        '''
         return self._cutsite_idxs_list[match.cutsite_number]
 
-    def sitesPresent(
+    def sites_present(
             self,
             seq: STR_T,
             full_sites: bool = True,
@@ -185,7 +210,7 @@ cdef class RestrictionSearcher:
                 f' with {self._str_type} type enzyme names'
             ) from None
 
-    def countSites(
+    def count_sites(
             self,
             seq: STR_T,
             full_sites: bool = True,
@@ -207,22 +232,23 @@ cdef class RestrictionSearcher:
             TypeError: Cannot perform search on a `seq` of type provided
 
         '''
-        regexs: List[REGEX_PAIR_T] = self._full_regexs if full_sites else self._core_regexs
-        counts: List[int] = [0] * self._num_enzymes
+        regexs_list = self._full_regexs if full_sites else self._core_regexs
+        counts_list = [0] * self._num_enzymes
         try:
-            for idx, regex_pair in enumerate(regexs):
-                counts[idx] +=  (   len(re.findall(regex_pair[0], seq)) +
-                                    len(re.findall(regex_pair[1], seq))
-                                )
-            return counts
+            for idx, regex_pair in enumerate(regexs_list):
+                counts_list[idx] +=  (
+                    len(re.findall(regex_pair[0], seq)) +
+                    len(re.findall(regex_pair[1], seq))
+                )
+            return counts_list
         except TypeError:
             raise TypeError(
                 f'Cannot perform search on a `seq` of type {type(seq)}'
                 ' using a RestrictionSearcher instantiated'
                 f' with {self._str_type} type enzyme names'
-            )
+            ) from None
 
-    def findSites(
+    def find_sites(
             self,
             seq: STR_T,
             full_sites: bool = True,
@@ -249,7 +275,7 @@ cdef class RestrictionSearcher:
         '''
         cdef int idx = 0
 
-        regexs = self._full_regexs if full_sites else self._core_regexs
+        regexs_list = self._full_regexs if full_sites else self._core_regexs
         regexs_compiled = (
             self._full_regexs_comp if full_sites else self._core_regexs_comp
         )
@@ -263,7 +289,7 @@ cdef class RestrictionSearcher:
 
         try:
             for regex_pair, regex_pair_compiled, in zip(
-                regexs,
+                regexs_list,
                 regexs_compiled,
             ):
                 regex_fwd, regex_rev = regex_pair
@@ -299,16 +325,18 @@ cdef class RestrictionSearcher:
                 f'Cannot perform search on a `seq` of type {type(seq)}'
                 ' using a RestrictionSearcher instantiated'
                 f' with {self._str_type} type enzyme names'
-            )
+            ) from None
 
     def __repr__(self):
-        return '<libnano.restriction.RestrictionSearcher> for enzymes: %s' %  \
-                ', '.join(self._enzyme_names)
+        return (
+            '<libnano.restriction.RestrictionSearcher> for enzymes: %s' %
+            ', '.join(self._enzyme_names)
+        )
 
     def __str__(self):
         return self.__repr__()
 
-    def displaySites(
+    def display_sites(
             self,
             seq: STR_T,
             sites: List[List[RestrictionMatch]],
@@ -346,7 +374,7 @@ cdef class RestrictionSearcher:
             print('')
 
 
-def getEnzymeRegexs(
+def get_enzyme_regexs(
         enzyme_names: List[STR_T],
         full_sites: bool = True,
 ) -> Tuple[List[STR_T], List[CUT_IDXS_T]]:
@@ -366,8 +394,9 @@ def getEnzymeRegexs(
     Raises:
         ValueError: Not a valid enzyme or is not present in the NEB Rebase DB
     '''
-    cdef list regexs = []
-    cdef list cutsite_idxs_list = []
+    cdef:
+        list regexs = []
+        list cutsite_idxs_list = []
 
     if isinstance(enzyme_names[0], str):
         coerce_type = lambda s: s
@@ -403,7 +432,7 @@ def getEnzymeRegexs(
     return regexs, cutsite_idxs_list
 
 
-def sitesPresent(
+def sites_present(
         seq: STR_T,
         enzyme_names: List[STR_T],
         full_sites: bool = True,
@@ -420,7 +449,7 @@ def sitesPresent(
     Raises:
         TypeError: Cannot perform search on a `seq` of type provided
     '''
-    regexs, _ = getEnzymeRegexs(enzyme_names, full_sites=full_sites)
+    regexs, _ = get_enzyme_regexs(enzyme_names, full_sites=full_sites)
     try:
         for regex in regexs:
             if re.search(regex[0], seq) or re.search(regex[1], seq):
@@ -433,7 +462,7 @@ def sitesPresent(
         )
 
 
-def countSites(
+def count_sites(
         seq: STR_T,
         enzyme_names: List[STR_T],
         full_sites: bool = True,
@@ -453,7 +482,7 @@ def countSites(
         TypeError: Cannot perform search on a `seq` of type provided
     '''
     regexs: List[STR_T]
-    regexs, _ = getEnzymeRegexs(
+    regexs, _ = get_enzyme_regexs(
         enzyme_names,
         full_sites=full_sites,
     )
@@ -472,7 +501,7 @@ def countSites(
         ) from None
 
 
-def findSites(
+def find_sites(
         seq: STR_T,
         enzyme_names: List[STR_T],
         full_sites: bool = True,
@@ -498,7 +527,7 @@ def findSites(
     Raises:
         TypeError: Cannot perform search on a `seq` of type provided
     '''
-    regexs, cutsite_idxs_list = getEnzymeRegexs(
+    regexs, cutsite_idxs_list = get_enzyme_regexs(
         enzyme_names,
         full_sites=full_sites,
     )

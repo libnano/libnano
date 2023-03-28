@@ -17,7 +17,7 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 '''
 libnano.seqrecord.feature
-~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
 '''
 from copy import (
@@ -82,7 +82,7 @@ cdef class DummyFeature:
             raise NotImplementedError('Only __lt__ implemented')
 
 
-def locationStr2Feature(
+def location_str_2_feature(
         feature_type: str,
         location_str: str,
         qualifiers: Optional[Dict] = None,
@@ -184,7 +184,7 @@ cdef class Feature:
             deepcopy(self.qualifiers),
         )
 
-    def copyForSlice(
+    def copy_for_slice(
             self,
             offset: int,
      ) -> Feature:
@@ -265,7 +265,7 @@ cdef class Feature:
                 'qualifiers': self.qualifiers,
             }
 
-    def addQualifier(
+    def add_qualifier(
             self,
             qualifier: str,
             value: Any,

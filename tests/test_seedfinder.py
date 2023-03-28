@@ -39,37 +39,37 @@ This also tests
 
 class TestSeedFinder(unittest.TestCase):
 
-    def test_checkSeed(self):
+    def test_check_seed(self):
         self.assertEqual(
-            seedfinder.checkSeed('#-##--#-##', 15),
+            seedfinder.check_seed('#-##--#-##', 15),
             2,
         )
         self.assertEqual(
-            seedfinder.checkSeed('#-##-##-##', 15),
+            seedfinder.check_seed('#-##-##-##', 15),
             1,
         )
         self.assertNotEqual(
-            seedfinder.checkSeed('#######-##', 15),
+            seedfinder.check_seed('#######-##', 15),
             2,
         )
-        # self.assertEqual(seedfinder.checkSeeds(
+        # self.assertEqual(seedfinder.check_seeds(
         #     ["#-#-#---#-----#-#-#---#-----#-#-#---#", "###-#--###-#--###-#"],
         #      50, k_min=4, k_max=6), 5)
 
-    def test_findSeed(self):
+    def test_find_seed(self):
         for x in range(10):
             m = random.randint(5, 20)
             k = random.randint(1, 3)
-            sd_list = seedfinder.findSeed(m, k)
-            # sds = seedfinder.findSeed(m, k)
+            sd_list = seedfinder.find_seed(m, k)
+            # sds = seedfinder.find_seed(m, k)
             for sd in sd_list:
                 the_seed = sd[2]
                 self.assertEqual(
-                    seedfinder.checkSeed(the_seed, m),
+                    seedfinder.check_seed(the_seed, m),
                     k,
                     msg=('m: %d, k: %d, sd: %s' % (m, k, sd)),
                 )
-                # self.assertEqual(seedfinder.checkSeeds(sds, m), k)
+                # self.assertEqual(seedfinder.check_seeds(sds, m), k)
 
 
 if __name__ == '__main__':

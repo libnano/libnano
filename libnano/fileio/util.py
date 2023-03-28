@@ -28,7 +28,7 @@ from typing import (
 )
 
 
-def getFileContents(
+def get_file_contents(
     fp: str,
     max_in_mem_size: int = 200,
 ) -> Tuple[Union[bytes, mmap.mmap], bool]:

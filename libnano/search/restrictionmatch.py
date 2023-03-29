@@ -34,6 +34,6 @@ class RestrictionMatch(NamedTuple):
     start_idx: int
     end_idx: int
     enzyme: str
-    cutside_number: int  # Index into the list of cutsites for the enzyme
+    cutsite_number: int  # Index into the list of cutsites for the enzyme
     cut_idxs: CUT_IDXS_T
     pair_regex: str

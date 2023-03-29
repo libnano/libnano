@@ -29,7 +29,7 @@ from typing import (
 )
 
 from libnano.search.seedmatch import SeedMatcher
-from libnano.seqstr import thresholdRollingHammingList
+from libnano.seqstr import threshold_rolling_hamming_list
 
 # Computed using seedfinder.pyx
 PRECOMPUTED_SEEDS: Dict[Tuple[int, int], List[str]] = {
@@ -121,7 +121,7 @@ cdef class WordMatcher:
 
 
 cdef class SubmerPoolSearch:
-    '''Uses `SeedMatcher`, `WordMatcher`, or `thresholdRollingHammingList`
+    '''Uses `SeedMatcher`, `WordMatcher`, or `threshold_rolling_hamming_list`
     to screen for mismatches of different queries against the list of
     sequences using the `find` method.  This is a convenience class to take
     care of overhead in deciding what matcher to use
@@ -177,7 +177,7 @@ cdef class SubmerPoolSearch:
             self.seeds = seeds
     # end def
 
-    def getMatchers(
+    def get_matchers(
             self,
     ) -> List[Union[WordMatcher, SeedMatcher]]:
         '''
@@ -200,7 +200,7 @@ cdef class SubmerPoolSearch:
             index into the self.sequences[i] where the hit occurs.
         '''
         if self.matchers is None:
-            return thresholdRollingHammingList(
+            return threshold_rolling_hamming_list(
                 target,
                 self.sequences,
                 self.mismatches,

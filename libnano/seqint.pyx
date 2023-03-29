@@ -53,7 +53,7 @@ def tester(s: STR_T) -> str:
     return c_util.cstr_to_obj(s_copy_cstr, slen, 0)
 
 
-def seq2Int(
+def seq_2_int(
         seq_obj: STR_T,
 ) -> int:
     '''Convert a DNA sequence to an integer representation
@@ -86,7 +86,7 @@ def seq2Int(
     return seqint
 
 
-def reverseComplement(
+def reverse_complement(
         uint64_t seqint,
         int length,
 ) -> float:
@@ -127,7 +127,7 @@ def complement(
     return seqintrc
 
 
-def reverse(
+def reverse_seq(
         uint64_t seqint,
         int length,
 ) -> float:
@@ -142,12 +142,18 @@ def reverse(
     '''
     cdef uint64_t         seqintrc
 
-    seqintrc = si_revSeqInt(seqint, length)
+    seqintrc = si_revSeqInt(
+        seqint,
+        length,
+    )
 
     return seqintrc
 
 
-def addBase(uint64_t seqint, base_obj: STR_T) -> int:
+def add_base(
+        uint64_t seqint,
+        base_obj: STR_T,
+) -> int:
     '''Add a base to the right-hand side of a seqint
 
     Args:
@@ -167,7 +173,7 @@ def addBase(uint64_t seqint, base_obj: STR_T) -> int:
     return seqintmod
 
 
-def removeBase(
+def remove_base(
         uint64_t seqint,
         int length,
 ) -> int:
@@ -187,7 +193,7 @@ def removeBase(
     return seqintmod
 
 
-def addToWindow(
+def add_to_window(
         uint64_t seqint,
         base_obj: STR_T,
         int length,
@@ -219,7 +225,7 @@ def addToWindow(
     return seqintmod
 
 
-def getSubstring(
+def get_substring(
         uint64_t seqint,
         int start_idx,
         int end_idx,
@@ -248,26 +254,29 @@ def getSubstring(
     return seqintmod
 
 
-def int2Seq(
+def int_2_seq(
         uint64_t seqint,
         int length,
 ) -> str:
-    '''Return the DNA sequence string represented by ```seqint```
+    '''Return the DNA sequence string represented by ``seqint``
 
     Args:
         seqint: integer representation of a DNA sequence
         length: length of the represented sequence in bases
 
     Returns:
-        DNA sequence string represented by ```seqint```
+        DNA sequence string represented by ``seqint``
     '''
-    cdef object ret_obj
-    cdef char* out_seq
+    cdef:
+        object ret_obj
+        char* out_seq = NULL
 
     if length == 0:
         return ''
 
-    out_seq = <char *> PyMem_Malloc((length+1)*sizeof(char))
+    out_seq = <char*> PyMem_Malloc(
+        (length + 1) * sizeof(char),
+    )
     if out_seq == NULL:
         raise OSError('Could not allocate memory for sequence.')
 
@@ -283,7 +292,7 @@ def int2Seq(
     return ret_obj
 
 
-cdef inline int2Seq_c(uint64_t seqint, char* out, int length):
+cdef inline int_2_seq_c(uint64_t seqint, char* out, int length):
     '''Cython header exposed wrapper for si_int2Seq
     '''
     return si_int2Seq(seqint, out, length)

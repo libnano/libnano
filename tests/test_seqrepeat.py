@@ -33,7 +33,7 @@ from libnano.metric import seqrepeat  # type: ignore
 class TestSeqRepeat(unittest.TestCase):
 
     def test_gap_check(self):
-        '''Test the gapCheck
+        '''Test the gap_check
         70 base window no repeats more than 8 base pairs
         must be a 70 bp gap between first base of repeat and
         the start of the next instance
@@ -52,7 +52,7 @@ class TestSeqRepeat(unittest.TestCase):
             seq,
             8,
         )
-        check = a.gapCheck(70)
+        check = a.gap_check(70)
         self.assertEqual(
             len(check),
             1,
@@ -66,7 +66,7 @@ class TestSeqRepeat(unittest.TestCase):
             seq[i:i + size],
             seq[j:j + size],
         )
-        check = a.gapCheck(72)
+        check = a.gap_check(72)
         self.assertEqual(
             len(check),
             2,
@@ -95,7 +95,7 @@ class TestSeqRepeat(unittest.TestCase):
             seq,
             8,
         )
-        check = a.allRepeats()
+        check = a.all_repeats()
         self.assertIn(
             key,
             check,
@@ -119,22 +119,22 @@ class TestSeqRepeat(unittest.TestCase):
         )
 
     def test_indices_of(self):
-        '''Test basic construction and indicesOf
+        '''Test basic construction and indices_of
         '''
         a = seqrepeat.RepeatCheck(
             'GGGGAAAATTTTTTATTTTTGGGGAAAAT',
             8,
         )
         self.assertEqual(
-            a.indicesOf('AAAATTTT'),
+            a.indices_of('AAAATTTT'),
             [4],
         )
         self.assertEqual(
-            a.indicesOf('GGGGAAAAT'),
+            a.indices_of('GGGGAAAAT'),
             [0, 20],
         )
         self.assertEqual(
-            a.indicesOf('ZZZZZZZZZ'),
+            a.indices_of('ZZZZZZZZZ'),
             [],
         )
 
@@ -143,15 +143,15 @@ class TestSeqRepeat(unittest.TestCase):
             6,
         )
         self.assertEqual(
-            a.indicesOf('AAAATTTT'),
+            a.indices_of('AAAATTTT'),
             [4],
         )
         self.assertEqual(
-            a.indicesOf('GGGGAAA'),
+            a.indices_of('GGGGAAA'),
             [0, 20],
         )
         self.assertEqual(
-            a.indicesOf('ZZZZZZZ'),
+            a.indices_of('ZZZZZZZ'),
             [],
         )
 
@@ -161,7 +161,7 @@ class TestSeqRepeat(unittest.TestCase):
             32,
         )
         self.assertEqual(
-            a.indicesOf(longest),
+            a.indices_of(longest),
             [0],
         )
 
@@ -177,7 +177,7 @@ class TestSeqRepeat(unittest.TestCase):
         seq = f'{key}{gap1_str}{key}'
 
         a = seqrepeat.RepeatCheck(seq, 8)
-        check = a.screenEnds(8)
+        check = a.screen_ends(8)
         self.assertEqual(check, (True, True))
 
         # (False, True)
@@ -190,7 +190,7 @@ class TestSeqRepeat(unittest.TestCase):
             seq,
             8,
         )
-        check = a.screenEnds(8)
+        check = a.screen_ends(8)
         self.assertEqual(
             check,
             (False, True),
@@ -206,7 +206,7 @@ class TestSeqRepeat(unittest.TestCase):
             seq,
             8,
         )
-        check = a.screenEnds(8)
+        check = a.screen_ends(8)
         self.assertEqual(
             check,
             (False, False),
@@ -221,7 +221,7 @@ class TestSeqRepeat(unittest.TestCase):
             seq,
             8,
         )
-        check = a.screenEnds(8)
+        check = a.screen_ends(8)
         self.assertEqual(
             check,
             (True, False),
@@ -232,7 +232,7 @@ class TestSeqRepeat(unittest.TestCase):
             'GGGGAAAATGGGGAAAA',
             8,
         )
-        violations, counts = a.windowCheck(
+        violations, counts = a.window_check(
             17,
             0,
         )
@@ -244,7 +244,7 @@ class TestSeqRepeat(unittest.TestCase):
             counts,
             [1],
         )
-        out = a.getRepeatWindow(
+        out = a.get_repeat_window(
             violations[0],
             17,
         )

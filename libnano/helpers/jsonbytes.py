@@ -88,7 +88,6 @@ class BOrderedDict(OrderedDict):
                 if isinstance(item, str):
                     value[i] = item.encode('utf-8')
         super(BOrderedDict, self).__setitem__(key, value, dict_setitem)
-# end class
 
 
 def load(

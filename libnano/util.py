@@ -17,41 +17,45 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 '''
 libnano.util
-~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~
 
 Helpful functions and data structures
 
 '''
 
-# import math
 import random
-# import sys
 from collections import Counter
-# from itertools import chain
 from typing import (
     Dict,
     List,
     Optional,
 )
 
+from libnano.seqstr import reverse_complement  # type: ignore
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~ DNA Sequence Manipulation ~~~~~~~~~~~~~~~~~~~~~~~~ #
 
-_DNAcomp = str.maketrans('ACGTacgt', 'TGCATGCA')
 
+def random_dna_seq(length: int) -> str:
+    '''
+    Args:
+        length: length of output DNA sequence
 
-def reverseComplement(seq: str) -> str:
-    return seq.translate(_DNAcomp)[::-1]
-
-
-rc = reverseComplement
-
-
-def complement(seq: str) -> str:
-    return seq.translate(_DNAcomp)
-
-
-def randomSeq(length: int) -> str:
+    Returns:
+        Random DNA sequence of length ``length``
+    '''
     return ''.join([random.choice('ATGC') for x in range(length)])
+
+
+def random_rna_seq(length: int) -> str:
+    '''
+    Args:
+        length: length of output RNA sequence
+
+    Returns:
+        Random RNA sequence of length ``length``
+    '''
+    return ''.join([random.choice('AUGC') for x in range(length)])
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Filters ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
@@ -227,7 +231,7 @@ class SeqSet:
         self.seqs: List[str] = []
         self.max_run = max_run
 
-    def addSeq(self, seq: str) -> None:
+    def add_seq(self, seq: str) -> None:
         '''
         Args:
             seq: Sequence to add to the set
@@ -239,7 +243,7 @@ class SeqSet:
         '''
         self.seqs = []
 
-    def checkAgainstWords(
+    def check_against_words(
             self,
             seq: str,
     ) -> bool:
@@ -262,7 +266,7 @@ class SeqSet:
         return True
 
 
-def genWordList(
+def generate_word_list(
         seq: str,
         word_size: int,
         include_rc: bool = True,
@@ -282,7 +286,7 @@ def genWordList(
         range(len(seq) - word_size)
     ]
     if include_rc:
-        seq_rc = reverseComplement(seq)
+        seq_rc = reverse_complement(seq)
         word_list += [
             seq_rc[idx:idx + word_size].upper() for idx in
             range(len(seq_rc) - word_size)
@@ -290,7 +294,7 @@ def genWordList(
     return word_list
 
 
-def genWordDict(
+def generate_word_dict(
         seq: str,
         word_size: int,
         include_rc: bool = True,
@@ -306,11 +310,15 @@ def genWordDict(
         from ``seq``
 
     '''
-    word_list = genWordList(seq, word_size, include_rc)
+    word_list = generate_word_list(
+        seq,
+        word_size,
+        include_rc,
+    )
     return Counter(word_list)
 
 
-def duplicateWordCount(
+def duplicate_word_count(
         seq: str,
         word_size: int,
         include_rc: bool = True,
@@ -325,13 +333,13 @@ def duplicateWordCount(
         Number of words with incidence more than 1 in the word set
 
     '''
-    word_list = genWordList(seq, word_size, include_rc)
+    word_list = generate_word_list(seq, word_size, include_rc)
     return len([k for k, v in Counter(word_list).items() if v > 1])
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~ Random sequence generation ~~~~~~~~~~~~~~~~~~~~~~~ #
 
-def _buildBaseList(
+def _build_base_list(
         probs: Dict[str, int],
 ) -> List[str]:
     '''
@@ -339,7 +347,7 @@ def _buildBaseList(
         probs: Dictionary of base to probability
 
     Returns:
-        List of bases time the frequency
+        List of each `base` key in ``probs`` times the frequency value
 
     '''
     base_list = []
@@ -368,53 +376,7 @@ def weighted_choice(
     return -1
 
 
-# def randSeqInv(
-#       add_length: int,
-#       probs: Dict[str, int],
-#       start_length: int = None
-# ):
-#     '''Probs format {'A':25, 'T':25, 'G':25, 'C':25}
-#     (25% liklihood of each)
-#     or
-#     Probs format {'A':0.25, 'T':0.25, 'G':0.25, 'C':0.25}
-
-#     Computes the inverse distribution from the probs
-
-#     start_length is the length that the original weights
-#     was calculated from and if not None will rebalance the
-#     distribution as the sequence is built up
-#     '''
-#     seq = ''
-#     L = start_length
-#     weights = list(probs.values())
-#     bases = list(probs.keys())
-#     # bases = ['A', 'T', 'G', 'C']
-#     invweights = [0, 0, 0, 0] # initialize
-#     for x in range(add_length):
-#         enum_weights = [i for i in enumerate(weights)]
-#         # sort by weight
-#         enum_weights_sorted = sorted(enum_weights, key=lambda i: i[1])
-#         # swap high and low
-#         invweights[invweight_sorted[0][0]] = invweight_sorted[3][1]
-#         invweights[invweight_sorted[3][0]] = invweight_sorted[0][1]
-#         invweights[invweight_sorted[1][0]] = invweight_sorted[2][1]
-#         invweights[invweight_sorted[2][0]] = invweight_sorted[1][1]
-
-#         base_idx = weighted_choice(invweights)
-#         seq += bases[base_idx]
-
-#         if L is not None:
-#             # recalculate weights
-#             weights[base_idx] = (weights[base_idx]*L+1)/(L+1)
-#             for b in bases:
-#                 if b == base_idx:
-#                     continue
-#                 else:
-#                     weights[b] = weights[b]*L/(L+1)
-#
-
-
-def randSeq(
+def random_probability_sequence(
         length: int,
         probs: Optional[Dict[str, int]] = None,
 ) -> str:
@@ -432,12 +394,13 @@ def randSeq(
         probs = {'A': 25, 'T': 25, 'G': 25, 'C': 25}
     weights = list(probs.values())
     bases = list(probs.keys())
-    return ''.join(
-        [bases[weighted_choice(weights)] for x in range(length)],
-    )
+    return ''.join([
+        bases[weighted_choice(weights)]
+        for x in range(length)
+    ])
 
 
-def _checkAgainstWords(
+def _check_seq_against_word_list(
         seq: str,
         word_list: List[str],
 ) -> bool:
@@ -461,14 +424,17 @@ def _checkAgainstWords(
         return True
 
 
-def randSeqAvoidWords(
-    length: int,
-    flank_left: str = '',
-    flank_right: str = '',
-    probs: Optional[Dict[str, int]] = None,
-    word_list: List[str] = [],
+def random_probability_sequence_avoid_word_list(
+        length: int,
+        flank_left: str = '',
+        flank_right: str = '',
+        probs: Optional[Dict[str, int]] = None,
+        word_list: Optional[List[str]] = None,
+        try_count_limit: int = 0,
 ) -> str:
-    '''
+    '''Generate a random sequence screened against homopolymer runs of length
+    3 and screen against an optional ``word_list``
+
     Args:
         length: Length of generated sequence
         flank_left: Left flanking sequence
@@ -481,14 +447,23 @@ def randSeqAvoidWords(
         Random sequence screened successfully against ``word_list``
 
     '''
+    try_count = 0
     while True:
-        raw_rand = randSeq(length, probs=probs)
+        raw_rand = random_probability_sequence(
+            length,
+            probs=probs,
+        )
         if homopol_run(raw_rand, 3):
-            if _checkAgainstWords(
-                seq=f'{flank_left}{raw_rand}{flank_right}',
-                word_list=word_list,
-            ):
+            if word_list:
+                if _check_seq_against_word_list(
+                    seq=f'{flank_left}{raw_rand}{flank_right}',
+                    word_list=word_list,
+                ):
+                    return raw_rand
+            else:
                 return raw_rand
-
-
-# TODO: add filtering capabilies a la nucleic (avoid GC runs etc)
+        if try_count_limit:
+            try_count += 1
+            if try_count >= try_count_limit:
+                break
+    return ''

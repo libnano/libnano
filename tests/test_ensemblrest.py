@@ -20,7 +20,6 @@ tests.test_ensemblrest
 ~~~~~~~~~~~~~~~~~~~~~~
 
 '''
-import os
 import time
 import unittest
 from typing import (
@@ -36,12 +35,12 @@ import libnano.ensemblrest as er
 
 class TestEnsembleRest(unittest.TestCase):
     def test_get_probes(self):
-        # gene = 'SLC17A8'
         transcript = 'ENST00000323346'
         probe_name = 'ILMN_1767842'
-        # gene_eid = 'ENSG00000179520'
 
-        out_list = er.getArrayProbes(transcript)
+        out_list = er.fetch_array_probes(
+            transcript,
+        )
         self.assertIsInstance(
             out_list,
             list,
@@ -62,14 +61,14 @@ class TestEnsembleRest(unittest.TestCase):
                     f'non-unique_hash: {p_hash}',
                 )
             out_unique.add(p_hash)
-        grouped_out_list = er.probeListGroupByProbeName(
+        grouped_out_list = er.probe_list_group_by_probe_name(
             out_list,
         )
         self.assertTrue(
             len(grouped_out_list) > 0,
         )
 
-        probe_dict = er.getProbeFromList(
+        probe_dict = er.get_probe_from_list(
             probe_name,
             grouped_out_list,
         )
@@ -104,7 +103,7 @@ class TestEnsembleRest(unittest.TestCase):
             ],
         }
         # 1. Get the probe sequence
-        seq = er.getRegionSequence(
+        seq = er.fetch_region_sequence(
             species,
             chromosome=probe_dict['seq_region_name'],
             start_idx=probe_dict['start'],
@@ -115,9 +114,9 @@ class TestEnsembleRest(unittest.TestCase):
 
         # 2. confirm that getRegionSequence matches slicing the whole gene
         # for a forward strand (strand == 1) (no reverse complement check)
-        lookup: dict = er.lookUpID(gene_eid)
+        lookup: dict = er.fetch_lookup_id(gene_eid)
         gene_start_idx: int = lookup['start']
-        full_gene_seq = er.getSequence(gene_eid, seq_type='genomic')
+        full_gene_seq = er.fetch_sequence(gene_eid, seq_type='genomic')
         slc = slice(
             probe_dict['start'] - gene_start_idx,
             probe_dict['end'] - gene_start_idx + 1,
@@ -130,7 +129,7 @@ class TestEnsembleRest(unittest.TestCase):
         )
 
         # 3. Check that the sequence exists in the 3' exon
-        three_p_seq = er.getSequence(
+        three_p_seq = er.fetch_sequence(
             three_p_exon,
         )
         self.assertTrue(
@@ -195,14 +194,14 @@ class TestEnsembleRest(unittest.TestCase):
         for item in genes_and_barcodes_list:
             three_p_exon_id = item.utr_id
             transcript_id = item.transcript_id
-            filtered_probes: pd.DataFrame = er.getProbesForID(
+            filtered_probes: pd.DataFrame = er.fetch_probes_for_id(
                 three_p_exon_id,
                 keep_n=number_probes_per_gene,
             )
             self.assertTrue(len(filtered_probes) > 0)
             barcode = item.barcode
-            exon_seq = er.getSequence(three_p_exon_id)
-            transcript: dict = er.lookUpID(transcript_id)
+            exon_seq = er.fetch_sequence(three_p_exon_id)
+            transcript: dict = er.fetch_lookup_id(transcript_id)
 
             for exon in transcript['Exon']:
                 if exon['id'] == three_p_exon_id:
@@ -241,7 +240,7 @@ class TestEnsembleRest(unittest.TestCase):
                             continue
 
                 try:
-                    seq = er.getRegionSequence(
+                    seq = er.fetch_region_sequence(
                         species,
                         chromosome=probe['seq_region_name'],
                         start_idx=p_start,
@@ -251,7 +250,7 @@ class TestEnsembleRest(unittest.TestCase):
                 except ValueError:
                     raise
                 try:
-                    seq, _ = er.filterRegionSequence(
+                    seq, _ = er.fetch_filter_region_sequence(
                         seq,
                         p_strand,
                         transcript_id,

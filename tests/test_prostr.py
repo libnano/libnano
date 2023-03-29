@@ -26,8 +26,8 @@ from libnano.datasets import dataset_container
 from libnano.prostr import (
     ReverseTranslator,
     WeightedReverseTranslator,
-    dnaToAA,
-    rnaToAA,
+    dna_to_aa,
+    rna_to_aa,
 )
 
 
@@ -42,9 +42,9 @@ class TestProStr(unittest.TestCase):
         a = ReverseTranslator(aa_seq)
         self.assertIsNotNone(a)
         for _ in range(1000):
-            rt = a.revTranslate()
+            rt = a.rev_translate()
             self.assertEqual(
-                dnaToAA(rt),
+                dna_to_aa(rt),
                 aa_seq,
             )
 
@@ -53,8 +53,8 @@ class TestProStr(unittest.TestCase):
         self.assertIsNotNone(a)
         for _ in range(1000):
             self.assertEqual(
-                rnaToAA(
-                    a.revTranslate(),
+                rna_to_aa(
+                    a.rev_translate(),
                 ),
                 aa_seq,
             )
@@ -66,7 +66,7 @@ class TestProStr(unittest.TestCase):
             self.assertIsNotNone(a)
             for _ in range(1000):
                 self.assertEqual(
-                    dnaToAA(a.revTranslate()),
+                    dna_to_aa(a.rev_translate()),
                     aa_seq,
                 )
             # RNA, weighted
@@ -78,19 +78,19 @@ class TestProStr(unittest.TestCase):
             self.assertIsNotNone(a)
             for _ in range(1000):
                 self.assertEqual(
-                    rnaToAA(a.revTranslate()),
+                    rna_to_aa(a.rev_translate()),
                     aa_seq,
                 )
 
     def test_dna_to_aa(self):
         self.assertEqual(
-            dnaToAA('TTTTTCAGT'),
+            dna_to_aa('TTTTTCAGT'),
             'FFS',
         )
         with self.assertRaises(KeyError):
-            dnaToAA('TTTTTCAGTA')  # seq % 3 != 0
+            dna_to_aa('TTTTTCAGTA')  # seq % 3 != 0
         with self.assertRaises(KeyError):
-            dnaToAA('TTTTTCAGX')  # Invalid character
+            dna_to_aa('TTTTTCAGX')  # Invalid character
         # Exhaustive (test translation of every codon)
         dna_seq = ''
         aa_seq = ''
@@ -98,19 +98,19 @@ class TestProStr(unittest.TestCase):
             dna_seq += ''.join(codons)
             aa_seq += aa * len(codons)
         self.assertEqual(
-            dnaToAA(dna_seq),
+            dna_to_aa(dna_seq),
             aa_seq,
         )
 
     def test_rna_to_aa(self):
         self.assertEqual(
-            rnaToAA('UUUUUCAGU'),
+            rna_to_aa('UUUUUCAGU'),
             'FFS',
         )
         with self.assertRaises(KeyError):
-            rnaToAA('UUUUUCAGUU')  # seq % 3 != 0
+            rna_to_aa('UUUUUCAGUU')  # seq % 3 != 0
         with self.assertRaises(KeyError):
-            rnaToAA('UUUUUCAGX')  # Invalid character
+            rna_to_aa('UUUUUCAGX')  # Invalid character
         # Exhaustive (test translation of every codon)
         rna_seq = ''
         aa_seq = ''
@@ -118,7 +118,7 @@ class TestProStr(unittest.TestCase):
             rna_seq += ''.join(codons)
             aa_seq += aa * len(codons)
         self.assertEqual(
-            rnaToAA(rna_seq),
+            rna_to_aa(rna_seq),
             aa_seq,
         )
 

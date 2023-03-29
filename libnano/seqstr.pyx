@@ -108,7 +108,7 @@ def dsRandomer(
     return s, comp
 
 
-def reverse(seq: STR_T) -> STR_T:
+def reverse_seq(seq: STR_T) -> STR_T:
     '''Compute the reverse of a DNA/RNA/amino acid sequence
 
     Args:
@@ -144,7 +144,7 @@ def reverse(seq: STR_T) -> STR_T:
 
 
 
-cdef inline char* reverse_c(
+cdef inline char* reverse_seq_c(
         char* seq,
         int length,
 ):
@@ -160,7 +160,7 @@ cdef inline char* reverse_c(
 
 
 
-cdef inline void reverse_cb(
+cdef inline void reverse_seq_cb(
         char* seq,
         char* out,
         int length,
@@ -215,7 +215,10 @@ cdef inline char* complement_c(
         char* seq,
         int length,
 ):
-    cdef char* c_seq = c_util.copy_string(seq, length)
+    cdef char* c_seq = c_util.copy_string(
+        seq,
+        length,
+    )
     ss_compSeq(c_seq, length)
     return c_seq
 
@@ -225,11 +228,15 @@ cdef inline void complement_cb(
         char* out,
         int length,
 ):
-    c_util.copy_string_buffer(seq, out, length)
+    c_util.copy_string_buffer(
+        seq,
+        out,
+        length,
+    )
     ss_compSeq(out, length)
 
 
-def reverseComplement(
+def reverse_complement(
         seq: STR_T,
 ) -> STR_T:
     '''Compute the reverse complement of a DNA/RNA/amino acid sequence
@@ -265,27 +272,33 @@ def reverseComplement(
     return rcomp_seq
 
 
-cdef inline char* reverseComplement_c(
+cdef inline char* reverse_complement_c(
         char* seq,
         int length,
 ):
-    cdef char* c_seq = c_util.copy_string(seq, length)
+    cdef char* c_seq = c_util.copy_string(
+        seq,
+        length,
+    )
     ss_revCompSeq(c_seq, length)
     return c_seq
 
 
 
-cdef inline void reverseComplement_cb(
+cdef inline void reverse_complement_cb(
         char* seq,
         char* out,
         int length,
 ):
-    c_util.copy_string_buffer(seq, out, length)
+    c_util.copy_string_buffer(
+        seq,
+        out,
+        length,
+    )
     ss_revCompSeq(out, length)
 
 
-
-def hammingDistance(
+def hamming_distance(
         seq1: STR_T,
         seq2: STR_T,
 ) -> int:
@@ -313,7 +326,7 @@ def hammingDistance(
     )
 
 
-cdef inline int hammingDistance_c(
+cdef inline int hamming_distance_c(
         char* seq1,
         char* seq2,
         int len1,
@@ -336,7 +349,7 @@ cdef inline int hammingDistance_c(
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Simple heuristics ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 
 
-def minHammingDistance(
+def min_hamming_distance(
         seq1: STR_T,
         seq_list: List[STR_T],
 ) -> int:
@@ -358,11 +371,12 @@ def minHammingDistance(
         ValueError: All strings in `seq_list` must have the same length as seq1
 
     '''
-    cdef char* seq1_cstr = NULL
-    cdef char* seq2_cstr = NULL
-    cdef Py_ssize_t len1
-    cdef Py_ssize_t len2
-    cdef object seq2
+    cdef:
+        char* seq1_cstr = NULL
+        char* seq2_cstr = NULL
+        Py_ssize_t len1
+        Py_ssize_t len2
+        object seq2
 
     seq1_cstr = c_util.obj_to_cstr_len(
         seq1,
@@ -391,7 +405,7 @@ def minHammingDistance(
     return min_hd
 
 
-def thresholdRollingHammingList(
+def threshold_rolling_hamming_list(
         target: STR_T,
         seq_list: List[STR_T],
         int threshold,
@@ -467,7 +481,7 @@ def thresholdRollingHammingList(
     return out_list
 
 
-def rollingHammingDistance(
+def rolling_hamming_distance(
         seq1: STR_T,
         seq2: STR_T,
         int overlap = 0,
@@ -504,18 +518,16 @@ def rollingHammingDistance(
         A numpy array of the hamming distance between seq1 and seq2 computed
         at each index of seq2
 
-    Raises:
-        ValueError
-
     '''
-    cdef char* seq1_cstr = NULL
-    cdef char* seq2_cstr = NULL
-    cdef Py_ssize_t len1, len2
+    cdef:
+        char* seq1_cstr = NULL
+        char* seq2_cstr = NULL
+        Py_ssize_t len1, len2
 
-    cdef cnp.ndarray[cnp.int32_t, ndim=1] hamming_distance_np_arr
+        cnp.ndarray[cnp.int32_t, ndim=1] hamming_distance_np_arr
 
-    cdef int* hamming_distance_arr
-    cdef int num_positions
+        int* hamming_distance_arr
+        int num_positions
 
     seq1_cstr = c_util.obj_to_cstr_len(seq1, &len1)
     seq2_cstr = c_util.obj_to_cstr_len(seq2, &len2)
@@ -524,16 +536,24 @@ def rollingHammingDistance(
 
     hamming_distance_np_arr = np.zeros(num_positions, dtype=np.int32)
 
-    hamming_distance_arr = <int*> cnp.PyArray_DATA(hamming_distance_np_arr)
+    hamming_distance_arr = <int*> cnp.PyArray_DATA(
+        hamming_distance_np_arr,
+    )
 
-    ss_rollingHamming(<const char *> seq1_cstr, <const char *> seq2_cstr,
-                      <int> len1, <int>len2, overlap, hamming_distance_arr)
+    ss_rollingHamming(
+        <const char*> seq1_cstr,
+        <const char*> seq2_cstr,
+        <int> len1,
+        <int> len2,
+        overlap,
+        hamming_distance_arr
+    )
 
     # get rid of PyObject* to get cython objects
     return hamming_distance_np_arr
 
 
-cdef inline void rollingHammingDistance_c(
+cdef inline void rolling_hamming_distance_c(
         char* seq1,
         char* seq2,
         int len1,
@@ -551,7 +571,7 @@ cdef inline void rollingHammingDistance_c(
     )
 
 
-def misprimeCheck(
+def misprime_check(
         putative_seq: STR_T,
         sequences: Iterable[STR_T],
         int hamming_threshold,
@@ -571,7 +591,6 @@ def misprimeCheck(
         bool: True if will misprime False otherwise.
     '''
     cdef:
-        bint is_offtarget = False
         int res
         char* seq1_cstr = NULL   # the shorter sequence
         char* seq2_cstr = NULL   # the longer sequence

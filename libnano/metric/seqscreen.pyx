@@ -46,7 +46,7 @@ from typing import (
 )
 
 
-def containsRun(
+def contains_run(
         seq_obj: Union[str, bytes],
         maxA: int,
         maxT: int,
@@ -90,7 +90,7 @@ def containsRun(
     return True if rc else False
 
 
-def gcWindow(
+def gc_window(
         seq_obj : Union[str, bytes],
         gc_min_percent: int,
         gc_max_percent: int,

@@ -45,7 +45,7 @@ LOCAL_DIR = op.dirname(op.abspath(__file__))
 class TestSubmer(unittest.TestCase):
 
     def setUp(self):
-        recs = fasta.parseFasta(
+        recs = fasta.parse_fasta(
             op.join(
                 LOCAL_DIR,
                 'test_data/MG1655.fa',
@@ -115,7 +115,7 @@ class TestSubmer(unittest.TestCase):
             m,
             force_hamming=True,
         )
-        self.assertEqual(tbl.getMatchers(), None)
+        self.assertEqual(tbl.get_matchers(), None)
 
     def test_find_matches(self):
         m = 10  # Initialize to ensure a seed check

@@ -50,7 +50,7 @@ class TestFastaParsing(unittest.TestCase):
         )
 
     def test_parseFasta(self):
-        parsed_input = fasta.parseFasta(
+        parsed_input = fasta.parse_fasta(
             self.ex1,
             alphabet='AMINO_ACID',
         )
@@ -63,7 +63,7 @@ class TestFastaParsing(unittest.TestCase):
             len(parsed_input),
             3,
         )
-        parsed_input = fasta.parseFasta(
+        parsed_input = fasta.parse_fasta(
             self.ex2,
             alphabet='AMINO_ACID',
         )
@@ -74,7 +74,7 @@ class TestFastaParsing(unittest.TestCase):
 
     def test_parseFastaGen(self):
         num_recs = 0
-        for rec_id, rec_seq in fasta.parseFastaGen(
+        for rec_id, rec_seq in fasta.parse_fasta_gen(
             self.ex1,
             alphabet='AMINO_ACID',
         ):
@@ -85,7 +85,7 @@ class TestFastaParsing(unittest.TestCase):
             )
         self.assertEqual(num_recs, 3)
         num_recs = 0
-        for rec_id, rec_seq in fasta.parseFastaGen(
+        for rec_id, rec_seq in fasta.parse_fasta_gen(
             self.ex1,
             alphabet='AMINO_ACID',
         ):
@@ -100,19 +100,19 @@ class TestFastaParsing(unittest.TestCase):
         )
 
     def test_sanitizeRecSeq(self):
-        for seq_id, req_seq in fasta.parseFastaGen(
+        for seq_id, req_seq in fasta.parse_fasta_gen(
             self.ex1,
             alphabet='AMINO_ACID',
         ):
             pass
         with self.assertRaises(ValueError):
-            for seq_id, req_seq in fasta.parseFastaGen(
+            for seq_id, req_seq in fasta.parse_fasta_gen(
                 self.ex1,
                 alphabet='DNA',
             ):
                 pass
         with self.assertRaises(ValueError):
-            for seq_id, req_seq in fasta.parseFastaGen(
+            for seq_id, req_seq in fasta.parse_fasta_gen(
                 self.ex1,
                 not_allowed='N',
             ):

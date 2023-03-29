@@ -72,7 +72,7 @@ class SubAlignmentGroup(NamedTuple):
     notes: str
 
 
-def removeWhitespace(raw_string: str) -> str:
+def remove_whitespace(raw_string: str) -> str:
     '''Remove all whitespace (including newlines/carriage returns) from
     a string.
 
@@ -86,7 +86,7 @@ def removeWhitespace(raw_string: str) -> str:
     return ''.join(re.split(_WS_SPLIT, raw_string))
 
 
-def parseXMFA(
+def parse_xmfa(
         xmfa_fp: str,
 ) -> List[SubAlignmentGroup]:
     '''
@@ -123,7 +123,7 @@ def parseXMFA(
                     end_idx=int(sub_alignment.group('end_idx')),
                     strand=str(sub_alignment.group('strand')),
                     notes=str(sub_alignment.group('notes')),
-                    seq=removeWhitespace(sub_alignment.group('seq')),
+                    seq=remove_whitespace(sub_alignment.group('seq')),
                 ),
             )
 
@@ -143,6 +143,6 @@ if __name__ == '__main__':
     DIR = os.path.dirname(os.path.realpath(__file__))
     print()
     # output = parseXMFA(os.path.join(DIR, 'example.xmfa'))
-    output = parseXMFA(os.path.join(DIR, '1swap100_output', '1swap100.xmfa'))
+    output = parse_xmfa(os.path.join(DIR, '1swap100_output', '1swap100.xmfa'))
     print()
     print(output)

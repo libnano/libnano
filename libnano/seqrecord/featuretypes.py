@@ -70,7 +70,7 @@ class FeatureTypes(object):
         '''
         return self.ftype_dict[feature_name]
 
-    def addFeatureType(
+    def add_feature_type(
         self,
         feature_name: str,
         description: str = '',
@@ -100,12 +100,12 @@ class FeatureTypes(object):
                         ftype_LUT[ft_id] = feature_name
                     elif existing_fname == feature_name:
                         raise ValueError(
-                            f'addFeatureType: feature_name {feature_name} '
+                            f'add_feature_type: feature_name {feature_name} '
                             'already exists',
                         )
                     else:
                         raise ValueError(
-                            f'addFeatureType: feature_name {feature_name} '
+                            f'add_feature_type: feature_name {feature_name} '
                             f'with ft_id {ft_id} collision',
                         )
                 except IndexError:
@@ -124,7 +124,7 @@ class FeatureTypes(object):
             self.count += 1
             return ft_id
 
-    def removeFeatureType(
+    def remove_feature_type(
             self,
             feature_name: str,
     ) -> Tuple[int, str]:

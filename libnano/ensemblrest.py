@@ -36,16 +36,15 @@ from typing import (
     Optional,
     Set,
     Tuple,
-    Union,
 )
 
 import pandas as pd
 import requests
 
-from libnano.seqstr import reverseComplement  # type: ignore
+from libnano.seqstr import reverse_complement  # type: ignore
 
-USE_CACHE: bool = True
-DO_PRINT_CACHE: bool = False
+USE_CACHE = True
+DO_PRINT_CACHE = False
 TIMEOUT_FAST: float = 2.0
 TIMEOUT_SLOW: float = 6.0
 TIMEOUT_REQU: float = 5 * TIMEOUT_SLOW
@@ -156,19 +155,30 @@ POST_JSON: Dict = {
     'Accept': 'application/json',
 }
 
-home_path: str = str(Path.home())
-CACHE_FILE: str = op.join(home_path, '.ENSEMBLCACHE.pickle')
+HOME_PATH: str = str(Path.home())
+CACHE_FILE: str = op.join(
+    HOME_PATH,
+    '.ENSEMBLCACHE.pickle',
+)
 
-SPECIES_LIST: List[str] = ['mouse', 'human']
-_cache_dirty: bool
-ensembl_cache: Dict
-THE_FILE: str = op.basename(__file__)
+SPECIES_LIST = ['mouse', 'human']
+_CACHE_DIRTY = False
+ENSEMBL_CACHE: Dict[str, Any] = {}
+THE_FILE_NAME = op.basename(__file__)
 
 
-def makeCache(
+def make_cache(
         species_list: Optional[List[str]] = None,
 ) -> Dict[str, Any]:
-    global _cache_dirty
+    '''
+    Args:
+        species_list: List of species strings.  If `None`, use global
+            ``SPECIES_LIST``
+
+    Returns:
+        cache dictionary
+    '''
+    global _CACHE_DIRTY
     global SPECIES_LIST
     if species_list is None:
         species_list = SPECIES_LIST
@@ -178,40 +188,57 @@ def makeCache(
     }
     d['species_list'] = species_list
     SPECIES_LIST = species_list
-    _cache_dirty = False
+    _CACHE_DIRTY = False
     return d
 
 
-def loadCache(filename: str) -> Dict:
+def load_cache(
+        filename: str,
+) -> Dict[str, Any]:
+    '''
+    Args:
+        filename: Full path cache filename
+
+    Returns:
+        Loaded cache dictionary if the cache exists, otherwise, creates a
+        new cache and prints and eeror
+    '''
     try:
         with io.open(filename, 'rb') as fd:
             the_cache: Dict = pickle.load(fd)
     except OSError:
         if DO_PRINT_CACHE:
             print(
-                f'Could not load cache for {THE_FILE}: {filename}',
+                f'Could not load cache for {THE_FILE_NAME}: {filename}',
             )
-        the_cache = makeCache()
+        the_cache = make_cache()
     if DO_PRINT_CACHE:
-        print(f'LOADED cache for {THE_FILE}: {CACHE_FILE}')
+        print(f'LOADED cache for {THE_FILE_NAME}: {CACHE_FILE}')
     return the_cache
 
 
 if Path(CACHE_FILE).exists():
-    ensembl_cache = loadCache(CACHE_FILE)
-    SPECIES_LIST = ensembl_cache['species_list']
-    _cache_dirty = False
+    ENSEMBL_CACHE = load_cache(CACHE_FILE)
+    SPECIES_LIST = ENSEMBL_CACHE['species_list']
+    _CACHE_DIRTY = False
 else:
-    ensembl_cache = makeCache()
+    # Does not create a cache file
+    ENSEMBL_CACHE = make_cache()
 
 
 def clearCache(
         species_list: Optional[List[str]] = None,
-):
-    global _cache_dirty
-    global ensembl_cache
-    _cache_dirty = False
-    ensembl_cache = makeCache(
+) -> None:
+    '''Clear the cache and create a new one
+
+    Args:
+        species_list: List of species strings.  If `None`, use global
+            ``SPECIES_LIST``
+    '''
+    global _CACHE_DIRTY
+    global ENSEMBL_CACHE
+    _CACHE_DIRTY = False
+    ENSEMBL_CACHE = make_cache(
         species_list=species_list,
     )
 
@@ -220,54 +247,77 @@ def addSpecies(
         species: str,
 ) -> None:
     global SPECIES_LIST
-    global _cache_dirty
+    global _CACHE_DIRTY
     if species not in SPECIES_LIST:
         SPECIES_LIST.append(species)
-        ensembl_cache[species] = {}
-        _cache_dirty = True
+        ENSEMBL_CACHE[species] = {}
+        _CACHE_DIRTY = True
 
 
-def _closeCache(
+def _close_cache(
 ) -> None:
-    global _cache_dirty
-    global ensembl_cache
-    if _cache_dirty:
+    '''Dump the cache to the cache file if dirty
+    '''
+    global _CACHE_DIRTY
+    global ENSEMBL_CACHE
+    if _CACHE_DIRTY:
         with io.open(CACHE_FILE, 'wb') as fd:
-            pickle.dump(ensembl_cache, fd)
+            pickle.dump(ENSEMBL_CACHE, fd)
         if DO_PRINT_CACHE:
-            print(f'UPDATED {THE_FILE} cache')
+            print(f'UPDATED {THE_FILE_NAME} cache')
 
 
-atexit.register(_closeCache)
+# Dump the cache file on exit
+atexit.register(_close_cache)
 
 
-def getCache(
+def get_cache(
         url: str,
         arg: str,
         cache: Dict[str, Any],
         content_type: str = 'application/json',
 ) -> Any:
-    global _cache_dirty
+    '''
+    Args:
+        url: url to fetch
+        arg: Argument
+        cache: Cache fetch from
+        content_type: Remote content type to fetch
+
+    Returns:
+        Value for the arguments in the cache
+    '''
+    global _CACHE_DIRTY
     global USE_CACHE
 
     res = cache.get(arg) if USE_CACHE else None
 
     if res is None:
-        res = getURL(url, content_type=content_type)
+        res = get_url(url, content_type=content_type)
         cache[arg] = res
-        _cache_dirty = True
+        _CACHE_DIRTY = True
     return res
 
 
-def getCacheList(
+def get_cache_list(
         url: str,
         data: Dict,
         arg_list: List[str],
         cache: Dict[str, Any],
 ) -> Dict[Any, Any]:
-    global _cache_dirty
+    '''
+    Args:
+        url: url to fetch
+        data: Data to post for the result list
+        arg_list: List of argument strings
+        cache: Cache fetch from
+
+    Returns:
+        Value for the arguments in the cache
+    '''
+    global _CACHE_DIRTY
     global USE_CACHE
-    do_post: bool = False
+    do_post = False
     res: Dict[Any, Any] = {}
     if USE_CACHE:
         for x in arg_list:
@@ -279,13 +329,24 @@ def getCacheList(
     else:
         do_post = True
     if do_post:
-        res = postURL(url, data=data)
+        res = post_url(
+            url,
+            data=data,
+        )
         cache.update(res)
-        _cache_dirty = True
+        _CACHE_DIRTY = True
     return res
 
 
 class Base:
+    '''Bass object class for typing Ensembl results
+
+    Attr:
+        idxs: Indices
+        is_fwd: Is on a forward strand
+        is_rev: Is on a reverse strand
+        chromosome: Chromosome the item in a part of
+    '''
     key_list: List[str] = []
 
     def __init__(self, d: Dict):
@@ -313,14 +374,81 @@ class Base:
 
 
 class Exon(Base):
+    '''
+    Attributes:
+        idxs: Indices
+        is_fwd: Is on a forward strand
+        is_rev: Is on a reverse strand
+        chromosome: Chromosome the item in a part of
+        assembly_name:
+        db_type:
+        end:
+        id:
+        object_type:
+        seq_region_name:
+        species:
+        start:
+        strand:
+        version:
+    '''
     key_list: List[str] = EXON_KEYS
 
 
 class Transcript(Base):
+    '''
+    Attributes:
+        idxs: Indices
+        is_fwd: Is on a forward strand
+        is_rev: Is on a reverse strand
+        chromosome: Chromosome the item in a part of
+        Exon:
+        Parent:
+        Translation:
+        UTR:
+        assembly_name:
+        biotype:
+        db_type:
+        display_name:
+        end:
+        id:
+        is_canonical:
+        logic_name:
+        object_type:
+        seq_region_name:
+        source:
+        species:
+        start:
+        strand:
+        version:
+    '''
     key_list: List[str] = TRANSCRIPT_KEYS
 
 
 class LookUp(Base):
+    '''
+    Attributes:
+        idxs: Indices
+        is_fwd: Is on a forward strand
+        is_rev: Is on a reverse strand
+        chromosome: Chromosome the item in a part of
+        Transcript:
+        assembly_name:
+        biotype:
+        db_type:
+        description:
+        display_name:
+        end:
+        id:
+        logic_name:
+        object_type:
+        seq_region_name:
+        source:
+        species:
+        start:
+        strand:
+        version:
+        transcripts: List of transcripts
+    '''
     key_list: List[str] = LOOKUP_KEYS
 
     @property
@@ -328,7 +456,7 @@ class LookUp(Base):
         return self.d['Transcript']
 
 
-def getURL(
+def get_url(
         url: str,
         content_type='application/json',
 ) -> Any:
@@ -356,15 +484,17 @@ def getURL(
         return r.json()
 
 
-def postURL(
-        url: str, data: Dict,
-        headers: Dict = POST_JSON,
-) -> Dict:
+def post_url(
+        url: str,
+        data: Dict[str, Any],
+        headers: Dict[str, Any] = POST_JSON,
+) -> Dict[str, Any]:
     '''Post request to the ``url`` and return the JSON response
     Exits if response is not OK
 
     Args:
         url: URL to post to
+        data: Data payload for the POST
         headers: Headers to post with
 
     Returns:
@@ -383,7 +513,9 @@ def postURL(
     return r.json()
 
 
-def archiveID(eid: str) -> Dict:
+def archive_id(
+        eid: str,
+) -> Dict[str, Any]:
     '''Uses the given identifier to return the archived sequence
 
     Args:
@@ -393,10 +525,13 @@ def archiveID(eid: str) -> Dict:
         Dictionary of the archive ID given the Exon ID
     '''
     url = f'{SERVER}/archive/id/{eid}?'
-    return getURL(url)  # type: ignore
+    return get_url(url)  # type: ignore
 
 
-def xRefName(species: str, name: str) -> List[Dict]:
+def fetch_xref_name(
+        species: str,
+        name: str,
+) -> List[Dict[str, Any]]:
     '''Performs a lookup based upon the primary accession or display label of an
      external reference and returning the information we hold about the entry
 
@@ -409,10 +544,10 @@ def xRefName(species: str, name: str) -> List[Dict]:
 
     '''
     url = f'{SERVER}/xrefs/name/{species}/{name}?'
-    return getURL(url)  # type: ignore
+    return get_url(url)  # type: ignore
 
 
-def externalXRefs(
+def fetch_external_xrefs(
         species: str,
         name: str,
 ) -> Dict[str, List[Dict[str, Any]]]:
@@ -435,7 +570,7 @@ def externalXRefs(
             }
 
     '''
-    res: List[Dict] = xRefName(species, name)
+    res: List[Dict] = fetch_xref_name(species, name)
     out: Dict[str, List[Dict[str, Any]]] = {}
     for item in res:
         dbname = item['dbname']
@@ -453,7 +588,10 @@ def externalXRefs(
     return out
 
 
-def xRefSymbol(species: str, name: str) -> List[Dict]:
+def fetch_xref_symbol(
+        species: str,
+        name: str,
+) -> List[Dict[str, Any]]:
     '''Looks up an external symbol and returns all Ensembl objects linked to
     it. This can be a display name for a gene/transcript/translation, a synonym
      or an externally linked reference. If a gene's transcript is linked to the
@@ -469,10 +607,12 @@ def xRefSymbol(species: str, name: str) -> List[Dict]:
 
     '''
     url = f'{SERVER}/xrefs/symbol/{species}/{name}?'
-    return getURL(url)  # type: ignore
+    return get_url(url)  # type: ignore
 
 
-def getBiotypes(species: str) -> List[Dict]:
+def fetch_biotypes(
+        species: str,
+) -> List[Dict]:
     '''List the functional classifications of gene models that Ensembl
     associates with a particular species. Useful for restricting the type of
     genes/transcripts retrieved by other endpoints.
@@ -485,13 +625,13 @@ def getBiotypes(species: str) -> List[Dict]:
 
     '''
     url = f'{SERVER}/info/biotypes/{species}?'
-    return getURL(url)  # type: ignore
+    return get_url(url)  # type: ignore
 
 
-def lookUpID(
+def fetch_lookup_id(
     eid: str,
     is_protein_coding: bool = True,
-) -> Dict:
+) -> Dict[str, Any]:
     '''Find the species and database for a single identifier e.g. gene,
     transcript, protein. DOES not work for an exon ID.
     Filter out non-protein coding exons optionally
@@ -504,9 +644,13 @@ def lookUpID(
         Dictionary given the Exon ID
 
     '''
-    global ensembl_cache
-    url = SERVER + '/lookup/id/%s?expand=1;utr=1;phenotypes=1' % (eid)
-    res = getCache(url, eid, ensembl_cache)
+    global ENSEMBL_CACHE
+    url = f'{SERVER}/lookup/id/{eid}?expand=1;utr=1;phenotypes=1'
+    res = get_cache(
+        url,
+        eid,
+        ENSEMBL_CACHE,
+    )
 
     # is it a gene?
     if is_protein_coding and 'G' in eid:
@@ -518,7 +662,7 @@ def lookUpID(
     return res
 
 
-def lookUpIDList(
+def fetch_lookup_id_list(
     id_list: List[str],
     species: str,
     is_protein_coding: bool = True,
@@ -534,7 +678,7 @@ def lookUpIDList(
         Dictionary of dictionaries given the Exon IDs
 
     '''
-    global ensembl_cache
+    global ENSEMBL_CACHE
 
     url = f'{SERVER}/lookup/id/{species}'
 
@@ -544,7 +688,12 @@ def lookUpIDList(
         'utr': 1,
         'phenotypes': 1,
     }
-    res = getCacheList(url, data, id_list, ensembl_cache)
+    res = get_cache_list(
+        url,
+        data,
+        id_list,
+        ENSEMBL_CACHE,
+    )
 
     if is_protein_coding:
         for eid, lookup in res.items():
@@ -557,7 +706,7 @@ def lookUpIDList(
     return res
 
 
-def lookUpSymbol(
+def fetch_lookUp_symbol(
     species: str,
     symbol: str,
     is_protein_coding: bool = True,
@@ -575,9 +724,13 @@ def lookUpSymbol(
         Dictionaries given the arguments
 
     '''
-    global ensembl_cache
+    global ENSEMBL_CACHE
     url = f'{SERVER}/lookup/symbol/{species}/{symbol}?expand=1'
-    res = getCache(url, symbol, ensembl_cache[species])
+    res = get_cache(
+        url,
+        symbol,
+        ENSEMBL_CACHE[species],
+    )
 
     if is_protein_coding:
         out = []
@@ -588,7 +741,7 @@ def lookUpSymbol(
     return res
 
 
-def lookUpSymbolList(
+def fetch_lookup_symbol_list(
     species: str,
     symbol_list: List[str],
     is_protein_coding: bool = True,
@@ -606,7 +759,7 @@ def lookUpSymbolList(
         Dictionary of dictionaries given the arguments
 
     '''
-    global ensembl_cache
+    global ENSEMBL_CACHE
     url = f'{SERVER}/lookup/symbol/{species}'
     data = {
         'symbols': symbol_list,
@@ -614,11 +767,11 @@ def lookUpSymbolList(
         'utr': 1,
         'phenotypes': 1,
     }
-    res = getCacheList(
+    res = get_cache_list(
         url,
         data,
         symbol_list,
-        ensembl_cache[species],
+        ENSEMBL_CACHE[species],
     )
 
     if is_protein_coding:
@@ -632,13 +785,20 @@ def lookUpSymbolList(
 
 
 class TranscriptAndUTR(NamedTuple):
+    '''Named Tuple for capturing Transcripts and UTRs
+
+    Attributes:
+        transcript_id: Transcript ID
+        utr_id: UTR ID
+
+    '''
     transcript_id: str
     utr_id: str
 
 
-def getThreePrimeUTRs(
-    species: str,
-    symbols: List[str],
+def fetch_three_prime_utrs(
+        species: str,
+        symbols: List[str],
 ) -> List[TranscriptAndUTR]:
     '''
     Args:
@@ -652,18 +812,22 @@ def getThreePrimeUTRs(
 
     Raises:
         ValueError: Could not find canonical transcript for symbol
-
+        KeyError: Symbol not in symbol list fetched
     '''
 
-    res: Dict = lookUpSymbolList(species, symbols)
+    res = fetch_lookup_symbol_list(
+        species,
+        symbols,
+    )
     out: List[TranscriptAndUTR] = []
     for symbol in symbols:
         try:
             item_dict = res[symbol]
         except KeyError:
-            print(res)
-            raise
-        found_utr: bool = False
+            raise KeyError(
+                f'{symbol=} not in symbol list {res} fetched',
+            ) from None
+        found_utr = False
         for transcript in item_dict['Transcript']:
             if transcript['is_canonical'] == 1:
                 three_prime_utr_id: str = transcript['Exon'][-1]['id']
@@ -681,7 +845,7 @@ def getThreePrimeUTRs(
     return out
 
 
-def convertCDNA2Genome(
+def fetch_cdna_to_genome(
         transcript_id: str,
         idxs: Tuple[int, int],
 ) -> Dict:
@@ -698,11 +862,11 @@ def convertCDNA2Genome(
 
     '''
     url = f'{SERVER}/map/cdna/{transcript_id}/{idxs[0]}..{idxs[1]}?'
-    res = getURL(url)
+    res = get_url(url)
     return res
 
 
-def convertCDS2Genome(
+def fetch_cds_to_genome(
         transcript_id: str,
         idxs: Tuple[int, int],
 ) -> Dict:
@@ -719,11 +883,11 @@ def convertCDS2Genome(
 
     '''
     url = f'{SERVER}/map/cds/{transcript_id}/{idxs[0]}..{idxs[1]}?'
-    res = getURL(url)
+    res = get_url(url)
     return res
 
 
-def getSequence(
+def fetch_sequence(
         eid: str,
         seq_type: str = 'cdna',
 ) -> str:
@@ -736,18 +900,18 @@ def getSequence(
         Sequence string matching Ensembl stable ID and type
 
     '''
-    global ensembl_cache
+    global ENSEMBL_CACHE
     query = f'/sequence/id/{eid}?;type={seq_type}'
     url = f'{SERVER}{query}'
-    return getCache(
+    return get_cache(
         url,
         query,
-        ensembl_cache,
+        ENSEMBL_CACHE,
         content_type='text/plain',
     )
 
 
-def getRegionSequence(
+def fetch_region_sequence(
         species: str,
         chromosome: str,
         start_idx: int,
@@ -772,7 +936,7 @@ def getRegionSequence(
         ValueError: strand argument needs to be -1 or 1
 
     '''
-    global ensembl_cache
+    global ENSEMBL_CACHE
     if strand is None:
         if is_rev is None:
             raise ValueError(
@@ -782,21 +946,21 @@ def getRegionSequence(
     elif strand not in (-1, 1):
         raise ValueError('strand argument needs to be -1 or 1')
 
-    region = '%s:%d..%d:%d' % (chromosome, start_idx, end_idx, strand)
+    region = f'{chromosome}:{start_idx}..{end_idx}:{strand}'
     query = f'/sequence/region/{species}/{region}'
     url = f'{SERVER}{query}'
 
-    res = getCache(
+    res = get_cache(
         url,
         query,
-        ensembl_cache,
+        ENSEMBL_CACHE,
         content_type='text/plain',
     )
     assert (len(res) == (end_idx - start_idx + 1))
     return res
 
 
-def filterRegionSequence(
+def fetch_filter_region_sequence(
         query_seq: str,
         query_strand: int,
         transcript_id: str,
@@ -827,14 +991,14 @@ def filterRegionSequence(
         ValueError on sequence not found in the target reference sequence
 
     '''
-    was_rc: bool = False
+    was_rc = False
     query_seq_out: str = query_seq
     if transcript is None:
-        transcript = lookUpID(transcript_id)
+        transcript = fetch_lookup_id(transcript_id)
     if reference_seq is None:
-        reference_seq = getSequence(transcript_id)
+        reference_seq = fetch_sequence(transcript_id)
     if transcript['strand'] != query_strand:
-        query_seq_out = reverseComplement(query_seq)
+        query_seq_out = reverse_complement(query_seq)
         was_rc = True
     if query_seq_out not in reference_seq:
         raise ValueError(
@@ -844,7 +1008,7 @@ def filterRegionSequence(
     return query_seq_out, was_rc
 
 
-def overlap(
+def fetch_overlap(
         eid: str,
         feature: str = 'variation',
 ) -> List[Dict[str, Any]]:
@@ -861,21 +1025,27 @@ def overlap(
 
     '''
     url = f'{SERVER}/overlap/id/{eid}?feature={feature}'
-    return getCache(url, eid + feature, ensembl_cache)
+    return get_cache(
+        url,
+        f'{eid}{feature}',
+        ENSEMBL_CACHE,
+    )
 
 
-def excludeVariantsRegion(region: Base) -> List[Tuple[int, int]]:
+def fetch_exclude_variants_region(
+        region: Base,
+) -> List[Tuple[int, int]]:
     '''
     Args:
         region: the region (e.g. an Exon) Ensembl ID
 
     Returns:
-        list of non-variant slices of the region of the transcript.  the second
+        list of non-variant slices of the region of the transcript.  The second
         index in the tuple is non-inclusive so (1, 10) means every index from 1
         to 9 is included.  Good for python slicing
 
     '''
-    res = overlap(
+    res = fetch_overlap(
         region.id,
         feature='variation',
     )
@@ -892,7 +1062,7 @@ def excludeVariantsRegion(region: Base) -> List[Tuple[int, int]]:
     return out
 
 
-def excludeVariantsAllRegions(
+def fetch_exclude_variants_all_regions(
         transcript: Transcript,
 ) -> List[List[Tuple[int, int]]]:
     '''Exons are sorted by index in a transcript
@@ -908,13 +1078,17 @@ def excludeVariantsAllRegions(
         List of lists of region tuple pairs
 
     '''
-    regions = []
+    regions: List[List[Tuple[int, int]]] = []
     for item in transcript.Exon:
-        regions.append(excludeVariantsRegion(Exon(item)))
+        regions.append(
+            fetch_exclude_variants_region(
+                Exon(item),
+            ),
+        )
     return regions
 
 
-def idxLo2Hi(item: Dict) -> Tuple[int, int]:
+def idx_lo_2_hi(item: Dict) -> Tuple[int, int]:
     '''Sometimes start and end are reversed see rs214083637 in
     ENSMUSE00000339485 whereby start is 15881352 and end is 15881351
     despite strand being 1
@@ -934,7 +1108,7 @@ def idxLo2Hi(item: Dict) -> Tuple[int, int]:
     return start, end
 
 
-def excludeVariantsSet(
+def fetch_exclude_variants_set(
         region: Base,
 ) -> Set[int]:
     '''
@@ -947,18 +1121,20 @@ def excludeVariantsSet(
         to 9 is included.  Good for python slicing
 
     '''
-    res = overlap(
+    res = fetch_overlap(
         region.id,
         feature='variation',
     )
-    out = set()
+    out: Set[int] = set()
     for item in res:
-        start, end = idxLo2Hi(item)
-        out |= set(range(start, end + 1))
+        start, end = idx_lo_2_hi(item)
+        out |= set(
+            range(start, end + 1),
+        )
     return out
 
 
-def permittedRegions(
+def fetch_permitted_regions(
         transcript: Transcript,
 ) -> List[List[Tuple[int, int]]]:
     '''
@@ -970,30 +1146,43 @@ def permittedRegions(
         List of Lists of permitted non-variant regions per exon
 
     '''
-    # capture a set to make sure we exclude all the right indices
-    excluded_indices_set = excludeVariantsSet(transcript)
+    # Capture a set to make sure we exclude all the right indices
+    excluded_indices_set = fetch_exclude_variants_set(
+        transcript,
+    )
     out = []
     for item in transcript.Exon:
-        # assume Exon indices go from low to high and are NOT reversed
-        idx_l, idx_h = idxLo2Hi(item)
-        exon_set = set(range(idx_l, idx_h + 1))
+        # Assume Exon indices go from low to high and are NOT reversed
+        idx_l, idx_h = idx_lo_2_hi(item)
+        exon_set = set(
+            range(idx_l, idx_h + 1),
+        )
 
-        delta_set = exon_set.difference(excluded_indices_set)
-        indices = sorted(list(delta_set))
+        delta_set = exon_set.difference(
+            excluded_indices_set,
+        )
+        indices = sorted(
+            list(delta_set),
+        )
         i = indices[0]
         k = i
         slice_list = []
         for j in indices[1:]:
             if j > k + 1:
-                slice_list.append((i, k + 1))  # k + 1 because python slicing
+                # k + 1 because python slicing
+                slice_list.append((i, k + 1))
                 i = j
             k = j
-        slice_list.append((i, k + 1))
-        out.append(slice_list)
+        slice_list.append(
+            (i, k + 1),
+        )
+        out.append(
+            slice_list,
+        )
     return out
 
 
-def slicedSequence(
+def fetch_sliced_sequence(
     exon_id: str,
     offset: int,
     is_rev: bool,
@@ -1028,19 +1217,18 @@ def slicedSequence(
             beginning
 
     '''
-    seq_total = getSequence(exon_id)
+    seq_total = fetch_sequence(
+        exon_id,
+    )
     if is_rev:
         seq_total = seq_total[::-1]
     out = []
-    # base_count = 0
     for region in regions:
-        # print(region[0] - offset, region[1] - offset)
         segment = seq_total[
             region[0] - offset:
             region[1] - offset
         ]
-        # base_count += len(segment)
-        if is_rev:  # reverse the segment back
+        if is_rev:  # Reverse the segment back
             segment = segment[::-1]
         out.append((region[0], segment))
     if is_rev:
@@ -1049,7 +1237,9 @@ def slicedSequence(
         return out
 
 
-def getArrayProbes(eid: str) -> List[Dict]:
+def fetch_array_probes(
+        eid: str,
+) -> List[Dict]:
     '''
     Args:
         eid:  ensembl ID
@@ -1058,14 +1248,16 @@ def getArrayProbes(eid: str) -> List[Dict]:
         Uniquified list of probes from a call to the `overlap` REST request
 
     '''
-    res = overlap(
+    res = fetch_overlap(
         eid,
         feature='array_probe',
     )
-    return _uniqueProbes(res)
+    return _uniquify_probes(res)
 
 
-def _probe_dict_2_str(probe: Dict) -> str:
+def _probe_dict_2_str(
+        probe: Dict[str, Any],
+) -> str:
     '''
     Args:
         probe: probe dictionary to create string from
@@ -1075,10 +1267,15 @@ def _probe_dict_2_str(probe: Dict) -> str:
 
     '''
     global PROBE_KEYS
-    return ''.join(str(probe[x]) for x in PROBE_KEYS)
+    return ''.join(
+        str(probe[x])
+        for x in PROBE_KEYS
+    )
 
 
-def _uniqueProbes(probe_list: List[Dict]) -> List[Dict]:
+def _uniquify_probes(
+        probe_list: List[Dict[str, Any]],
+) -> List[Dict[str, Any]]:
     '''
     Args:
         probe_list: List of probe dictionaries to create string for
@@ -1089,7 +1286,8 @@ def _uniqueProbes(probe_list: List[Dict]) -> List[Dict]:
 
     '''
     probe_cache: Set[str] = set()
-    out: List[Dict] = []
+    out: List[Dict[str, Any]] = []
+
     for probe in probe_list:
         probe_hash: str = _probe_dict_2_str(probe)
         if probe_hash not in probe_cache:
@@ -1098,8 +1296,8 @@ def _uniqueProbes(probe_list: List[Dict]) -> List[Dict]:
     return out
 
 
-def probeListGroupByProbeName(
-        probe_list: List[Dict],
+def probe_list_group_by_probe_name(
+        probe_list: List[Dict[str, Any]],
 ) -> List[Dict]:
     '''Get a dict per probe with a List of microarrays that the probe is in
 
@@ -1111,13 +1309,15 @@ def probeListGroupByProbeName(
 
     '''
     probe_name_idx_dict: Dict[str, int] = {}
-    idx: int = 0
-    out: List[Dict] = []
+    idx = 0
+    out: List[Dict[str, Any]] = []
     for probe in probe_list:
         probe_name: str = probe['probe_name']
         if probe_name not in probe_name_idx_dict:
             probe_copy = copy.copy(probe)
-            probe_copy['microarrays'] = [probe_copy['microarray']]
+            probe_copy['microarrays'] = [
+                probe_copy['microarray'],
+            ]
             del probe_copy['microarray']
             out.append(probe_copy)
 
@@ -1125,17 +1325,19 @@ def probeListGroupByProbeName(
             probe_name_idx_dict[probe_name] = idx
             idx += 1
         else:
-            j: int = probe_name_idx_dict[probe_name]
-            ref_probe: Dict = out[j]
-            ref_probe['microarrays'].append(probe['microarray'])
+            j = probe_name_idx_dict[probe_name]
+            ref_probe = out[j]
+            ref_probe['microarrays'].append(
+                probe['microarray'],
+            )
     return out
 
 
-def getProbeFromList(
+def get_probe_from_list(
         probe_name: str,
-        probe_list: List[Dict],
-) -> Dict:
-    '''Look up a probe dictionary in a `probe_list` which was a result from
+        probe_list: List[Dict[str, Any]],
+) -> Dict[str, Any]:
+    '''Look up a probe dictionary in a ``probe_list`` which was a result from
     a call to  :func:`getArrayProbes`
 
     Args:
@@ -1155,11 +1357,11 @@ def getProbeFromList(
     raise ValueError(f'probe: {probe_name} not found in list')
 
 
-def getProbesForID(
+def fetch_probes_for_id(
         eid: str,
         keep_n: int = 0,
 ) -> pd.DataFrame:
-    '''Fet a dataframe of overlapping probes for a given ensembl ID
+    '''Fetch a dataframe of overlapping probes for a given ensembl ID
 
     Args:
         eid: ensembl ID of the item (Transcript, Exon, etc)
@@ -1177,12 +1379,17 @@ def getProbesForID(
                 'seq_region_name'
             ]
 
-    '''
-    out_list: List[Dict] = getArrayProbes(eid)
-    if len(out_list) == 0:
-        raise ValueError
+    Raises:
+        ValueError: Empty array probes list
 
-    COLUMNS: List[str] = [
+    '''
+    out_list: List[Dict] = fetch_array_probes(
+        eid,
+    )
+    if len(out_list) == 0:
+        raise ValueError(f'Empty array probes list for {eid=}')
+
+    columns_list = [
         'probe_name',
         'start',
         'end',
@@ -1193,7 +1400,10 @@ def getProbesForID(
         'strand',
         'microarray',
     ]
-    df: pd.DataFrame = pd.DataFrame(out_list, columns=COLUMNS)
+    df = pd.DataFrame(
+        out_list,
+        columns=columns_list,
+    )
     probe_name_series: pd.Series = df['probe_name']
     count_of_probe_use: pd.Series = probe_name_series.value_counts()
 
@@ -1208,7 +1418,7 @@ def getProbesForID(
     else:
         filtered_probes = df    # type: ignore
 
-    columns_to_keep: List[str] = [
+    columns_to_keep = [
         'probe_name',
         'start',
         'end',
@@ -1216,7 +1426,9 @@ def getProbesForID(
         'probe_length',
         'seq_region_name',
     ]
-    filtered_probes = filtered_probes.loc[:, columns_to_keep].drop_duplicates()
+    filtered_probes = filtered_probes.loc[
+        :, columns_to_keep,
+    ].drop_duplicates()
 
     # Filter out probes where the length doesn't match the index delta
     filtered_probes = filtered_probes[
@@ -1229,16 +1441,20 @@ def getProbesForID(
         count_of_probe_use.loc[filtered_probes['probe_name'].iloc[i]]
         for i in range(len(filtered_probes))
     ]
-    filtered_probes = filtered_probes.assign(array_freq=array_freq)
+    filtered_probes = filtered_probes.assign(
+        array_freq=array_freq,
+    )
 
-    return filtered_probes.reset_index(drop=True)  # type: ignore
+    return filtered_probes.reset_index(  # type: ignore
+        drop=True,
+    )
 
 
-def permittedSequences(
+def fetch_permitted_sequences(
         transcript: Transcript,
         exon_id: Optional[str] = None,
 ) -> List[List[Tuple[int, str]]]:
-    '''Get a list of start indices and their associated Exon dictionary
+    '''Fetch a list of start indices and their associated Exon dictionary
 
     Args:
         transcript:  :class:`Transcript` as calculated through a call to
@@ -1249,9 +1465,14 @@ def permittedSequences(
         List of list of the genomic start indices and the permitted
             sequences of the exons
 
+    Raises:
+        ValueError: exon_id not present in transcript region
+
     '''
-    slices: List[List[Tuple[int, int]]] = permittedRegions(transcript)
-    is_rev: bool = transcript.strand == -1
+    slices: List[List[Tuple[int, int]]] = fetch_permitted_regions(
+        transcript,
+    )
+    is_rev = transcript.strand == -1
     if exon_id is not None:
         regions = []
         for i, item in enumerate(transcript.Exon):
@@ -1259,16 +1480,31 @@ def permittedSequences(
                 regions = slices[i]
                 break
         if len(regions) > 0:
-            idx_l, idx_h = idxLo2Hi(item)
-            return [slicedSequence(exon_id, idx_l, is_rev, regions)]
+            idx_l, _ = idx_lo_2_hi(item)
+            return [
+                fetch_sliced_sequence(
+                    exon_id,
+                    idx_l,
+                    is_rev,
+                    regions,
+                ),
+            ]
         else:
-            raise ValueError('exon_id {} not there'.format(exon_id))
+            raise ValueError(
+                f'{exon_id=} not present in {transcript=} region',
+            )
     else:
         out = []
         for item, regions in zip(transcript.Exon, slices):
-            idx_l, idx_h = idxLo2Hi(item)
-            # print(idx_h - idx_l)
-            out.append(slicedSequence(item['id'], idx_l, is_rev, regions))
+            idx_l, _ = idx_lo_2_hi(item)
+            out.append(
+                fetch_sliced_sequence(
+                    item['id'],
+                    idx_l,
+                    is_rev,
+                    regions,
+                ),
+            )
         return out
 
 
@@ -1288,88 +1524,108 @@ if __name__ == '__main__':
     # print(transcript.id)
     # # pprint(permittedSequences(transcript, 'ENSMUSE00000513876'))
     # pprint(permittedSequences(transcript))
-    pprint(lookUpSymbolList('mouse', ['GFAP', 'SST']))
+    pprint(fetch_lookup_symbol_list('mouse', ['GFAP', 'SST']))
 
 '''
-a = {'Transcript': [{'Exon': [{'assembly_name': 'GRCm38',
-                           'db_type': 'core',
-                           'end': 15881477,
-                           'id': 'ENSMUSE00000339485',
-                           'object_type': 'Exon',
-                           'seq_region_name': '4',
-                           'species': 'mus_musculus',
-                           'start': 15881264,
-                           'strand': 1,
-                           'version': 2},
-                          {'assembly_name': 'GRCm38',
-                           'db_type': 'core',
-                           'end': 15882034,
-                           'id': 'ENSMUSE00001218329',
-                           'object_type': 'Exon',
-                           'seq_region_name': '4',
-                           'species': 'mus_musculus',
-                           'start': 15881958,
-                           'strand': 1,
-                           'version': 1}],
-                 'Parent': 'ENSMUSG00000028222',
-                 'Translation': {'Parent': 'ENSMUST00000029876',
-                                 'db_type': 'core',
-                                 'end': 15904763,
-                                 'id': 'ENSMUSP00000029876',
-                                 'length': 261,
-                                 'object_type': 'Translation',
-                                 'species': 'mus_musculus',
-                                 'start': 15881399},
-                 'UTR': [{'Parent': 'ENSMUST00000029876',
-                          'assembly_name': 'GRCm38',
-                          'db_type': 'core',
-                          'end': 15881398,
-                          'id': 'ENSMUST00000029876',
-                          'object_type': 'five_prime_UTR',
-                          'seq_region_name': '4',
-                          'source': 'ensembl_havana',
-                          'species': 'mus_musculus',
-                          'start': 15881264,
-                          'strand': 1},
-                         {'Parent': 'ENSMUST00000029876',
-                          'assembly_name': 'GRCm38',
-                          'db_type': 'core',
-                          'end': 15908064,
-                          'id': 'ENSMUST00000029876',
-                          'object_type': 'three_prime_UTR',
-                          'seq_region_name': '4',
-                          'source': 'ensembl_havana',
-                          'species': 'mus_musculus',
-                          'start': 15904764,
-                          'strand': 1}],
-                 'assembly_name': 'GRCm38',
-                 'biotype': 'protein_coding',
-                 'db_type': 'core',
-                 'display_name': 'Calb1-201',
-                 'end': 15908064,
-                 'id': 'ENSMUST00000029876',
-                 'is_canonical': 1,
-                 'logic_name': 'ensembl_havana_transcript',
-                 'object_type': 'Transcript',
-                 'seq_region_name': '4',
-                 'source': 'ensembl_havana',
-                 'species': 'mus_musculus',
-                 'start': 15881264,
-                 'strand': 1,
-                 'version': 1}],
- 'assembly_name': 'GRCm38',
- 'biotype': 'protein_coding',
- 'db_type': 'core',
- 'description': 'Calbindin  [Source:UniProtKB/Swiss-Prot;Acc:P12658]',
- 'display_name': 'Calb1',
- 'end': 15908064,
- 'id': 'ENSMUSG00000028222',
- 'logic_name': 'ensembl_havana_gene',
- 'object_type': 'Gene',
- 'seq_region_name': '4',
- 'source': 'ensembl_havana',
- 'species': 'mus_musculus',
- 'start': 15881264,
- 'strand': 1,
- 'version': 2}
+a = {
+    'Transcript': [
+        {
+            'Exon': [
+                {
+                    'assembly_name': 'GRCm38',
+                    'db_type': 'core',
+                    'end': 15881477,
+                    'id': 'ENSMUSE00000339485',
+                    'object_type': 'Exon',
+                    'seq_region_name': '4',
+                    'species': 'mus_musculus',
+                    'start': 15881264,
+                    'strand': 1,
+                    'version': 2,
+                },
+                {
+                    'assembly_name': 'GRCm38',
+                    'db_type': 'core',
+                    'end': 15882034,
+                    'id': 'ENSMUSE00001218329',
+                    'object_type': 'Exon',
+                    'seq_region_name': '4',
+                    'species': 'mus_musculus',
+                    'start': 15881958,
+                    'strand': 1,
+                    'version': 1,
+                }
+            ],
+            'Parent': 'ENSMUSG00000028222',
+            'Translation': {
+                'Parent': 'ENSMUST00000029876',
+                'db_type': 'core',
+                'end': 15904763,
+                'id': 'ENSMUSP00000029876',
+                'length': 261,
+                'object_type': 'Translation',
+                'species': 'mus_musculus',
+                'start': 15881399,
+            },
+            'UTR': [
+                {
+                    'Parent': 'ENSMUST00000029876',
+                    'assembly_name': 'GRCm38',
+                    'db_type': 'core',
+                    'end': 15881398,
+                    'id': 'ENSMUST00000029876',
+                    'object_type': 'five_prime_UTR',
+                    'seq_region_name': '4',
+                    'source': 'ensembl_havana',
+                    'species': 'mus_musculus',
+                    'start': 15881264,
+                    'strand': 1,
+                },
+                {
+                    'Parent': 'ENSMUST00000029876',
+                    'assembly_name': 'GRCm38',
+                    'db_type': 'core',
+                    'end': 15908064,
+                    'id': 'ENSMUST00000029876',
+                    'object_type': 'three_prime_UTR',
+                    'seq_region_name': '4',
+                    'source': 'ensembl_havana',
+                    'species': 'mus_musculus',
+                    'start': 15904764,
+                    'strand': 1,
+                }
+            ],
+            'assembly_name': 'GRCm38',
+            'biotype': 'protein_coding',
+            'db_type': 'core',
+            'display_name': 'Calb1-201',
+            'end': 15908064,
+            'id': 'ENSMUST00000029876',
+            'is_canonical': 1,
+            'logic_name': 'ensembl_havana_transcript',
+            'object_type': 'Transcript',
+            'seq_region_name': '4',
+            'source': 'ensembl_havana',
+            'species': 'mus_musculus',
+            'start': 15881264,
+            'strand': 1,
+            'version': 1,
+        }
+    ],
+    'assembly_name': 'GRCm38',
+    'biotype': 'protein_coding',
+    'db_type': 'core',
+    'description': 'Calbindin  [Source:UniProtKB/Swiss-Prot;Acc:P12658]',
+    'display_name': 'Calb1',
+    'end': 15908064,
+    'id': 'ENSMUSG00000028222',
+    'logic_name': 'ensembl_havana_gene',
+    'object_type': 'Gene',
+    'seq_region_name': '4',
+    'source': 'ensembl_havana',
+    'species': 'mus_musculus',
+    'start': 15881264,
+    'strand': 1,
+    'version': 2,
+}
  '''

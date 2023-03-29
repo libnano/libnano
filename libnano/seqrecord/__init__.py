@@ -22,11 +22,11 @@ libnano.seqrecord.__init__
 '''
 from libnano.seqrecord.feature import (  # type: ignore
     Feature,
-    locationStr2Feature,
+    location_str_2_feature,
 )
 from libnano.seqrecord.location import Location
 from libnano.seqrecord.seqrecordbase import (  # type: ignore
     SeqRecord,
-    fromFasta,
-    fromGenbankLike,
+    from_fasta,
+    from_genbank_like,
 )

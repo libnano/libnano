@@ -20,7 +20,6 @@ tests.test_seqrecord
 ~~~~~~~~~~~~~~~~~~~~
 
 '''
-# import json
 import unittest
 from os.path import (
     abspath,
@@ -28,11 +27,9 @@ from os.path import (
     join,
 )
 
-import conftest
-
 from libnano.seqrecord import (  # Feature,; Location,; SeqRecord,
-    fromGenbankLike,
-    locationStr2Feature,
+    from_genbank_like,
+    location_str_2_feature,
 )
 
 LOCAL_DIR: str = abspath(dirname(__file__))
@@ -53,48 +50,48 @@ class TestSeqRecord(unittest.TestCase):
             'sample_complex.gb',  # fails for compound location
         ]
 
-    def checkFile(self, fn):
+    def check_file(self, fn):
         fn_gb = join(LOCAL_DIR, 'test_data', fn)
-        a = fromGenbankLike(fn_gb)
+        a = from_genbank_like(fn_gb)
         self.assertIsNotNone(a)
         return a
 
-    def test_checkNormalFiles(self):
+    def test_check_normal_files(self):
         for fn in self.normal_files:
-            self.checkFile(fn)
+            self.check_file(fn)
 
-    def test_checkExceptionFiles(self):
+    def test_check_exception_files(self):
         def doexc(fn):
             fn_gb = join(LOCAL_DIR, 'test_data', fn)
             self.assertRaises(
                 NotImplementedError,
-                fromGenbankLike,
+                from_genbank_like,
                 fn_gb,
             )
 
         for fn in self.exception_files:
             doexc(fn)
 
-    def test_addFeature(self):
-        sr = self.checkFile(self.normal_files[0])
+    def test_add_feature(self):
+        sr = self.check_file(self.normal_files[0])
         feature_name = 'myfeature'
-        ft = locationStr2Feature(
+        ft = location_str_2_feature(
             feature_name,
             '1615..1636',
         )
-        sr.addFeature(ft)
+        sr.add_feature(ft)
         self.assertIn(feature_name, sr)
 
-    def test_removeFeature(self):
-        sr = self.checkFile(self.normal_files[0])
+    def test_remove_feature(self):
+        sr = self.check_file(self.normal_files[0])
         feature_name = 'myfeature'
-        ft = locationStr2Feature(
+        ft = location_str_2_feature(
             feature_name,
             '1615..1636',
         )
-        sr.addFeature(ft)
+        sr.add_feature(ft)
         self.assertIn(feature_name, sr)
-        sr.removeFeature(ft)
+        sr.remove_feature(ft)
         self.assertNotIn(feature_name, sr)
 
 

@@ -36,11 +36,11 @@ _COMPLUT = str.maketrans(
 )
 
 
-def reverse(seq):
+def reverse_seq(seq):
     return seq[::-1]
 
 
-def reverseComplement(seq):
+def reverse_complement(seq):
     return seq.translate(_COMPLUT)[::-1]
 
 
@@ -66,8 +66,8 @@ class TestSeqStr(unittest.TestCase):
     def test_rev(self):
         for x in range(1000):
             seq = self._rand_seq()
-            py_rev = reverse(seq)
-            rev = seqstr.reverse(seq)
+            py_rev = reverse_seq(seq)
+            rev = seqstr.reverse_seq(seq)
             self.assertEqual(py_rev, rev)
 
     def test_comp(self):
@@ -83,8 +83,8 @@ class TestSeqStr(unittest.TestCase):
     def test_rev_comp(self):
         for x in range(1000):
             seq = self._rand_seq()
-            py_revcomp = reverseComplement(seq)
-            revcomp = seqstr.reverseComplement(seq)
+            py_revcomp = reverse_complement(seq)
+            revcomp = seqstr.reverse_complement(seq)
             self.assertEqual(
                 py_revcomp,
                 revcomp,
@@ -92,11 +92,11 @@ class TestSeqStr(unittest.TestCase):
 
     def test_rev_compProfile(self):
         py_time = timeit.timeit(
-            lambda: reverseComplement('ACGTUMRWSYKVHDBNACGTUMRWSYKVHDBN'),
+            lambda: reverse_complement('ACGTUMRWSYKVHDBNACGTUMRWSYKVHDBN'),
             number=10000,
         )
         capi_time = timeit.timeit(
-            lambda: seqstr.reverseComplement(
+            lambda: seqstr.reverse_complement(
                 'ACGTUMRWSYKVHDBNACGTUMRWSYKVHDBN',
             ),
             number=10000,
@@ -117,7 +117,7 @@ class TestSeqStr(unittest.TestCase):
                     'ATGC'.replace(s1[random_idx], ''),
                 )
             s2 = ''.join(s2)
-            hd = seqstr.hammingDistance(
+            hd = seqstr.hamming_distance(
                 s1,
                 s2,
             )

@@ -208,7 +208,7 @@ def find_cliques(
     return out_list
 
 
-def hammingGraphEqual(list sequences) -> np.ndarray:
+def hamming_graph_equal(list sequences) -> np.ndarray:
     '''Compute hamming distance between all strings in a list
 
     Args:
@@ -274,7 +274,7 @@ def hammingGraphEqual(list sequences) -> np.ndarray:
     return hm_np
 
 
-def hammingGraph(list sequences) -> np.ndarray:
+def hamming_graph(list sequences) -> np.ndarray:
     '''Compute hamming distance between all strings in a list. Strings
     can be different lengths but must be sorted longest to shortest
 
@@ -342,7 +342,7 @@ def hammingGraph(list sequences) -> np.ndarray:
     return hm_np
 
 
-def hamming2XGraph(
+def hamming_2x_graph(
         list sequences,
         int min_distance=2,
 ) -> np.ndarray:
@@ -405,7 +405,7 @@ def hamming2XGraph(
     return check_np
 
 
-def hammingAnd3pMismatchGraph(
+def hamming_and_3p_mismatch_graph(
         list sequences,
         int min_distance = 2,
 ) -> np.ndarray:

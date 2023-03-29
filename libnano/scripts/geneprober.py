@@ -47,19 +47,19 @@ import libnano.ensemblrest as ger
 from libnano.ensemblrest import (
     LookUp,
     Transcript,
-    lookUpID,
-    lookUpSymbolList,
-    overlap,
-    permittedSequences,
+    fetch_lookup_id,
+    fetch_lookup_symbol_list,
+    fetch_overlap,
+    fetch_permitted_sequences,
 )
 from libnano.padlock import (
     DEFAULT_PADLOCK_CONFIG,
     PadHit,
-    generatePadlocks,
-    writePadlocksToCSV,
+    generate_padlocks,
+    write_padlocks_to_csv,
 )
 
-BARCODE_LIST: List[str] = bt.getBarcodeSet('34_3hd_5mer_v00')
+BARCODE_LIST: List[str] = bt.get_barcode_set('34_3hd_5mer_v00')
 
 
 class GeneIds(NamedTuple):
@@ -104,12 +104,12 @@ def disable_cache():
     ger.USE_CACHE = True
 
 
-def useCache(is_on: bool):
+def use_cache(is_on: bool):
     ger.USE_CACHE = is_on
 
 
-def listExons(transcript_id: str):
-    res: dict = lookUpID(transcript_id)
+def list_exons(transcript_id: str):
+    res: dict = fetch_lookup_id(transcript_id)
     msg = '%-10s%8d'
     exon = res.get('Exon')
     if exon is None:
@@ -126,7 +126,7 @@ def listExons(transcript_id: str):
         )
 
 
-def listTranscriptsIdxs(
+def list_transcripts_idxs(
     species: str,
     symbols: List[str],
     filename: Optional[str] = None,
@@ -142,7 +142,7 @@ def listTranscriptsIdxs(
         symbols:
     '''
     print('Listing transcript indices')
-    res_dict = lookUpSymbolList(species, symbols)
+    res_dict = fetch_lookup_symbol_list(species, symbols)
     msg1 = '%-12s%-20s%8s%8s%8s%8s%8s%8s'
     print(
         msg1 % (
@@ -205,7 +205,7 @@ def listTranscriptsIdxs(
                 )
 
 
-def listDetails(
+def list_details(
         species: str,
         symbols: List[str],
         **kwargs,
@@ -226,7 +226,7 @@ def listDetails(
         symbols:
     '''
     print('Listing Details')
-    res_dict = lookUpSymbolList(
+    res_dict = fetch_lookup_symbol_list(
         species,
         symbols,
     )
@@ -248,7 +248,7 @@ def listDetails(
         for transcript in item_dict['Transcript']:
             if transcript['is_canonical'] == 1:
                 three_prime_utr_id: str = transcript['Exon'][-1]['id']
-                variant_count = len(overlap(three_prime_utr_id))
+                variant_count = len(fetch_overlap(three_prime_utr_id))
                 for exon in transcript['Exon']:
                     elength += exon['end'] - exon['start']
                 break
@@ -264,7 +264,7 @@ def listDetails(
         print(msg % to_print)
 
 
-def designPadlocks(
+def design_padlocks(
         species: str,
         symbols: List[str],
         exon_index: int = -1,
@@ -301,7 +301,7 @@ def designPadlocks(
 
     arm_length_2X: int = 2 * arm_length
 
-    res: Dict[str, Any] = lookUpSymbolList(
+    res: Dict[str, Any] = fetch_lookup_symbol_list(
         species,
         symbols,
     )
@@ -318,7 +318,7 @@ def designPadlocks(
         canon_transcript_id = canon_transcript.id
         exon_id = canon_transcript.Exon[exon_index]['id']
 
-        p_seqs_list = permittedSequences(
+        p_seqs_list = fetch_permitted_sequences(
             canon_transcript,
         )
 
@@ -378,7 +378,7 @@ def designPadlocks(
 
         pads: List = out_dict[symbol]
         for g_index, segment in candidate_segments_list:
-            pads += generatePadlocks(
+            pads += generate_padlocks(
                 segment,
                 canon_transcript_id,
                 exon_id,
@@ -398,7 +398,7 @@ def designPadlocks(
             bumped_params = DEFAULT_PADLOCK_CONFIG()
             bumped_params['arm_gc_max'] = 0.65
             for g_index, segment in candidate_segments_list:
-                pads += generatePadlocks(
+                pads += generate_padlocks(
                     segment,
                     canon_transcript_id,
                     exon_id,
@@ -412,7 +412,7 @@ def designPadlocks(
         # cannon_transcript = None    # clear the transcript
 
     if filename:
-        writePadlocksToCSV(
+        write_padlocks_to_csv(
             out_dict,
             filename,
         )
@@ -481,11 +481,11 @@ def cli(genes, output, species, ids, dobarcode, filename):
     if ids is not None:
         ids = ids.split()
     if output == 'd':
-        func = listDetails
+        func = list_details
     elif output == 'i':
-        func = listTranscriptsIdxs
+        func = list_transcripts_idxs
     elif output == 'p':
-        designPadlocks(
+        design_padlocks(
             species,
             genes,
             barcodes=barcodes,
@@ -495,7 +495,7 @@ def cli(genes, output, species, ids, dobarcode, filename):
     elif output == 'e':
         if ids is not None:
             for eid in ids:
-                listExons(eid)
+                list_exons(eid)
             return
         else:
             raise ValueError(

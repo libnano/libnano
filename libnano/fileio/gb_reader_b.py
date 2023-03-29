@@ -70,24 +70,24 @@ def parse(
         b'FEATURES             Location/Qualifiers%s' % (NEWLINE_BYT),
     )
 
-    parseLocus(start, d_info)
-    parseDefinition(start, d_info)
-    parseAccession(start, d_info)
-    parseVersion(start, d_info)
-    parseDBLink(start, d_info)
-    parseKeywords(start, d_info)
-    parseSource(start, d_info)
-    parseOrganism(start, d_info)
+    parse_locus(start, d_info)
+    parse_definition(start, d_info)
+    parse_accession(start, d_info)
+    parse_version(start, d_info)
+    parse_db_link(start, d_info)
+    parse_keywords(start, d_info)
+    parse_source(start, d_info)
+    parse_organism(start, d_info)
 
-    d_info[b'references'] = parseReference(start)
+    d_info[b'references'] = parse_reference(start)
     _, _, comment = start.partition(b'COMMENT     ')
-    parseComment(d_info, comment)
-    d[b'features'] = parseFeatures(features, is_ordered)  # type: ignore
+    parse_comment(d_info, comment)
+    d[b'features'] = parse_features(features, is_ordered)  # type: ignore
     d[b'seq'] = parseOrigin(origin)
     return d
 
 
-def parseComment(
+def parse_comment(
         d: Dict,
         comment: bytes,
 ) -> None:
@@ -201,7 +201,7 @@ RE_COMP_LOCUS = re.compile(
 )
 
 
-def parseLocus(
+def parse_locus(
         raw: bytes,
         d_out: Dict,
 ) -> None:
@@ -226,7 +226,7 @@ RE_COMP_DEFINITION = re.compile(
 )
 
 
-def parseDefinition(
+def parse_definition(
         raw: bytes,
         d_out: Dict,
 ) -> None:
@@ -253,7 +253,7 @@ def parseDefinition(
 RE_COMP_ACCESSION = re.compile(RE_ACCESSION, flags=re.M)
 
 
-def parseAccession(
+def parse_accession(
         raw: bytes,
         d_out: Dict,
 ) -> None:
@@ -275,7 +275,7 @@ def parseAccession(
 RE_COMP_VERSION = re.compile(RE_VERSION, flags=re.M)
 
 
-def parseVersion(
+def parse_version(
         raw: bytes,
         d_out: Dict,
 ) -> None:
@@ -298,7 +298,7 @@ def parseVersion(
 RE_COMP_DBLINK = re.compile(RE_DBLINK, flags=re.M)
 
 
-def parseDBLink(
+def parse_db_link(
         raw: bytes,
         d_out: Dict,
 ) -> None:
@@ -320,7 +320,7 @@ def parseDBLink(
 RE_COMP_KEYWORDS = re.compile(RE_KEYWORDS, flags=re.M)
 
 
-def parseKeywords(
+def parse_keywords(
         raw: bytes,
         d_out: Dict,
 ) -> None:
@@ -342,7 +342,7 @@ def parseKeywords(
 RE_COMP_SOURCE = re.compile(RE_SOURCE, flags=re.M)
 
 
-def parseSource(
+def parse_source(
         raw: bytes,
         d_out: Dict,
 ) -> None:
@@ -364,7 +364,7 @@ def parseSource(
 RE_COMP_ORGANISM = re.compile(RE_ORGANISM, flags=re.M)
 
 
-def parseOrganism(
+def parse_organism(
         raw: bytes,
         d_out: Dict,
 ) -> None:
@@ -423,7 +423,7 @@ RE_REFERENCE = _bytes(''.join(re_reference))
 RE_COMP_REF = re.compile(RE_REFERENCE, flags=re.M)
 
 
-def parseReference(
+def parse_reference(
         raw: bytes,
 ) -> List[dict]:
     '''Parse reference into a list of dictionaries
@@ -464,7 +464,7 @@ def parseReference(
     return ref_list
 
 
-def addMultivalue(
+def add_multivalue(
         d: Dict,
         key: bytes,
         val: Any,
@@ -508,7 +508,7 @@ RE_COMP_FEATURE = re.compile(
 QUOTE_BYTE: int = b'\"'[0]
 
 
-def parseFeatures(
+def parse_features(
         raw: bytes,
         is_ordered: bool = False,
 ) -> List[dict]:
@@ -570,7 +570,7 @@ def parseFeatures(
                 value_to_add = None
             else:
                 value_to_add = temp if is_str else int(temp)
-            addMultivalue(
+            add_multivalue(
                 qs,
                 key,
                 value_to_add,

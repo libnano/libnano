@@ -45,7 +45,7 @@ _ALPHABETS: Dict[str, str] = {
 Record_T = Union[Tuple[str, str], Tuple[bytes, bytes]]
 
 
-def sanitizeRecSeq(
+def sanitize_rec_seq(
         rec_id: str,
         rec_seq: str,
         alphabet: str,
@@ -84,7 +84,7 @@ def sanitizeRecSeq(
                 )
 
 
-def parseFasta(
+def parse_fasta(
         fasta_fn: str,
         alphabet: str = 'DNA',
         not_allowed: str = '',
@@ -129,7 +129,7 @@ def parseFasta(
         ]
         if alphabet or not_allowed:
             for rec_id, rec_seq in d:
-                sanitizeRecSeq(
+                sanitize_rec_seq(
                     rec_id,
                     rec_seq,
                     alphabet,
@@ -138,7 +138,7 @@ def parseFasta(
     return d
 
 
-def parseFastaGen(
+def parse_fasta_gen(
     fasta_fn: str,
     alphabet: str = 'DNA',
     not_allowed: str = '',
@@ -172,7 +172,7 @@ def parseFastaGen(
             if start_record_delim in line:
                 if rec_id != end_record_delim:
                     if alphabet or not_allowed:
-                        sanitizeRecSeq(
+                        sanitize_rec_seq(
                             rec_id,
                             rec_seq,
                             alphabet,
@@ -184,7 +184,7 @@ def parseFastaGen(
             else:
                 rec_seq += line.strip()
     if alphabet or not_allowed:
-        sanitizeRecSeq(
+        sanitize_rec_seq(
             rec_id,
             rec_seq,
             alphabet,
@@ -219,7 +219,7 @@ def write(
     if iotype == 'unicode':
         with io.open(fasta_fn, 'w', encoding='utf-8') as fd:
             for record in records:
-                writeRecord(
+                write_record(
                     fd,
                     records[0],
                     records[1],
@@ -228,7 +228,7 @@ def write(
     else:
         with io.open(fasta_fn, 'wb') as fd:
             for record in records:
-                writeRecordB(
+                write_record_b(
                     fd,
                     records[0],
                     records[1],
@@ -236,7 +236,7 @@ def write(
                 )
 
 
-def writeRecord(
+def write_record(
         fd: _io.TextIOWrapper,
         rec_id: str,
         rec_seq: str,
@@ -257,7 +257,7 @@ def writeRecord(
         fd.write('\n')
 
 
-def writeRecordB(
+def write_record_b(
         fd: _io.TextIOWrapper,
         rec_id: bytes,
         rec_seq: bytes,

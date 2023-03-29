@@ -32,7 +32,7 @@ from typing import (
 from libnano.fileio import gb_reader
 
 
-def genbankToFasta(
+def genbank_to_fasta(
         genbank_fp: str,
         seq_record: Optional[Dict] = None,
 ) -> None:
@@ -58,4 +58,4 @@ def genbankToFasta(
 if __name__ == '__main__':
     import sys
     genbank_fp = sys.argv[1]
-    genbankToFasta(genbank_fp)
+    genbank_to_fasta(genbank_fp)

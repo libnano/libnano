@@ -34,7 +34,7 @@ def test_cli():
 
 def test_list_details():
     with geneprober.disable_cache():
-        geneprober.listDetails(
+        geneprober.list_details(
             'mouse',
             ['DAXX'],
         )
@@ -44,7 +44,7 @@ def test_list_detailsfail():
     a_fake_gene_symbol: str = 'DOOF'
     with geneprober.disable_cache():
         with pytest.raises(KeyError):
-            geneprober.listDetails(
+            geneprober.list_details(
                 'mouse',
                 [a_fake_gene_symbol],
             )

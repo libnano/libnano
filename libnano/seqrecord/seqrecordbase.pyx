@@ -54,7 +54,7 @@ from libnano.fileio import (
 from libnano.seqrecord.feature import (  # type: ignore
     DummyFeature,
     Feature,
-    locationStr2Feature,
+    location_str_2_feature,
 )
 from libnano.seqrecord.featuretypes import FeatureTypes
 
@@ -218,14 +218,14 @@ cdef class SeqRecord:
         sr = type(self)(
             feature_types=self.feature_types,
         )
-        feature_list = self.getFeatures(
+        feature_list = self.get_features(
             start,
             stop,
         )
         for i in range(len(feature_list)):
             f = feature_list[i]
-            fcopy = f.copyForSlice(start)
-            sr.addFeature(fcopy)
+            fcopy = f.copy_for_slice(start)
+            sr.add_feature(fcopy)
         sr.seq = self.sequence[start:stop]
         return sr
 
@@ -239,7 +239,7 @@ cdef class SeqRecord:
             sequence=copy(self.sequence),
         )
         for f in self.feature_instance_list:
-            sr.addFeature(f.__copy__()) # copy the feature too?
+            sr.add_feature(f.__copy__()) # copy the feature too?
         return sr
 
     def __add__(self, x: SeqRecord):
@@ -256,9 +256,9 @@ cdef class SeqRecord:
             )
         # Unsure about copy of feature_types
         sr = self.__copy__()
-        for f in x.iterFeatures():
-            fcopy = f.copyForSlice(start)
-            sr.addFeature(fcopy)
+        for f in x.iter_features():
+            fcopy = f.copy_for_slice(start)
+            sr.add_feature(fcopy)
         sr.seq = sr.seq + x.seq
         return sr
 
@@ -268,7 +268,7 @@ cdef class SeqRecord:
     def __hash__(self):
         return hash(self.seq.lower())
 
-    cdef constructFeaturesFromGenbankLike(
+    cdef construct_features_from_genbank_like(
             self,
             list feature_list,
     ):
@@ -285,14 +285,14 @@ cdef class SeqRecord:
 
         for i in range(len_features):
             fobj = feature_list[i]
-            f = locationStr2Feature(
+            f = location_str_2_feature(
                 fobj['type'],
                 fobj['location'],
                 fobj['qualifiers'],
             )
-            self.addFeature(f)
+            self.add_feature(f)
 
-    def fromGenbankLike(
+    def from_genbank_like(
             self,
             fn_string: str,
     ) -> None:
@@ -306,7 +306,7 @@ cdef class SeqRecord:
         '''
         extension = os.path.splitext(fn_string)[1]
         if extension == '.json':
-            with io.open(fn_string, 'r', encoding='utf-8') as fd_json:
+            with open(fn_string, 'r', encoding='utf-8') as fd_json:
                 obj = json.load(fd_json)
         elif extension == '.gb':
             obj = gb_reader.parse(fn_string)
@@ -314,10 +314,10 @@ cdef class SeqRecord:
             raise NotImplementedError('Only json and gb are supported')
 
         self.seq = obj['seq']
-        self.constructFeaturesFromGenbankLike(obj['features'])
+        self.construct_features_from_genbank_like(obj['features'])
         self.info = obj['info']
 
-    cdef list serializeFeatures(
+    cdef list serialize_features(
             self,
             bint clone,
     ):
@@ -363,17 +363,17 @@ cdef class SeqRecord:
         '''
         d = {
             'seq': self.sequence,
-            'features': self.serializeFeatures(clone),
+            'features': self.serialize_features(clone),
             'info': self.info
         }
         if to_json:
             return json.dumps(d)
         elif to_json_file is not None:
-            with io.open(to_json_file, 'w', encoding='utf-8') as fd:
+            with open(to_json_file, 'w', encoding='utf-8') as fd:
                 fd.write(json.dumps(d, indent=4))
         return d
 
-    def toGenBank(
+    def to_genbank(
             self,
             fn_string: str,
             order_qualifiers: bool = False,
@@ -391,7 +391,7 @@ cdef class SeqRecord:
                 order_qualifiers=order_qualifiers,
             )
 
-    def toFasta(
+    def to_fasta(
             self,
             fn_string: str,
     ) -> None:
@@ -407,7 +407,7 @@ cdef class SeqRecord:
             [(description, self.sequence)],
         )
 
-    cpdef addFeature(
+    cpdef add_feature(
             self,
             feature: Feature,
             description: str = None,
@@ -426,7 +426,7 @@ cdef class SeqRecord:
         fi_dict: Dict[str, List[Feature]] = self.feature_instance_dict
 
         # if feature_name not in feature_types:
-        #     ft_id = feature_types.addFeatureType(
+        #     ft_id = feature_types.add_feature_type(
         #         feature_name,
         #         description=description,
         #     )
@@ -452,7 +452,7 @@ cdef class SeqRecord:
         else:
             fi_dict[feature_name] = [feature]
 
-    cpdef removeFeature(
+    cpdef remove_feature(
             self,
             feature: Feature,
     ):
@@ -462,7 +462,7 @@ cdef class SeqRecord:
             feature: :class:`Feature` instance to add
 
         Raises:
-            ValueError: removeFeature: Feature not in SeqRecord
+            ValueError: Feature not in SeqRecord
         '''
         cdef Py_ssize_t idx
         feature_name = feature.name()
@@ -474,7 +474,7 @@ cdef class SeqRecord:
         if idx == len(fi_list) or \
             fi_list[idx] != feature:
             raise ValueError(
-                'removeFeature: Feature not in SeqRecord'
+                'Feature not in SeqRecord'
             )
         fi_list.pop(idx)
 
@@ -483,7 +483,7 @@ cdef class SeqRecord:
         if len(ilist) == 0:
             del fi_dict[feature_name]
 
-    cpdef list getFeatures(
+    cpdef list get_features(
             self,
             Py_ssize_t start,
             Py_ssize_t end,
@@ -521,7 +521,7 @@ cdef class SeqRecord:
         )
         return fi_list[idx_lo:idx_hi]
 
-    def iterFeatures(self) -> Iterator[Feature]:
+    def iter_features(self) -> Iterator[Feature]:
         '''Iterator and not the list itself since we must not
         expose the feature_instance_list object itself
 
@@ -532,7 +532,7 @@ cdef class SeqRecord:
         return iter(self.feature_instance_list)
 
 
-def fromFasta(
+def from_fasta(
         fasta_fn: str,
         alphabet: str = 'DNA',
         not_allowed: str = None,
@@ -562,7 +562,7 @@ def fromFasta(
     return out
 
 
-def fromGenbankLike(
+def from_genbank_like(
         fn_string: str,
         feature_types: Optional[FeatureTypes] = None,
 ) -> SeqRecord:
@@ -579,5 +579,5 @@ def fromGenbankLike(
     sr = SeqRecord(
         feature_types=feature_types,
     )
-    sr.fromGenbankLike(fn_string)
+    sr.from_genbank_like(fn_string)
     return sr

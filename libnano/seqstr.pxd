@@ -32,18 +32,18 @@ Includes hamming distance method and derivative heuristic methods.
 '''
 
 cdef:
-    char* reverse_c(char* seq, int length)
-    void reverse_cb(char* seq, char* out, int length)
+    char* reverse_seq_c(char* seq, int length)
+    void reverse_seq_cb(char* seq, char* out, int length)
 
     char* complement_c(char* seq, int length)
     void complement_cb(char* seq, char* out, int length)
 
-    char* reverseComplement_c(char* seq, int length)
-    void reverseComplement_cb(char* seq, char* out, int length)
+    char* reverse_complement_c(char* seq, int length)
+    void reverse_complement_cb(char* seq, char* out, int length)
 
-    int hammingDistance_c(char* seq1, char* seq2, int len1)
+    int hamming_distance_c(char* seq1, char* seq2, int len1)
 
-    void rollingHammingDistance_c(
+    void rolling_hamming_distance_c(
         char* seq1, char* seq2,
         int len1, int len2,
         int overlap,

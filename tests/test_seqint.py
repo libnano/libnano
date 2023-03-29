@@ -35,7 +35,7 @@ _DNACOMP = str.maketrans(
 )
 
 
-def reverseComplement(seq):
+def reverse_complement(seq):
     return seq.translate(_DNACOMP)[::-1]
 
 
@@ -47,7 +47,7 @@ def add_to_window(seq, base):
     return seq[1:] + base
 
 
-def addBase(seq, base):
+def add_base(seq, base):
     return seq + base
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
@@ -66,8 +66,8 @@ class TestSeqInt(unittest.TestCase):
         ''' Test conversion to seqint and back for various random seqs '''
         for x in range(1000):
             seq = self._rand_seq()
-            seq_int = seqint.seq2Int(seq)
-            out_seq = seqint.int2Seq(
+            seq_int = seqint.seq_2_int(seq)
+            out_seq = seqint.int_2_seq(
                 seq_int,
                 len(seq),
             )
@@ -81,13 +81,13 @@ class TestSeqInt(unittest.TestCase):
         for x in range(1000):
             seq = self._rand_seq()
             base = random.choice('ATGC')
-            seq_int = seqint.seq2Int(seq)
-            seq_int_add = seqint.addToWindow(
+            seq_int = seqint.seq_2_int(seq)
+            seq_int_add = seqint.add_to_window(
                 seq_int,
                 base,
                 len(seq),
             )
-            seq_add = seqint.int2Seq(
+            seq_add = seqint.int_2_seq(
                 seq_int_add,
                 len(seq),
             )
@@ -104,16 +104,16 @@ class TestSeqInt(unittest.TestCase):
         ''' Test reverse complement of seqint '''
         for x in range(1000):
             seq = self._rand_seq()
-            seq_int = seqint.seq2Int(seq)
-            seq_int_rc = seqint.reverseComplement(
+            seq_int = seqint.seq_2_int(seq)
+            seq_int_rc = seqint.reverse_complement(
                 seq_int,
                 len(seq),
             )
-            seq_rc = seqint.int2Seq(
+            seq_rc = seqint.int_2_seq(
                 seq_int_rc,
                 len(seq),
             )
-            py_seq_rc = reverseComplement(seq)
+            py_seq_rc = reverse_complement(seq)
             self.assertEqual(
                 seq_rc,
                 py_seq_rc.upper(),
@@ -124,7 +124,7 @@ class TestSeqInt(unittest.TestCase):
         ''' Test seqint substring method '''
         for x in range(1000):
             seq = self._rand_seq()
-            seq_int = seqint.seq2Int(seq)
+            seq_int = seqint.seq_2_int(seq)
             sidx = random.randint(
                 0,
                 len(seq) - 1,
@@ -133,14 +133,14 @@ class TestSeqInt(unittest.TestCase):
                 sidx + 1,
                 len(seq),
             )
-            sub_seq_int = seqint.getSubstring(
+            sub_seq_int = seqint.get_substring(
                 seq_int,
                 sidx,
                 eidx,
                 len(seq),
             )
             self.assertEqual(
-                seqint.int2Seq(
+                seqint.int_2_seq(
                     sub_seq_int,
                     eidx - sidx,
                 ),
@@ -151,7 +151,7 @@ class TestSeqInt(unittest.TestCase):
         # Should not allow input sequence of over 30 bases
         self.assertRaises(
             ValueError,
-            seqint.seq2Int,
+            seqint.seq_2_int,
             'A' * 31,
         )
 

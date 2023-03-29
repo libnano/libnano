@@ -27,7 +27,7 @@ from typing import (
 )
 
 from libnano.dseq import DSeq
-from libnano.seqstr import reverse  # type: ignore
+from libnano.seqstr import reverse_seq  # type: ignore
 
 
 class TestDSeq(unittest.TestCase):
@@ -92,7 +92,7 @@ class TestDSeq(unittest.TestCase):
 
         fwd = fwd.replace('Y', 'C')
         rev_rev = rev_rev.replace('R', 'G')
-        rev = reverse(rev_rev)
+        rev = reverse_seq(rev_rev)
         ds_baei_dseq = DSeq(
             seq_buf + fwd + seq_buf,
             seq_buf + rev + seq_buf, overhang=5,
@@ -140,12 +140,12 @@ class TestDSeq(unittest.TestCase):
         bsai_ds2_checks = (
             DSeq(
                 'GGTCTCG',
-                reverse('TTTAAACCAGAGCTTAA'),
+                reverse_seq('TTTAAACCAGAGCTTAA'),
                 overhang=6,
             ),
             DSeq(
                 'AATTCAAATTTGGTCTCG',
-                reverse('GTTTAAACCAGAGCTTAA'),
+                reverse_seq('GTTTAAACCAGAGCTTAA'),
                 overhang=-4,
             ),
             DSeq(
@@ -162,7 +162,7 @@ class TestDSeq(unittest.TestCase):
         rev = 'TTTGAATTCGAGACCAAA'
 
         bsai_cut_fwd = 'AATTCAAATTTGGTCTCG'
-        bsai_cut_rev = reverse('GTTTAAACCAGAGCTTAA')
+        bsai_cut_rev = reverse_seq('GTTTAAACCAGAGCTTAA')
 
         bsai_circ_cut_checks_dseq_list = [
             DSeq(

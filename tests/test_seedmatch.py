@@ -22,13 +22,9 @@ tests.test_seedmatch
 '''
 from __future__ import print_function
 
-# import random
 import unittest
 
 from libnano.search.seedmatch import SeedMatcher  # type: ignore
-
-# import conftest
-
 
 DEBUG: bool = False
 

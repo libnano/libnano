@@ -25,14 +25,13 @@ from __future__ import print_function
 import os.path as op
 import random
 import re
-# import sys
 import time
 import unittest
 
 import pytest
 
 from libnano.fileio import fasta
-from libnano.search import submerpool  # type: ignore
+from libnano.search import _submerpool  # type: ignore
 
 LOCAL_DIR = op.dirname(op.abspath(__file__))
 
@@ -96,21 +95,21 @@ class TestSubmer(unittest.TestCase):
             m = random.randint(5, 20)
             k = random.randint(1, 3)
             # sd_list = seedfinder.findSeed(m, k)
-            tbl = submerpool.SubmerPoolSearch(
+            tbl = _submerpool.SubmerPoolSearch(
                 [self.mg1655],
                 m,
                 mismatches=k,
             )
             self.assertNotEqual(tbl, None)
         # Test no mismatchs
-        tbl = submerpool.SubmerPoolSearch(
+        tbl = _submerpool.SubmerPoolSearch(
             [self.mg1655],
             m,
             mismatches=0,
         )
         self.assertNotEqual(tbl, None)
         # Test no mismatchs
-        tbl = submerpool.SubmerPoolSearch(
+        tbl = _submerpool.SubmerPoolSearch(
             [self.mg1655],
             m,
             force_hamming=True,
@@ -128,7 +127,7 @@ class TestSubmer(unittest.TestCase):
                     for j in range(m)
                 ],
             )
-            tbl = submerpool.SubmerPoolSearch(
+            tbl = _submerpool.SubmerPoolSearch(
                 [self.mg1655],
                 m,
                 mismatches=k,

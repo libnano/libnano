@@ -78,7 +78,8 @@ import json
 import os.path as op
 import re
 import sys
-import urllib.request as urllib2
+import urllib.error
+import urllib.request
 from typing import (  # Union,
     Any,
     Dict,
@@ -235,11 +236,11 @@ def get_rebase_list(
         'Connection': 'keep-alive',
     }
 
-    req = urllib2.Request(
+    req = urllib.request.Request(
         enzyme_list_url,
         headers=request_headers,
     )
-    res = urllib2.urlopen(req)
+    res = urllib.request.urlopen(req)
     raw_data = res.read().decode('utf8')
     reference_section = re.search(      # type: ignore
         r'References:(.*)',

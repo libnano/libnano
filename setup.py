@@ -8,7 +8,6 @@ libnano: Low-level nucleic acid sequence manipulation tools
 nucleic acid toolkit
 
 '''
-
 import os
 import os.path as op
 import re
@@ -21,7 +20,7 @@ with open('README.rst') as fd:
 DISTNAME = 'libnano'
 LICENSE = 'GPLv2'
 AUTHORS = 'Nick Conway, Ben Pruitt'
-EMAIL = 'nick.conway@wyss.harvard.edu'
+EMAIL = 'a.grinner@gmail.com'
 URL = 'https://github.com/libnano/libnano'
 DOWNLOAD_URL = ''
 CLASSIFIERS = [
@@ -132,8 +131,8 @@ add_extension(
 )
 
 add_extension(
-    'libnano.search.seedfinder',
-    sources=['libnano/search/seedfinder.pyx'],
+    'libnano.search._seedfinder',
+    sources=['libnano/search/_seedfinder.pyx'],
     extra_compile_args=EXTRA_COMPILE_ARGS,
 )
 
@@ -155,8 +154,8 @@ add_extension(
 )
 
 add_extension(
-    'libnano.search.submerpool',
-    sources=['libnano/search/submerpool.pyx'],
+    'libnano.search._submerpool',
+    sources=['libnano/search/_submerpool.pyx'],
     include_dirs=COMMON_INCLUDE,
     extra_compile_args=EXTRA_COMPILE_ARGS,
 )
@@ -233,35 +232,10 @@ add_extension(
 res_data_fp = op.join(MODULE_PATH, 'datasets')
 LIBNANO_FILES += [
     op.relpath(op.join(root, f), MODULE_PATH) for root, _, files in
-    os.walk(res_data_fp) for f in files if ('.json' in f or '.yaml' in f)
+    os.walk(res_data_fp) for f in files if ('.json' in f)
 ]
 
-add_extension(
-    'libnano.seqrecord.feature',
-    depends=[],
-    sources=['libnano/seqrecord/feature.pyx'],
-    include_dirs=COMMON_INCLUDE,
-    extra_compile_args=EXTRA_COMPILE_ARGS,
-)
-
-add_extension(
-    'libnano.seqrecord.seqrecordbase',
-    depends=[],
-    sources=['libnano/seqrecord/seqrecordbase.pyx'],
-    include_dirs=COMMON_INCLUDE,
-    extra_compile_args=EXTRA_COMPILE_ARGS,
-)
-
-add_extension(
-    'libnano.simplethermo',
-    depends=[],
-    sources=['libnano/simplethermo.pyx'],
-    include_dirs=COMMON_INCLUDE,
-    extra_compile_args=EXTRA_COMPILE_ARGS,
-)
-
-
-# add header files or extra c files
+# Add header files or extra c files
 for path in COMMON_INCLUDE:
     LIBNANO_FILES += [
         op.relpath(op.join(path, f)) for f in
@@ -280,12 +254,9 @@ LIBNANO_FILES = list(set(LIBNANO_FILES))
 
 PACKAGES_LIST = [
     'libnano',
-    'libnano.fileio',
     'libnano.helpers',
     'libnano.cymem',
     'libnano.search',
-    'libnano.seqrecord',
-    'libnano.scripts',
     'libnano.datasets',
     'libnano.metric',
 ]
@@ -324,16 +295,7 @@ CYTHON_EXT_LIST = try_cythonize(
 INSTALL_REQUIRES = [
     'cython>=0.29.0',
     'numpy>=1.24.0',
-    'PyYAML>=6.0',
-    'requests>=2.28.1',
-    'primer3-py>=1.0.0',
-    'click>=8.1.0',
-    'ssw-py>=1.0.0',
-    'pygments',
-    'pandas',
 ]
-if sys.platform == 'win32':
-    INSTALL_REQUIRES.append('colorama')
 
 import libnano
 
@@ -357,8 +319,4 @@ setup(
     script_args=SCRIPT_ARGS,
     zip_safe=False,
     install_requires=INSTALL_REQUIRES,
-    entry_points='''
-        [console_scripts]
-        geneprober=libnano.scripts.geneprober:cli
-    ''',
 )
